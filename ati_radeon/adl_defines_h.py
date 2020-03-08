@@ -45,8 +45,76 @@ BOOL = ctypes.c_bool
 USHORT = ctypes.c_ushort
 
 
+
+try:
+    long = long
+except NameError:
+    long = int
+
+
+class EnumItem(long):
+
+    def __init__(self, value):
+
+        try:
+            super(EnumItem, self).__init__(value)
+        except TypeError:
+            super(EnumItem, self).__init__()
+
+        self._string = ''
+        self._value = value
+
+    def set_string(self, value):
+        self._string = value
+        return self
+
+    def __eq__(self, other):
+        if isinstance(other, (int, long)):
+            if other == self._value:
+                return True
+            if str(other) in self._string:
+                return True
+
+            return False
+
+        return other == self._string
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __str__(self):
+        if self._string:
+            return self._string
+
+        return super(EnumItem, self).__str__()
+
+
 class ENUM(INT):
-    pass
+
+    def __init__(self, value=None):
+
+        if value is None:
+            super(ENUM, self).__init__()
+        else:
+            for k, v in self.__class__.__dict__.items():
+                if k.startswith('_'):
+                    continue
+
+                if v == value:
+                    value = v
+                    break
+
+            super(ENUM, self).__init__(value)
+
+    @property
+    def value(self):
+        value = INT.value.__get__(self)
+        for k, v in self.__class__.__dict__.items():
+            if k.startswith('_'):
+                continue
+
+            if v == value:
+                return v
 
 
 def defined(macro):
@@ -892,11 +960,11 @@ ADL_OSMODEINFOORIENTATION_DEFAULT = 0
 if defined(_WIN32) or defined(_WIN64):
 
     class DUMMY_ENUM(ENUM):
-        DISPLAYCONFIG_ROTATION_IDENTITY = 0
-        DISPLAYCONFIG_ROTATION_ROTATE90 = 1
-        DISPLAYCONFIG_ROTATION_ROTATE180 = 2
-        DISPLAYCONFIG_ROTATION_ROTATE270 = 3
-        DISPLAYCONFIG_ROTATION_FORCE_UINT32 = 4
+        DISPLAYCONFIG_ROTATION_IDENTITY = EnumItem(0).set_string('Identity')
+        DISPLAYCONFIG_ROTATION_ROTATE90 = EnumItem(1).set_string('90°')
+        DISPLAYCONFIG_ROTATION_ROTATE180 = EnumItem(2).set_string('180°')
+        DISPLAYCONFIG_ROTATION_ROTATE270 = EnumItem(3).set_string('730°')
+        DISPLAYCONFIG_ROTATION_FORCE_UINT32 = EnumItem(4).set_string('Force UINT32')
 
     ADL_OSMODEINFOORIENTATION_DEFAULT_WIN7 = (
         DUMMY_ENUM.DISPLAYCONFIG_ROTATION_FORCE_UINT32
@@ -922,14 +990,14 @@ class ADLThreadingModel(ENUM):
     # guaranteed to be thread-safe. Client that calls
     # ADL_Main_Control_Create have to provide its own mechanism for ADL
     # calls serialization.
-    ADL_THREADING_UNLOCKED = 0
+    ADL_THREADING_UNLOCKED = EnumItem(0).set_string('Unlocked')
 
     # not < ADL will enforce serialization of ADL API when called by
     # multiple threads. Only single thread will be allowed to enter ADL
     # API at the time. This option makes ADL calls thread-safe. You
     # shouldn't use this option if ADL calls will be executed on Linux on
     # x-server rendering thread. It can cause the application to hung.
-    ADL_THREADING_LOCKED = 1
+    ADL_THREADING_LOCKED = EnumItem(0).set_string('Locked')
 
 
 ADL_THREADING_UNLOCKED = ADLThreadingModel.ADL_THREADING_UNLOCKED
@@ -941,14 +1009,14 @@ ADL_THREADING_LOCKED = ADLThreadingModel.ADL_THREADING_LOCKED
 # ADLPurposeCode Enumeration
 # /////////////////////////////////////////////////////////////////////////
 class ADLPurposeCode(ENUM):
-    ADL_PURPOSECODE_NORMAL = 0
-    ADL_PURPOSECODE_HIDE_MODE_SWITCH = 1
-    ADL_PURPOSECODE_MODE_SWITCH = 2
-    ADL_PURPOSECODE_ATTATCH_DEVICE = 3
-    ADL_PURPOSECODE_DETACH_DEVICE = 4
-    ADL_PURPOSECODE_SETPRIMARY_DEVICE = 5
-    ADL_PURPOSECODE_GDI_ROTATION = 6
-    ADL_PURPOSECODE_ATI_ROTATION = 7
+    ADL_PURPOSECODE_NORMAL = EnumItem(0).set_string('Normal')
+    ADL_PURPOSECODE_HIDE_MODE_SWITCH = EnumItem(1).set_string('Hide Mode Switch.')
+    ADL_PURPOSECODE_MODE_SWITCH = EnumItem(2).set_string('Mode switch.')
+    ADL_PURPOSECODE_ATTATCH_DEVICE = EnumItem(3).set_string('Attach Device.')
+    ADL_PURPOSECODE_DETACH_DEVICE = EnumItem(4).set_string('Detach device.')
+    ADL_PURPOSECODE_SETPRIMARY_DEVICE = EnumItem(5).set_string('Set primary device.')
+    ADL_PURPOSECODE_GDI_ROTATION = EnumItem(6).set_string('GDI Rotation.')
+    ADL_PURPOSECODE_ATI_ROTATION = EnumItem(7).set_string('STI Rotation.')
 
 
 ADL_PURPOSECODE_NORMAL = ADLPurposeCode.ADL_PURPOSECODE_NORMAL
@@ -965,10 +1033,10 @@ ADL_PURPOSECODE_ATI_ROTATION = ADLPurposeCode.ADL_PURPOSECODE_ATI_ROTATION
 # ADLAngle Enumeration
 # /////////////////////////////////////////////////////////////////////////
 class ADLAngle(ENUM):
-    ADL_ANGLE_LANDSCAPE = 0
-    ADL_ANGLE_ROTATERIGHT = 90
-    ADL_ANGLE_ROTATE180 = 180
-    ADL_ANGLE_ROTATELEFT = 270
+    ADL_ANGLE_LANDSCAPE = EnumItem(0).set_string('Landscape')
+    ADL_ANGLE_ROTATERIGHT = EnumItem(90).set_string('Rotate right')
+    ADL_ANGLE_ROTATE180 = EnumItem(150).set_string('Rotate 180')
+    ADL_ANGLE_ROTATELEFT = EnumItem(270).set_string('Rotate left')
 
 
 ADL_ANGLE_LANDSCAPE = ADLAngle.ADL_ANGLE_LANDSCAPE
@@ -981,8 +1049,8 @@ ADL_ANGLE_ROTATELEFT = ADLAngle.ADL_ANGLE_ROTATELEFT
 # ADLOrientationDataType Enumeration
 # /////////////////////////////////////////////////////////////////////////
 class ADLOrientationDataType(ENUM):
-    ADL_ORIENTATIONTYPE_OSDATATYPE = 1
-    ADL_ORIENTATIONTYPE_NONOSDATATYPE = 2
+    ADL_ORIENTATIONTYPE_OSDATATYPE = EnumItem(1).set_string('OS Data Type')
+    ADL_ORIENTATIONTYPE_NONOSDATATYPE = EnumItem(2).set_string('Non OS data type')
 
 
 ADL_ORIENTATIONTYPE_OSDATATYPE = ADLOrientationDataType.ADL_ORIENTATIONTYPE_OSDATATYPE
@@ -993,9 +1061,9 @@ ADL_ORIENTATIONTYPE_NONOSDATATYPE = ADLOrientationDataType.ADL_ORIENTATIONTYPE_N
 # ADLPanningMode Enumeration
 # /////////////////////////////////////////////////////////////////////////
 class ADLPanningMode(ENUM):
-    ADL_PANNINGMODE_NO_PANNING = 0
-    ADL_PANNINGMODE_AT_LEAST_ONE_NO_PANNING = 1
-    ADL_PANNINGMODE_ALLOW_PANNING = 2
+    ADL_PANNINGMODE_NO_PANNING = EnumItem(0).set_string('No panning')
+    ADL_PANNINGMODE_AT_LEAST_ONE_NO_PANNING = EnumItem(1).set_string('At Least one not painting')
+    ADL_PANNINGMODE_ALLOW_PANNING = EnumItem(2).set_string('Allow panning')
 
 
 ADL_PANNINGMODE_NO_PANNING = ADLPanningMode.ADL_PANNINGMODE_NO_PANNING
@@ -1007,9 +1075,9 @@ ADL_PANNINGMODE_ALLOW_PANNING = ADLPanningMode.ADL_PANNINGMODE_ALLOW_PANNING
 # ADLLARGEDESKTOPTYPE Enumeration
 # /////////////////////////////////////////////////////////////////////////
 class ADLLARGEDESKTOPTYPE(ENUM):
-    ADL_LARGEDESKTOPTYPE_NORMALDESKTOP = 0
-    ADL_LARGEDESKTOPTYPE_PSEUDOLARGEDESKTOP = 1
-    ADL_LARGEDESKTOPTYPE_VERYLARGEDESKTOP = 2
+    ADL_LARGEDESKTOPTYPE_NORMALDESKTOP = EnumItem(0).set_string('Normal Desktop')
+    ADL_LARGEDESKTOPTYPE_PSEUDOLARGEDESKTOP = EnumItem(1).set_string('Pseudo Large Desktop')
+    ADL_LARGEDESKTOPTYPE_VERYLARGEDESKTOP = EnumItem(2).set_string('Very large desktop')
 
 
 ADL_LARGEDESKTOPTYPE_NORMALDESKTOP = ADLLARGEDESKTOPTYPE.ADL_LARGEDESKTOPTYPE_NORMALDESKTOP
@@ -1021,8 +1089,8 @@ ADL_LARGEDESKTOPTYPE_VERYLARGEDESKTOP = ADLLARGEDESKTOPTYPE.ADL_LARGEDESKTOPTYPE
 # ADLPlatform Enumeration
 # /////////////////////////////////////////////////////////////////////////
 class ADLPlatForm(ENUM):
-    GRAPHICS_PLATFORM_DESKTOP = 0
-    GRAPHICS_PLATFORM_MOBILE = 1
+    GRAPHICS_PLATFORM_DESKTOP = EnumItem(0).set_string('Desktop')
+    GRAPHICS_PLATFORM_MOBILE = EnumItem(1).set_string('Mobile')
 
 
 GRAPHICS_PLATFORM_DESKTOP = ADLPlatForm.GRAPHICS_PLATFORM_DESKTOP
@@ -1033,9 +1101,9 @@ GRAPHICS_PLATFORM_MOBILE = ADLPlatForm.GRAPHICS_PLATFORM_MOBILE
 # ADLGraphicCoreGeneration Enumeration
 # /////////////////////////////////////////////////////////////////////////
 class ADLGraphicCoreGeneration(ENUM):
-    ADL_GRAPHIC_CORE_GENERATION_UNDEFINED = 0
-    ADL_GRAPHIC_CORE_GENERATION_PRE_GCN = 1
-    ADL_GRAPHIC_CORE_GENERATION_GCN = 2
+    ADL_GRAPHIC_CORE_GENERATION_UNDEFINED = EnumItem(0).set_string('Undefined')
+    ADL_GRAPHIC_CORE_GENERATION_PRE_GCN = EnumItem(1).set_string('Pre GCN')
+    ADL_GRAPHIC_CORE_GENERATION_GCN = EnumItem(1).set_string('GCN')
 
 
 ADL_GRAPHIC_CORE_GENERATION_UNDEFINED = ADLGraphicCoreGeneration.ADL_GRAPHIC_CORE_GENERATION_UNDEFINED
@@ -1364,9 +1432,9 @@ ADL_DISPLAY_BEZELOFFSET_COMMIT = 0x00000008
 
 
 class _SLS_ImageCropType(ENUM):
-    Fit = 1
-    Fill = 2
-    Expand = 3
+    Fit = EnumItem(1).set_string('Fit')
+    Fill = EnumItem(2).set_string('Fill')
+    Expand = EnumItem(3).set_string('Expand')
 
 
 SLS_ImageCropType = _SLS_ImageCropType
@@ -1376,9 +1444,9 @@ Expand = _SLS_ImageCropType.Expand
 
 
 class _DceSettingsType(ENUM):
-    DceSetting_HdmiLq = 1
-    DceSetting_DpSettings = 2
-    DceSetting_Protection = 3
+    DceSetting_HdmiLq = EnumItem(1).set_string('HDMI LQ')
+    DceSetting_DpSettings = EnumItem(2).set_string('Dp Settings')
+    DceSetting_Protection = EnumItem(3).set_string('Protection')
 
 
 DceSettingsType = _DceSettingsType
@@ -1388,11 +1456,11 @@ DceSetting_Protection = _DceSettingsType.DceSetting_Protection
 
 
 class _DpLinkRate(ENUM):
-    DPLinkRate_Unknown = 1
-    DPLinkRate_RBR = 2
-    DPLinkRate_HBR = 3
-    DPLinkRate_HBR2 = 4
-    DPLinkRate_HBR3 = 5
+    DPLinkRate_Unknown = EnumItem(1).set_string('Unknown')
+    DPLinkRate_RBR = EnumItem(2).set_string('RBR')
+    DPLinkRate_HBR = EnumItem(3).set_string('HBR')
+    DPLinkRate_HBR2 = EnumItem(4).set_string('HBR2')
+    DPLinkRate_HBR3 = EnumItem(5).set_string('HBR3')
 
 
 DpLinkRate = _DpLinkRate
@@ -1423,9 +1491,9 @@ ADL_PX_SCHEMEMASK_DYNAMIC = 0x0002
 
 # / PX Schemes
 class _ADLPXScheme(ENUM):
-    ADL_PX_SCHEME_INVALID = 0
-    ADL_PX_SCHEME_FIXED = ADL_PX_SCHEMEMASK_FIXED
-    ADL_PX_SCHEME_DYNAMIC = ADL_PX_SCHEMEMASK_DYNAMIC
+    ADL_PX_SCHEME_INVALID = EnumItem(0).set_string('Invalid')
+    ADL_PX_SCHEME_FIXED = EnumItem(ADL_PX_SCHEMEMASK_FIXED).set_string('Fixed')
+    ADL_PX_SCHEME_DYNAMIC = EnumItem(ADL_PX_SCHEMEMASK_DYNAMIC).set_string('Dynamic')
 
 
 ADLPXScheme = _ADLPXScheme
@@ -1437,9 +1505,9 @@ ADL_PX_SCHEME_DYNAMIC = _ADLPXScheme.ADL_PX_SCHEME_DYNAMIC
 # / Just keep the old definitions for compatibility, need to be removed
 # later
 class PXScheme(ENUM):
-    PX_SCHEME_INVALID = 0
-    PX_SCHEME_FIXED = 1
-    PX_SCHEME_DYNAMIC = 2
+    PX_SCHEME_INVALID = EnumItem(0).set_string('Invalid')
+    PX_SCHEME_FIXED = EnumItem(1).set_string('Fixed')
+    PX_SCHEME_DYNAMIC = EnumItem(2).set_string('Dynamic')
 
 
 PX_SCHEME_INVALID = PXScheme.PX_SCHEME_INVALID
@@ -1455,12 +1523,12 @@ ADL_APP_PROFILE_PROPERTY_LENGTH = 64
 
 
 class ApplicationListType(ENUM):
-    ADL_PX40_MRU = 1
-    ADL_PX40_MISSED = 2
-    ADL_PX40_DISCRETE = 3
-    ADL_PX40_INTEGRATED = 4
-    ADL_MMD_PROFILED = 5
-    ADL_PX40_TOTAL = 6
+    ADL_PX40_MRU = EnumItem(1).set_string('PX40 MRU')
+    ADL_PX40_MISSED = EnumItem(2).set_string('PX40 Missed')
+    ADL_PX40_DISCRETE = EnumItem(3).set_string('PX40 Discrete')
+    ADL_PX40_INTEGRATED = EnumItem(4).set_string('PX40 Intergrated')
+    ADL_MMD_PROFILED = EnumItem(5).set_string('MMD Profiled')
+    ADL_PX40_TOTAL = EnumItem(6).set_string('PX40 Total')
 
 
 ADL_PX40_MRU = ApplicationListType.ADL_PX40_MRU
@@ -1472,12 +1540,12 @@ ADL_PX40_TOTAL = ApplicationListType.ADL_PX40_TOTAL
 
 
 class _ADLProfilePropertyType(ENUM):
-    ADL_PROFILEPROPERTY_TYPE_BINARY = 0
-    ADL_PROFILEPROPERTY_TYPE_BOOLEAN = 1
-    ADL_PROFILEPROPERTY_TYPE_DWORD = 2
-    ADL_PROFILEPROPERTY_TYPE_QWORD = 3
-    ADL_PROFILEPROPERTY_TYPE_ENUMERATED = 4
-    ADL_PROFILEPROPERTY_TYPE_STRING = 5
+    ADL_PROFILEPROPERTY_TYPE_BINARY = EnumItem(0).set_string('BINARY')
+    ADL_PROFILEPROPERTY_TYPE_BOOLEAN = EnumItem(1).set_string('BOOLEAN')
+    ADL_PROFILEPROPERTY_TYPE_DWORD = EnumItem(2).set_string('DWORD')
+    ADL_PROFILEPROPERTY_TYPE_QWORD = EnumItem(3).set_string('QWORD')
+    ADL_PROFILEPROPERTY_TYPE_ENUMERATED = EnumItem(4).set_string('ENUM')
+    ADL_PROFILEPROPERTY_TYPE_STRING = EnumItem(5).set_string('STRING')
 
 
 ADLProfilePropertyType = _ADLProfilePropertyType
@@ -1842,10 +1910,10 @@ ADL_MAX_AUDIO_SAMPLE_RATE_COUNT = 16
 # ADLMultiChannelSplitStateFlag Enumeration
 # /////////////////////////////////////////////////////////////////////////
 class ADLMultiChannelSplitStateFlag(ENUM):
-    ADLMultiChannelSplit_Unitialized = 0
-    ADLMultiChannelSplit_Disabled = 1
-    ADLMultiChannelSplit_Enabled = 2
-    ADLMultiChannelSplit_SaveProfile = 3
+    ADLMultiChannelSplit_Unitialized = EnumItem(0).set_string('Unitilized')
+    ADLMultiChannelSplit_Disabled = EnumItem(1).set_string('Disabled')
+    ADLMultiChannelSplit_Enabled = EnumItem(2).set_string('Enabled')
+    ADLMultiChannelSplit_SaveProfile = EnumItem(3).set_string('Save profile')
 
 
 ADLMultiChannelSplit_Unitialized = ADLMultiChannelSplitStateFlag.ADLMultiChannelSplit_Unitialized
@@ -1858,16 +1926,16 @@ ADLMultiChannelSplit_SaveProfile = ADLMultiChannelSplitStateFlag.ADLMultiChannel
 # ADLSampleRate Enumeration
 # /////////////////////////////////////////////////////////////////////////
 class ADLSampleRate(ENUM):
-    ADLSampleRate_32KHz = 0
-    ADLSampleRate_44P1KHz = 1
-    ADLSampleRate_48KHz = 2
-    ADLSampleRate_88P2KHz = 3
-    ADLSampleRate_96KHz = 4
-    ADLSampleRate_176P4KHz = 5
-    ADLSampleRate_192KHz = 6
-    ADLSampleRate_384KHz = 7
-    ADLSampleRate_768KHz = 8
-    ADLSampleRate_Undefined = 9
+    ADLSampleRate_32KHz = EnumItem(0).set_string('32kHz')
+    ADLSampleRate_44P1KHz = EnumItem(1).set_string('44.1kHz')
+    ADLSampleRate_48KHz = EnumItem(2).set_string('48kHz')
+    ADLSampleRate_88P2KHz = EnumItem(3).set_string('88.2kHz')
+    ADLSampleRate_96KHz = EnumItem(4).set_string('96kHz')
+    ADLSampleRate_176P4KHz = EnumItem(5).set_string('176.4kHz')
+    ADLSampleRate_192KHz = EnumItem(6).set_string('192kHz')
+    ADLSampleRate_384KHz = EnumItem(7).set_string('384kHz')
+    ADLSampleRate_768KHz = EnumItem(8).set_string('768kHz')
+    ADLSampleRate_Undefined = EnumItem(9).set_string('Undefined')
 
 
 ADLSampleRate_32KHz = ADLSampleRate.ADLSampleRate_32KHz
@@ -1994,10 +2062,10 @@ ADL_ODN_EVENTCOUNTER_VPURECOVERY = 1
 # ADLODNControlType Enumeration
 # /////////////////////////////////////////////////////////////////////////
 class ADLODNControlType(ENUM):
-    ODNControlType_Current = 0
-    ODNControlType_Default = 1
-    ODNControlType_Auto = 2
-    ODNControlType_Manual = 3
+    ODNControlType_Current = EnumItem(0).set_string('Current')
+    ODNControlType_Default = EnumItem(1).set_string('Default')
+    ODNControlType_Auto = EnumItem(2).set_string('Auto')
+    ODNControlType_Manual = EnumItem(3).set_string('Manual')
 
 
 ODNControlType_Current = ADLODNControlType.ODNControlType_Current
@@ -2007,9 +2075,9 @@ ODNControlType_Manual = ADLODNControlType.ODNControlType_Manual
 
 
 class ADLODNDPMMaskType(ENUM):
-    ADL_ODN_DPM_CLOCK = 1 << 0
-    ADL_ODN_DPM_VDDC = 1 << 1
-    ADL_ODN_DPM_MASK = 1 << 2
+    ADL_ODN_DPM_CLOCK = EnumItem(1 << 0).set_string('Clock')
+    ADL_ODN_DPM_VDDC = EnumItem(1 << 1).set_string('VDDC')
+    ADL_ODN_DPM_MASK = EnumItem(1 << 2).set_string('Mask')
 
 
 ADL_ODN_DPM_CLOCK = ADLODNDPMMaskType.ADL_ODN_DPM_CLOCK
@@ -2019,25 +2087,25 @@ ADL_ODN_DPM_MASK = ADLODNDPMMaskType.ADL_ODN_DPM_MASK
 
 # ODN features Bits for ADLODNCapabilitiesX2
 class ADLODNFeatureControl(ENUM):
-    ADL_ODN_SCLK_DPM = 1 << 0
-    ADL_ODN_MCLK_DPM = 1 << 1
-    ADL_ODN_SCLK_VDD = 1 << 2
-    ADL_ODN_MCLK_VDD = 1 << 3
-    ADL_ODN_FAN_SPEED_MIN = 1 << 4
-    ADL_ODN_FAN_SPEED_TARGET = 1 << 5
-    ADL_ODN_ACOUSTIC_LIMIT_SCLK = 1 << 6
-    ADL_ODN_TEMPERATURE_FAN_MAX = 1 << 7
-    ADL_ODN_TEMPERATURE_SYSTEM = 1 << 8
-    ADL_ODN_POWER_LIMIT = 1 << 9
-    ADL_ODN_SCLK_AUTO_LIMIT = 1 << 10
-    ADL_ODN_MCLK_AUTO_LIMIT = 1 << 11
-    ADL_ODN_SCLK_DPM_MASK_ENABLE = 1 << 12
-    ADL_ODN_MCLK_DPM_MASK_ENABLE = 1 << 13
-    ADL_ODN_MCLK_UNDERCLOCK_ENABLE = 1 << 14
-    ADL_ODN_SCLK_DPM_THROTTLE_NOTIFY = 1 << 15
-    ADL_ODN_POWER_UTILIZATION = 1 << 16
-    ADL_ODN_PERF_TUNING_SLIDER = 1 << 17
-    ADL_ODN_REMOVE_WATTMAN_PAGE = 1 << 31
+    ADL_ODN_SCLK_DPM = EnumItem(1 << 0).set_string('SCLK DPM')
+    ADL_ODN_MCLK_DPM = EnumItem(1 << 1).set_string('MCLK DPM')
+    ADL_ODN_SCLK_VDD = EnumItem(1 << 2).set_string('SCLK VDD')
+    ADL_ODN_MCLK_VDD = EnumItem(1 << 3).set_string('MCLK VDD')
+    ADL_ODN_FAN_SPEED_MIN = EnumItem(1 << 4).set_string('Fan speed min')
+    ADL_ODN_FAN_SPEED_TARGET = EnumItem(1 << 5).set_string('Fan speed target')
+    ADL_ODN_ACOUSTIC_LIMIT_SCLK = EnumItem(1 << 6).set_string('Acoustic limit SCLK')
+    ADL_ODN_TEMPERATURE_FAN_MAX = EnumItem(1 << 7).set_string('Temperature fan max')
+    ADL_ODN_TEMPERATURE_SYSTEM = EnumItem(1 << 8).set_string('Temperature system')
+    ADL_ODN_POWER_LIMIT = EnumItem(1 << 9).set_string('Power limit')
+    ADL_ODN_SCLK_AUTO_LIMIT = EnumItem(1 << 10).set_string('SCLK auto limit')
+    ADL_ODN_MCLK_AUTO_LIMIT = EnumItem(1 << 11).set_string('MCLK auto limit')
+    ADL_ODN_SCLK_DPM_MASK_ENABLE = EnumItem(1 << 12).set_string('SCLK DPM mask enable')
+    ADL_ODN_MCLK_DPM_MASK_ENABLE = EnumItem(1 << 13).set_string('MCLK DPM mask enable')
+    ADL_ODN_MCLK_UNDERCLOCK_ENABLE = EnumItem(1 << 14).set_string('MCLK underclock enable')
+    ADL_ODN_SCLK_DPM_THROTTLE_NOTIFY = EnumItem(1 << 15).set_string('SCLK DPM throttle notify')
+    ADL_ODN_POWER_UTILIZATION = EnumItem(1 << 16).set_string('Power utilization')
+    ADL_ODN_PERF_TUNING_SLIDER = EnumItem(1 << 17).set_string('Performance tuning slider')
+    ADL_ODN_REMOVE_WATTMAN_PAGE = EnumItem(1 << 31).set_string('Remove wattman page')
 
 
 ADL_ODN_SCLK_DPM = ADLODNFeatureControl.ADL_ODN_SCLK_DPM
@@ -2065,12 +2133,12 @@ ADL_ODN_REMOVE_WATTMAN_PAGE = ADLODNFeatureControl.ADL_ODN_REMOVE_WATTMAN_PAGE
 # Item ID(Seeting ID). These IDs should match the drive defined in
 # CWDDEPM.h
 class ADLODNExtFeatureControl(ENUM):
-    ADL_ODN_EXT_FEATURE_MEMORY_TIMING_TUNE = 1 << 0
-    ADL_ODN_EXT_FEATURE_FAN_ZERO_RPM_CONTROL = 1 << 1
-    ADL_ODN_EXT_FEATURE_AUTO_UV_ENGINE = 1 << 2
-    ADL_ODN_EXT_FEATURE_AUTO_OC_ENGINE = 1 << 3
-    ADL_ODN_EXT_FEATURE_AUTO_OC_MEMORY = 1 << 4
-    ADL_ODN_EXT_FEATURE_FAN_CURVE = 1 << 5
+    ADL_ODN_EXT_FEATURE_MEMORY_TIMING_TUNE = EnumItem(1 << 0).set_string('Memory timing tune')
+    ADL_ODN_EXT_FEATURE_FAN_ZERO_RPM_CONTROL = EnumItem(1 << 1).set_string('Fan zero rpm control')
+    ADL_ODN_EXT_FEATURE_AUTO_UV_ENGINE = EnumItem(1 << 2).set_string('Auto UV engine')
+    ADL_ODN_EXT_FEATURE_AUTO_OC_ENGINE = EnumItem(1 << 3).set_string('Auto OC engine')
+    ADL_ODN_EXT_FEATURE_AUTO_OC_MEMORY = EnumItem(1 << 4).set_string('Auto OC memory')
+    ADL_ODN_EXT_FEATURE_FAN_CURVE = EnumItem(1 << 5).set_string('Fan curve')
 
 
 ADL_ODN_EXT_FEATURE_MEMORY_TIMING_TUNE = ADLODNExtFeatureControl.ADL_ODN_EXT_FEATURE_MEMORY_TIMING_TUNE
@@ -2084,22 +2152,22 @@ ADL_ODN_EXT_FEATURE_FAN_CURVE = ADLODNExtFeatureControl.ADL_ODN_EXT_FEATURE_FAN_
 # If any new feature is added, PPLIB only needs to add ext feature ID and
 # Item ID(Seeting ID).These IDs should match the drive defined in CWDDEPM.h
 class ADLODNExtSettingId(ENUM):
-    ADL_ODN_PARAMETER_AC_TIMING = 0
-    ADL_ODN_PARAMETER_FAN_ZERO_RPM_CONTROL = 1
-    ADL_ODN_PARAMETER_AUTO_UV_ENGINE = 2
-    ADL_ODN_PARAMETER_AUTO_OC_ENGINE = 3
-    ADL_ODN_PARAMETER_AUTO_OC_MEMORY = 4
-    ADL_ODN_PARAMETER_FAN_CURVE_TEMPERATURE_1 = 5
-    ADL_ODN_PARAMETER_FAN_CURVE_SPEED_1 = 6
-    ADL_ODN_PARAMETER_FAN_CURVE_TEMPERATURE_2 = 7
-    ADL_ODN_PARAMETER_FAN_CURVE_SPEED_2 = 8
-    ADL_ODN_PARAMETER_FAN_CURVE_TEMPERATURE_3 = 9
-    ADL_ODN_PARAMETER_FAN_CURVE_SPEED_3 = 10
-    ADL_ODN_PARAMETER_FAN_CURVE_TEMPERATURE_4 = 11
-    ADL_ODN_PARAMETER_FAN_CURVE_SPEED_4 = 12
-    ADL_ODN_PARAMETER_FAN_CURVE_TEMPERATURE_5 = 13
-    ADL_ODN_PARAMETER_FAN_CURVE_SPEED_5 = 14
-    ODN_COUNT = 15
+    ADL_ODN_PARAMETER_AC_TIMING = EnumItem(0).set_string('AC timing')
+    ADL_ODN_PARAMETER_FAN_ZERO_RPM_CONTROL = EnumItem(1).set_string('Fan zero RPM control')
+    ADL_ODN_PARAMETER_AUTO_UV_ENGINE = EnumItem(2).set_string('Auto UV engine')
+    ADL_ODN_PARAMETER_AUTO_OC_ENGINE = EnumItem(3).set_string('Auto OC engine')
+    ADL_ODN_PARAMETER_AUTO_OC_MEMORY = EnumItem(4).set_string('Auto OC memory')
+    ADL_ODN_PARAMETER_FAN_CURVE_TEMPERATURE_1 = EnumItem(5).set_string('Fan curve temperature 1')
+    ADL_ODN_PARAMETER_FAN_CURVE_SPEED_1 = EnumItem(6).set_string('Fan curve speed 1')
+    ADL_ODN_PARAMETER_FAN_CURVE_TEMPERATURE_2 = EnumItem(7).set_string('Fan curve temperature 2')
+    ADL_ODN_PARAMETER_FAN_CURVE_SPEED_2 = EnumItem(8).set_string('Fan curve speed 2')
+    ADL_ODN_PARAMETER_FAN_CURVE_TEMPERATURE_3 = EnumItem(9).set_string('Fan curve temperature 3')
+    ADL_ODN_PARAMETER_FAN_CURVE_SPEED_3 = EnumItem(10).set_string('Fan curve speed 3')
+    ADL_ODN_PARAMETER_FAN_CURVE_TEMPERATURE_4 = EnumItem(11).set_string('Fan curve temperature 4')
+    ADL_ODN_PARAMETER_FAN_CURVE_SPEED_4 = EnumItem(12).set_string('Fan curve speed 4')
+    ADL_ODN_PARAMETER_FAN_CURVE_TEMPERATURE_5 = EnumItem(13).set_string('Fan curve temperature 5')
+    ADL_ODN_PARAMETER_FAN_CURVE_SPEED_5 = EnumItem(14).set_string('Fan curve speed 5')
+    ODN_COUNT = EnumItem(15).set_string('ODN count')
 
 
 ADL_ODN_PARAMETER_AC_TIMING = ADLODNExtSettingId.ADL_ODN_PARAMETER_AC_TIMING
