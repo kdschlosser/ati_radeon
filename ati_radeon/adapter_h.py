@@ -1064,7 +1064,1279 @@ __all__ = (
 )
 
 
+from .displaysmanager_h import *  # NOQA
+from .adl_sdk_h import ADL2_Main_Control_Create, AdapterBase  # NOQA
+from .display_h import Display, _ADL2_Display_NumberOfDisplays_Get  # NOQA
+from .crossdisplay_h import CrossDisplay  # NOQA
+
+#
+# _ADL2_Adapter_NumberOfAdapters_Get
+#
+# _ADL2_Adapter_MVPU_Set # crossfire
+#
+# _ADL2_Adapter_EmulationMode_Set
+# _ADL2_Adapter_ConnectionData_Set
+# _ADL2_Adapter_ConnectionData_Remove
+# _ADL2_Adapter_EDIDManagement_Caps
+#
+#
+# _ADL2_Workstation_GlobalEDIDPersistence_Get
+# _ADL2_Workstation_GlobalEDIDPersistence_Set
+#
+#
+# _ADL2_FPS_Caps
+# _ADL2_FPS_Settings_Get
+# _ADL2_FPS_Settings_Set
+# _ADL2_FPS_Settings_Reset
+#
+#
+# _ADL2_Adapter_ClockInfo_Get
+# _ADL2_Display_AdapterID_Get
+#
+#
+# _ADL2_Adapter_EDC_ErrorRecords_Get
+# _ADL2_Adapter_EDC_ErrorInjection_Set
+# _ADL2_Adapter_Graphic_Core_Info_Get
+# _ADL2_Adapter_PMLog_Support_Get
+# _ADL2_Adapter_PMLog_Start
+# _ADL2_Adapter_PMLog_Stop
 
 
+class PortConnector(object):
+
+    def __init__(
+            self,
+            name,
+            adapter_index,
+            device_port,
+            type
+    ):
+        self.name = name
+        self._adapter_index = adapter_index
+        self._device_port = device_port
+        self._type = type
+
+    @property
+    def _properties(self):
+        iAdapterIndex = INT(self._adapter_index)
+        supportedConnections = ADLSupportedConnections()
+
+        devicePort = self._device_port
+
+        with ADL2_Main_Control_Create as context:
+            if _ADL2_Adapter_SupportedConnections_Get(
+                    context,
+                    iAdapterIndex,
+                    devicePort,
+                    ctypes.byref(supportedConnections)
+            ) == ADL_OK:
+                return supportedConnections.iSupportedProperties[self._type]
+
+    @property
+    def supports_bitrate(self):
+        properties = self._properties
+        return properties & ADL_CONNECTION_PROPERTY_BITRATE == ADL_CONNECTION_PROPERTY_BITRATE
+
+    @property
+    def supports_number_of_lanes(self):
+        properties = self._properties
+        return properties & ADL_CONNECTION_PROPERTY_NUMBER_OF_LANES == ADL_CONNECTION_PROPERTY_NUMBER_OF_LANES
+
+    @property
+    def supports_three_d_caps(self):
+        properties = self._properties
+        return properties & ADL_CONNECTION_PROPERTY_3DCAPS == ADL_CONNECTION_PROPERTY_3DCAPS
+
+    @property
+    def supports_output_bandwidth(self):
+        properties = self._properties
+        return properties & ADL_CONNECTION_PROPERTY_OUTPUT_BANDWIDTH == ADL_CONNECTION_PROPERTY_OUTPUT_BANDWIDTH
+
+    @property
+    def supports_color_depth(self):
+        properties = self._properties
+        return properties & ADL_CONNECTION_PROPERTY_COLORDEPTH == ADL_CONNECTION_PROPERTY_COLORDEPTH
+
+    @property
+    def _connection_data(self):
+        iAdapterIndex = INT(self._adapter_index)
+
+        connectionData = ADLConnectionData()
+        connectionData.iActiveConnections = INT(0)
+        connectionData.iNumberofPorts = INT(0)
+
+        devicePort = self._device_port
+
+        with ADL2_Main_Control_Create as context:
+            if _ADL2_Adapter_ConnectionData_Get(
+                    context,
+                    iAdapterIndex,
+                    devicePort,
+                    ADL_QUERY_CURRENT_DATA,
+                    ctypes.byref(connectionData)
+            ) == ADL_OK:
+                return connectionData
+
+    @property
+    def is_connected(self):
+        connectionData = self._connection_data
+        return connectionData.iConnectionType.value == self._type
+
+    @property
+    def bitrate(self):
+        connectionData = self._connection_data
+        valid_properties = connectionData.aConnectionProperties.iValidProperties.value
+
+        if valid_properties & ADL_CONNECTION_PROPERTY_BITRATE == ADL_CONNECTION_PROPERTY_BITRATE:
+            bitrate = connectionData.aConnectionProperties.iBitrate.value
+
+            if bitrate == ADL_LINK_BITRATE_1_62_GHZ:
+                return '1.62GHz'
+            if bitrate == ADL_LINK_BITRATE_2_7_GHZ:
+                return '2.7GHz'
+            if bitrate == ADL_LINK_BTIRATE_3_24_GHZ:
+                return '3.24GHz'
+            if bitrate == ADL_LINK_BITRATE_5_4_GHZ:
+                return '5.4GHz'
+
+        return 'Unknown'
+
+    @property
+    def number_of_lanes(self):
+        connectionData = self._connection_data
+        valid_properties = connectionData.aConnectionProperties.iValidProperties.value
+
+        if valid_properties & ADL_CONNECTION_PROPERTY_NUMBER_OF_LANES == ADL_CONNECTION_PROPERTY_NUMBER_OF_LANES:
+            return connectionData.aConnectionProperties.iNumberOfLanes.value
+
+    @property
+    def three_d_caps(self):
+        connectionData = self._connection_data
+        valid_properties = connectionData.aConnectionProperties.iValidProperties.value
+
+        if valid_properties & ADL_CONNECTION_PROPERTY_3DCAPS == ADL_CONNECTION_PROPERTY_3DCAPS:
+            caps = connectionData.aConnectionProperties.iStereo3DCaps.value
+
+            if caps & ADL_CONNPROP_S3D_ALTERNATE_TO_FRAME_PACK == ADL_CONNPROP_S3D_ALTERNATE_TO_FRAME_PACK:
+                return True
+
+        return False
+
+    @property
+    def output_bandwidth(self):
+        connectionData = self._connection_data
+        valid_properties = connectionData.aConnectionProperties.iValidProperties.value
+
+        if valid_properties & ADL_CONNECTION_PROPERTY_OUTPUT_BANDWIDTH == ADL_CONNECTION_PROPERTY_OUTPUT_BANDWIDTH:
+            output_bandwidth = connectionData.aConnectionProperties.iOutputBandwidth.value
+
+            if output_bandwidth == ADL_LINK_BITRATE_1_62_GHZ:
+                return '1.62GHz'
+            if output_bandwidth == ADL_LINK_BITRATE_2_7_GHZ:
+                return '2.7GHz'
+            if output_bandwidth == ADL_LINK_BTIRATE_3_24_GHZ:
+                return '3.24GHz'
+            if output_bandwidth == ADL_LINK_BITRATE_5_4_GHZ:
+                return '5.4GHz'
+
+        return 'Unknown'
+
+    @property
+    def color_depth(self):
+        connectionData = self._connection_data
+        valid_properties = connectionData.aConnectionProperties.iValidProperties.value
+
+        if valid_properties & ADL_CONNECTION_PROPERTY_COLORDEPTH == ADL_CONNECTION_PROPERTY_COLORDEPTH:
+            color_depth = connectionData.aConnectionProperties.iColorDepth.value
+
+            if color_depth == ADL_COLORDEPTH_666:
+                return '6bit'
+            if color_depth == ADL_COLORDEPTH_888:
+                return '8bit'
+            if color_depth == ADL_COLORDEPTH_101010:
+                return '10bit'
+            if color_depth == ADL_COLORDEPTH_121212:
+                return '12bit'
+            if color_depth == ADL_COLORDEPTH_141414:
+                return '14bit'
+            if color_depth == ADL_COLORDEPTH_161616:
+                return '16bit'
+
+            return 'Unknown'
 
 
+class AdapterPort(object):
+
+    def __init__(self, adapter_index, id):
+        self._adapter_index = adapter_index
+        self.id = id
+
+    @property
+    def active_connector(self):
+        for connector in self.supported_connections:
+            if connector.is_connected:
+                return connector
+
+    @property
+    def supported_connections(self):
+        iAdapterIndex = INT(self._adapter_index)
+        supportedConnections = ADLSupportedConnections()
+
+        devicePort = ADLDevicePort()
+        devicePort.iConnectorIndex = INT(self.id)
+        devicePort.aMSTRad.iLinkNumber = INT(1)
+        devicePort.aMSTRad.rad[0] = INT(0)
+
+        with ADL2_Main_Control_Create as context:
+            if _ADL2_Adapter_SupportedConnections_Get(
+                    context,
+                    iAdapterIndex,
+                    devicePort,
+                    ctypes.byref(supportedConnections)
+            ) != ADL_OK:
+                return []
+
+        res = []
+        for i in range(14):
+            if (supportedConnections.iSupportedConnections.value & (1 << i)) != (1 << i):
+                continue
+
+            if i == ADL_CONNECTION_TYPE_VGA:
+                res += [PortConnector('VGA', self._adapter_index, devicePort, i)]
+            elif i == ADL_CONNECTION_TYPE_DVI:
+                res += [PortConnector('DVI-D', self._adapter_index, devicePort, i)]
+            elif i == ADL_CONNECTION_TYPE_DVI_SL:
+                res += [PortConnector('DVI-I', self._adapter_index, devicePort, i)]
+            elif i == ADL_CONNECTION_TYPE_HDMI:
+                res += [PortConnector('HDMI', self._adapter_index, devicePort, i)]
+            elif i == ADL_CONNECTION_TYPE_DISPLAY_PORT:
+                res += [PortConnector('DisplayPort', self._adapter_index, devicePort, i)]
+            elif i == ADL_CONNECTION_TYPE_ACTIVE_DONGLE_DP_DVI_SL:
+                res += [PortConnector('DisplayPort --> DVI-I (Active)', self._adapter_index, devicePort, i)]
+            elif i == ADL_CONNECTION_TYPE_ACTIVE_DONGLE_DP_DVI_DL:
+                res += [PortConnector('DisplayPort --> DVI-D (Active)', self._adapter_index, devicePort, i)]
+            elif i == ADL_CONNECTION_TYPE_ACTIVE_DONGLE_DP_HDMI:
+                res += [PortConnector('DisplayPort --> HDMI (Active)', self._adapter_index, devicePort, i)]
+            elif i == ADL_CONNECTION_TYPE_ACTIVE_DONGLE_DP_VGA:
+                res += [PortConnector('DisplayPort --> VGA (Active)', self._adapter_index, devicePort, i)]
+            elif i == ADL_CONNECTION_TYPE_PASSIVE_DONGLE_DP_HDMI:
+                res += [PortConnector('DisplayPort --> HDMI (Passive)', self._adapter_index, devicePort, i)]
+            elif i == ADL_CONNECTION_TYPE_PASSIVE_DONGLE_DP_DVI:
+                res += [PortConnector('DisplayPort --> DVI (Passive)', self._adapter_index, devicePort, i)]
+            elif i == ADL_CONNECTION_TYPE_MST:
+                res += [PortConnector('Display Branch', self._adapter_index, devicePort, i)]
+            elif i == ADL_CONNECTION_TYPE_ACTIVE_DONGLE:
+                res += [PortConnector('DisplayPort (Active)', self._adapter_index, devicePort, i)]
+            elif i == ADL_CONNECTION_TYPE_VIRTUAL:
+                res += [PortConnector('Virtual', self._adapter_index, devicePort, i)]
+
+        return res
+
+    @property
+    def _connection_state(self):
+        connectionState = ADLConnectionState()
+        iAdapterIndex = INT(self._adapter_index)
+
+        devicePort = ADLDevicePort()
+        devicePort.iConnectorIndex = INT(self.id)
+        devicePort.aMSTRad.iLinkNumber = INT(1)
+        devicePort.aMSTRad.rad[0] = INT(0)
+
+        with ADL2_Main_Control_Create as context:
+            if _ADL2_Adapter_ConnectionState_Get(
+                    context,
+                    iAdapterIndex,
+                    devicePort,
+                    ctypes.byref(connectionState)
+            ) == ADL_OK:
+                return connectionState
+
+    @property
+    def emulation_status(self):
+        connectionState = self._connection_state
+
+        if connectionState.iDisplayIndex.value == -1:
+            return ''
+
+        status = connectionState.iEmulationStatus.value
+
+        if (
+            status & ADL_EMUL_STATUS_REAL_DEVICE_CONNECTED ==
+            ADL_EMUL_STATUS_REAL_DEVICE_CONNECTED
+        ):
+            return 'Real Display'
+
+        if (
+            status & ADL_EMUL_STATUS_EMULATED_DEVICE_USED ==
+            ADL_EMUL_STATUS_EMULATED_DEVICE_USED
+        ):
+            return 'Emulated Display'
+        if (
+            status & ADL_EMUL_STATUS_LAST_ACTIVE_DEVICE_USED ==
+            ADL_EMUL_STATUS_LAST_ACTIVE_DEVICE_USED
+        ):
+            return 'Last Active Display'
+
+        return 'No Display'
+
+    @property
+    def emulation_mode(self):
+        connectionState = self._connection_state
+        mode = connectionState.iEmulationMode.value
+        if mode == ADL_EMUL_MODE_OFF:
+            return 'Off'
+        if mode == ADL_EMUL_MODE_ON_CONNECTED:
+            return 'When Display connected'
+        if mode == ADL_EMUL_MODE_ON_DISCONNECTED:
+            return 'When Display Disconnected'
+        if mode == ADL_EMUL_MODE_ALWAYS:
+            return 'Always'
+
+    @property
+    def device_present(self):
+        connectionState = self._connection_state
+        status = connectionState.iEmulationStatus.value
+        return status & ADL_EMUL_STATUS_EMULATED_DEVICE_PRESENT == ADL_EMUL_STATUS_EMULATED_DEVICE_PRESENT
+
+    @property
+    def mhl_ports(self):
+        iAdapterIndex = INT(self._adapter_index)
+
+        connectionData = ADLConnectionData()
+        connectionData.iActiveConnections = INT(0)
+        connectionData.iNumberofPorts = INT(0)
+
+        parentDevicePort = ADLDevicePort()
+        parentDevicePort.iConnectorIndex = INT(self.id)
+        parentDevicePort.aMSTRad.iLinkNumber = INT(1)
+        parentDevicePort.aMSTRad.rad[0] = INT(0)
+
+        with ADL2_Main_Control_Create as context:
+            if _ADL2_Adapter_ConnectionData_Get(
+                    context,
+                    iAdapterIndex,
+                    parentDevicePort,
+                    ADL_QUERY_CURRENT_DATA,
+                    ctypes.byref(connectionData)
+            ) != ADL_OK:
+                return []
+
+        num_ports = connectionData.iNumberofPorts.value
+        
+        res = []
+        for i in range(num_ports):
+            res += [MSTPort(self._adapter_index, i, parentDevicePort)]
+
+        return res
+
+
+class MSTPort(object):
+
+    def __init__(self, adapter_index, port_num, parent_device_port):
+
+        self._adapter_index = adapter_index
+        self._port_num = port_num
+        self._parent_device_port = parent_device_port
+
+    @property
+    def _connection_data(self):
+        iAdapterIndex = INT(self._adapter_index)
+
+        connectionData = ADLConnectionData()
+        connectionData.iActiveConnections = INT(0)
+        connectionData.iNumberofPorts = INT(0)
+
+        parentDevicePort = self._parent_device_port
+
+        with ADL2_Main_Control_Create as context:
+            if _ADL2_Adapter_ConnectionData_Get(
+                    context,
+                    iAdapterIndex,
+                    parentDevicePort,
+                    ADL_QUERY_CURRENT_DATA,
+                    ctypes.byref(connectionData)
+            ) == ADL_OK:
+                return connectionData
+
+    @property
+    def active_connector(self):
+        for connector in self.supported_connections:
+            if connector.is_connected:
+                return connector
+
+    @property
+    def is_active(self):
+        connectionData = self._connection_data
+        active_connections = connectionData.iActiveConnections.value
+        num_ports = connectionData.iNumberofPorts.value
+
+        if (1 << self._port_num) & active_connections == (1 << self._port_num):
+            return True
+
+        # we have check, whether last bit is active. last bit can active when internal hub in use.
+        elif (
+                self._port_num + 1 == num_ports and
+                (1 << 7) & active_connections == (1 << 7)
+        ):
+            return True
+
+        return False
+
+    @property
+    def supported_connections(self):
+        connectionData = self._connection_data
+        active_connections = connectionData.iActiveConnections.value
+        num_ports = connectionData.iNumberofPorts.value
+
+        if (
+                self._port_num + 1 == num_ports and
+                (1 << 7) & active_connections == (1 << 7)
+        ):
+            active_bit = 7
+
+        else:
+            active_bit = self._port_num
+
+        iAdapterIndex = INT(self._adapter_index)
+        devicePort = ADLDevicePort()
+        devicePort.iConnectorIndex = self._parent_device_port.iConnectorIndex
+        devicePort.aMSTRad.iLinkNumber = INT(self._parent_device_port.aMSTRad.iLinkNumber.value + 1)
+        ctypes.memset(devicePort.aMSTRad.rad, 0, ADL_MAX_RAD_LINK_COUNT)
+        ctypes.memmove(
+            devicePort.aMSTRad.rad, 
+            self._parent_device_port.aMSTRad.rad, 
+            devicePort.aMSTRad.iLinkNumber.value
+        )
+        devicePort.aMSTRad.rad[self._parent_device_port.aMSTRad.iLinkNumber.value] = CHAR(active_bit + 1)
+
+        supportedConnections = ADLSupportedConnections()
+
+        with ADL2_Main_Control_Create as context:
+            if _ADL2_Adapter_SupportedConnections_Get(
+                    context,
+                    iAdapterIndex,
+                    devicePort,
+                    ctypes.byref(supportedConnections)
+            ) != ADL_OK:
+                return []
+
+        res = []
+        for i in range(14):
+            if (supportedConnections.iSupportedConnections.value & (1 << i)) != (1 << i):
+                continue
+
+            if i == ADL_CONNECTION_TYPE_VGA:
+                res += [PortConnector('VGA', self._adapter_index, devicePort, i)]
+            elif i == ADL_CONNECTION_TYPE_DVI:
+                res += [PortConnector('DVI-D', self._adapter_index, devicePort, i)]
+            elif i == ADL_CONNECTION_TYPE_DVI_SL:
+                res += [PortConnector('DVI-I', self._adapter_index, devicePort, i)]
+            elif i == ADL_CONNECTION_TYPE_HDMI:
+                res += [PortConnector('HDMI', self._adapter_index, devicePort, i)]
+            elif i == ADL_CONNECTION_TYPE_DISPLAY_PORT:
+                res += [PortConnector('DisplayPort', self._adapter_index, devicePort, i)]
+            elif i == ADL_CONNECTION_TYPE_ACTIVE_DONGLE_DP_DVI_SL:
+                res += [PortConnector('DisplayPort --> DVI-I (Active)', self._adapter_index, devicePort, i)]
+            elif i == ADL_CONNECTION_TYPE_ACTIVE_DONGLE_DP_DVI_DL:
+                res += [PortConnector('DisplayPort --> DVI-D (Active)', self._adapter_index, devicePort, i)]
+            elif i == ADL_CONNECTION_TYPE_ACTIVE_DONGLE_DP_HDMI:
+                res += [PortConnector('DisplayPort --> HDMI (Active)', self._adapter_index, devicePort, i)]
+            elif i == ADL_CONNECTION_TYPE_ACTIVE_DONGLE_DP_VGA:
+                res += [PortConnector('DisplayPort --> VGA (Active)', self._adapter_index, devicePort, i)]
+            elif i == ADL_CONNECTION_TYPE_PASSIVE_DONGLE_DP_HDMI:
+                res += [PortConnector('DisplayPort --> HDMI (Passive)', self._adapter_index, devicePort, i)]
+            elif i == ADL_CONNECTION_TYPE_PASSIVE_DONGLE_DP_DVI:
+                res += [PortConnector('DisplayPort --> DVI (Passive)', self._adapter_index, devicePort, i)]
+            elif i == ADL_CONNECTION_TYPE_MST:
+                res += [PortConnector('Display Branch', self._adapter_index, devicePort, i)]
+            elif i == ADL_CONNECTION_TYPE_ACTIVE_DONGLE:
+                res += [PortConnector('DisplayPort (Active)', self._adapter_index, devicePort, i)]
+            elif i == ADL_CONNECTION_TYPE_VIRTUAL:
+                res += [PortConnector('Virtual', self._adapter_index, devicePort, i)]
+
+        return res
+
+
+class Connector(object):
+    def __init__(self, slot, index, id, type, offset, length):
+        self.slot = slot
+        self.index = index
+        self.id = id
+        self._type = type
+        self.offset = offset
+        self.length = length
+
+    @property
+    def type(self):
+        if self._type == ADL_CONNECTOR_TYPE_UNKNOWN:
+            return 'Unknown'
+        if self._type == ADL_CONNECTOR_TYPE_VGA:
+            return 'VGA'
+        if self._type == ADL_CONNECTOR_TYPE_DVI_D:
+            return 'DVI-D'
+        if self._type == ADL_CONNECTOR_TYPE_DVI_I:
+            return 'DVI-I'
+        if self._type == ADL_CONNECTOR_TYPE_ATICVDONGLE_NA:
+            return 'Active Dongle-NA'
+        if self._type == ADL_CONNECTOR_TYPE_ATICVDONGLE_JP:
+            return 'Active Dongle-JP'
+        if self._type == ADL_CONNECTOR_TYPE_ATICVDONGLE_NONI2C:
+            return 'Active Dongle-NONI2C'
+        if self._type == ADL_CONNECTOR_TYPE_ATICVDONGLE_NONI2C_D:
+            return 'Active Dongle-NONI2C-D'
+        if self._type == ADL_CONNECTOR_TYPE_HDMI_TYPE_A:
+            return 'HDMI (type A)'
+        if self._type == ADL_CONNECTOR_TYPE_HDMI_TYPE_B:
+            return 'HDMI (type B)'
+        if self._type == ADL_CONNECTOR_TYPE_DISPLAYPORT:
+            return 'DisplayPort'
+        if self._type == ADL_CONNECTOR_TYPE_EDP:
+            return 'EDP'
+        if self._type == ADL_CONNECTOR_TYPE_MINI_DISPLAYPORT:
+            return 'DisplayPort (Mini)'
+        if self._type == ADL_CONNECTOR_TYPE_VIRTUAL:
+            return 'Virtual'
+
+
+class Slot(object):
+
+    def __init__(self, index, length, width, connectors):
+
+        self.index = index
+        self.length = length
+        self.width = width
+        self._connectors = connectors
+
+    @property
+    def connectors(self):
+        for connector in self._connectors:
+            yield Connector(
+                self,
+                connector.iConnectorIndex.value,
+                connector.iConnectorId.value,
+                connector.iType.value,
+                connector.iOffset.value,
+                connector.iLength.value
+            )
+
+
+class Adapter(AdapterBase):
+    
+    @property
+    def ports(self):
+        pAdapterCaps = ADLAdapterCapsX2()
+        iAdapterIndex = INT(self._adapter_index)
+
+        with ADL2_Main_Control_Create as context:
+            if _ADL2_AdapterX2_Caps(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(pAdapterCaps)
+            ) != ADL_OK:
+                return []
+            
+        res = []
+
+        for i in range(pAdapterCaps.iNumConnectors.value):
+            res += [AdapterPort(self._adapter_index, i)]
+        
+        return res
+
+    @property
+    def slots(self):
+        lpValidFlags = INT()
+        lpNumberSlots = INT()
+        lpNumberConnector = INT()
+        lppBracketSlot = (ADLBracketSlotInfo * ADL_ADAPTER_MAX_SLOTS)()
+        lppConnector = (ADLConnectorInfo * ADL_ADAPTER_MAX_CONNECTORS)()
+        iAdapterIndex = INT(self._adapter_index)
+
+        with ADL2_Main_Control_Create as context:
+            if ADL_OK == _ADL2_Adapter_BoardLayout_Get(
+                context,
+                iAdapterIndex,
+                ctypes.byref(lpValidFlags),
+                ctypes.byref(lpNumberSlots),
+                ctypes.byref(lppBracketSlot),
+                ctypes.byref(lpNumberConnector),
+                ctypes.byref(lppConnector),
+            ):
+
+                connectors = {}
+                for i in range(lpNumberConnector.value):
+                    connector = lppConnector[i]
+                    slot_index = connector.iSlotIndex.value
+
+                    if slot_index not in connectors:
+                        connectors[slot_index] = []
+
+                    connectors[slot_index] += [connector]
+
+                for i in range(lpNumberSlots.value):
+                    slot = lppBracketSlot[i]
+                    slot_index = slot.iSlotIndex.value
+                    yield Slot(
+                        slot_index,
+                        slot.iLength.value,
+                        slot.iWidth.value,
+                        connectors.get(slot_index, [])
+                    )
+
+    @property
+    def aspects(self):
+        iSize = INT(ADL_MAX_CHAR)
+        lpAspects = ctypes.create_string_buffer(ADL_MAX_CHAR)
+        iAdapterIndex = INT(self._adapter_index)
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_Adapter_Aspects_Get(context, iAdapterIndex, lpAspects, iSize)
+
+        return lpAspects
+
+    @property
+    def memory(self):
+        return Memory(self._adapter_index)
+
+    @property
+    def crossfire(self):
+        return CrossFire(self._adapter_index)
+
+    @property
+    def firmware(self):
+        return Firmware(self._adapter_index)
+
+    @property
+    def crossdisplay(self):
+        return CrossDisplay(self._adapter_index)
+
+    @property
+    def adapter_id(self):
+        lpAdapterID = INT()
+        iAdapterIndex = INT(self._adapter_index)
+
+        with ADL2_Main_Control_Create as context:
+            if _ADL2_Adapter_ID_Get(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(lpAdapterID),
+            ) == ADL_OK:
+                return lpAdapterID
+
+    @property
+    def is_active(self):
+        lpStatus = INT()
+        iAdapterIndex = INT(self._adapter_index)
+
+        with ADL2_Main_Control_Create as context:
+            if _ADL2_Adapter_Active_Get(context, iAdapterIndex, ctypes.byref(lpStatus)) == ADL_OK:
+                return lpStatus != ADL_FALSE
+
+    @property
+    def is_primary(self):
+        lpPrimaryAdapterIndex = INT()
+
+        with ADL2_Main_Control_Create as context:
+            if _ADL2_Adapter_Primary_Get(
+                    context,
+                    ctypes.byref(lpPrimaryAdapterIndex),
+            ) == ADL_OK:
+                return lpPrimaryAdapterIndex.value == self._adapter_index
+
+    def make_primary(self):
+        iAdapterIndex = INT(self._adapter_index)
+
+        with ADL2_Main_Control_Create as context:
+            return _ADL2_Adapter_Primary_Set(
+                context,
+                iAdapterIndex,
+            ) == ADL_OK
+
+    def mode_switch(self):
+        iAdapterIndex = INT(self._adapter_index)
+
+        with ADL2_Main_Control_Create as context:
+            return _ADL2_Adapter_ModeSwitch(
+                context,
+                iAdapterIndex,
+            ) == ADL_OK
+
+    @property
+    def displays(self):
+        iAdapterIndex = INT(self._adapter_index)
+        lpNumDisplays = INT()
+
+        res = []
+
+        with ADL2_Main_Control_Create as context:
+            if _ADL2_Display_NumberOfDisplays_Get(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(lpNumDisplays)
+            ) == ADL_OK:
+                for i in range(lpNumDisplays.value):
+                    res += [Display(self._adapter_index, i)]
+
+        return res
+
+    def save(self):
+        iAdapterIndex = INT(self._adapter_index)
+
+        with ADL2_Main_Control_Create as context:
+            return _ADL2_Flush_Driver_Data(context, iAdapterIndex) == ADL_OK
+
+    @property
+    def supported_aspect_ratios(self):
+        iSize = INT(256)
+        lpAspects = (CHAR * 256)
+        iAdapterIndex = INT(self._adapter_index)
+
+        with ADL2_Main_Control_Create as context:
+            if _ADL_Adapter_Aspects_Get(context, iAdapterIndex, lpAspects, iSize) == ADL_OK:
+                return self._get_string(lpAspects)
+
+    @property
+    def _adapter_info(self):
+        lpInfo = AdapterInfo()
+        lpInfo.iSize = ctypes.sizeof(AdapterInfo)
+        iInputSize = INT(ctypes.sizeof(AdapterInfo))
+        iAdapterIndex = INT(self._adapter_index)
+
+        with ADL2_Main_Control_Create as context:
+            if _ADL2_Adapter_AdapterInfoX2_Get(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(lpInfo),
+                    iInputSize
+            ) == ADL_OK:
+                return lpInfo
+
+    @property
+    def udid(self):
+        lpInfo = self._adapter_info
+        if lpInfo is not None:
+            return self._get_string(lpInfo.strUDID)
+
+    @property
+    def bus_number(self):
+        lpInfo = self._adapter_info
+        if lpInfo is not None:
+            return lpInfo.iBusNumber
+
+    @property
+    def device_number(self):
+        lpInfo = self._adapter_info
+        if lpInfo is not None:
+            return lpInfo.iDeviceNumber
+
+    @property
+    def function_number(self):
+        lpInfo = self._adapter_info
+        if lpInfo is not None:
+            return lpInfo.iFunctionNumber
+
+    @property
+    def vendor_id(self):
+        lpInfo = self._adapter_info
+        if lpInfo is not None:
+            return lpInfo.iVendorID
+
+    @property
+    def adapter_name(self):
+        lpInfo = self._adapter_info
+        if lpInfo is not None:
+            return self._get_string(lpInfo.strAdapterName)
+
+    @property
+    def display_name(self):
+        lpInfo = self._adapter_info
+        if lpInfo is not None:
+            return self._get_string(lpInfo.strDisplayName)
+
+    @property
+    def is_present(self):
+        lpInfo = self._adapter_info
+        if lpInfo is not None:
+            return lpInfo.iPresent == 1
+
+    @property
+    def exists(self):
+        lpInfo = self._adapter_info
+        if lpInfo is not None:
+            return lpInfo.iExist == 1
+
+    @property
+    def driver_path(self):
+        lpInfo = self._adapter_info
+        if lpInfo is not None:
+            return self._get_string(lpInfo.strDriverPath)
+
+    @property
+    def driver_path_ext(self):
+        lpInfo = self._adapter_info
+        if lpInfo is not None:
+            return self._get_string(lpInfo.strDriverPathExt)
+
+    @property
+    def upnp_path(self):
+        lpInfo = self._adapter_info
+        if lpInfo is not None:
+            return self._get_string(lpInfo.strPNPString)
+
+    @property
+    def display_index(self):
+        lpInfo = self._adapter_info
+        if lpInfo is not None:
+            return lpInfo.iOSDisplayIndex
+
+    @property
+    def driver_index(self):
+        lpInfo = self._adapter_info
+        if lpInfo is not None:
+            return lpInfo.iDrvIndex
+
+    @property
+    def asic_family_type(self):
+        lpAsicTypes = INT()
+        lpValids = INT()
+        iAdapterIndex = INT(self._adapter_index)
+
+        with ADL2_Main_Control_Create as context:
+            if _ADL2_Adapter_ASICFamilyType_Get(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(lpAsicTypes),
+                    ctypes.byref(lpValids)
+            ) == ADL_OK:
+                # not sure what to do with the values
+                asic_mapping = {
+                    ADL_ASIC_UNDEFINED: 'Undefined',
+                    ADL_ASIC_DISCRETE: 'Discrete',
+                    ADL_ASIC_INTEGRATED: 'Integrated',
+                    ADL_ASIC_FIREGL: 'FireGL',
+                    ADL_ASIC_FIREMV: 'FireMV',
+                    ADL_ASIC_XGP: 'XGP',
+                    ADL_ASIC_FUSION: 'Fusion',
+                    ADL_ASIC_FIRESTREAM: 'Firestream',
+                    ADL_ASIC_EMBEDDED: 'Embedded'
+                }
+
+                return asic_mapping[lpAsicTypes]
+
+    @property
+    def can_change_speed(self):
+        lpCaps = INT()
+        lpValid = INT()
+        iAdapterIndex = INT(self._adapter_index)
+
+        with ADL2_Main_Control_Create as context:
+            if _ADL2_Adapter_Speed_Caps(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(lpCaps),
+                    ctypes.byref(lpValid)
+            ) == ADL_OK:
+                return ADL_ADAPTER_SPEEDCAPS_SUPPORTED == lpCaps
+
+    @property
+    def speed(self):
+        lpCurrent = INT()
+        lpDefault = INT()
+        iAdapterIndex = INT(self._adapter_index)
+
+        with ADL2_Main_Control_Create as context:
+            if _ADL_Adapter_Speed_Get(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(lpCurrent),
+                    ctypes.byref(lpDefault)
+            ) == ADL_OK:
+                # not sure what to do with the values
+
+                speed_mapping = {
+                    ADL_CONTEXT_SPEED_UNFORCED: 'Unforced',
+                    ADL_CONTEXT_SPEED_FORCEHIGH: 'Force High',
+                    ADL_CONTEXT_SPEED_FORCELOW: 'Force_low',
+
+                }
+
+                return speed_mapping[lpCurrent]
+
+            return 'Unsupported'
+
+    @speed.setter
+    def speed(self, value):
+
+        if not isinstance(value, int):
+            if value not in ('Unforced', 'Force High'):
+                return
+
+            if value == 'Force High':
+                value = ADL_CONTEXT_SPEED_FORCEHIGH
+            else:
+                value = ADL_CONTEXT_SPEED_UNFORCED
+
+        else:
+            if value not in (
+                    ADL_CONTEXT_SPEED_FORCEHIGH,
+                    ADL_CONTEXT_SPEED_UNFORCED
+            ):
+                return
+
+        iSpeed = INT(value)
+        iAdapterIndex = INT(self._adapter_index)
+
+        with ADL2_Main_Control_Create as context:
+            _ADL_Adapter_Speed_Set(
+                context,
+                iAdapterIndex,
+                iSpeed,
+            )
+
+    @property
+    def default_speed(self):
+        lpCurrent = INT()
+        lpDefault = INT()
+        iAdapterIndex = INT(self._adapter_index)
+
+        with ADL2_Main_Control_Create as context:
+            if _ADL_Adapter_Speed_Get(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(lpCurrent),
+                    ctypes.byref(lpDefault)
+            ) == ADL_OK:
+                # not sure what to do with the values
+
+                speed_mapping = {
+                    ADL_CONTEXT_SPEED_UNFORCED: 'Unforced',
+                    ADL_CONTEXT_SPEED_FORCEHIGH: 'Force High',
+                    ADL_CONTEXT_SPEED_FORCELOW: 'Force_low',
+
+                }
+
+                return speed_mapping[lpDefault]
+
+            return 'Unsupported'
+
+    @property
+    def is_gpu_accessable(self):
+        lpAccessibility = INT()
+        iAdapterIndex = INT(self._adapter_index)
+
+        with ADL2_Main_Control_Create as context:
+            if _ADL2_Adapter_Accessibility_Get(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(lpAccessibility),
+            ) == ADL_OK:
+                return lpAccessibility == 1
+
+    @property
+    def core_clock(self):
+        lpCoreClock = INT()
+        lpMemoryClock = INT()
+        iAdapterIndex = INT(self._adapter_index)
+
+        with ADL2_Main_Control_Create as context:
+            if _ADL2_Adapter_ObservedClockInfo_Get(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(lpCoreClock),
+                    ctypes.byref(lpMemoryClock),
+            ) == ADL_OK:
+                return lpCoreClock.value
+
+    def extended_desktop(self, value):
+        lpNewlyActivate = INT()
+        iStatus = INT(value)
+        iAdapterIndex = INT(self._adapter_index)
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_Adapter_Active_Set(
+                context,
+                iAdapterIndex,
+                iStatus,
+                ctypes.byref(lpNewlyActivate),
+            )
+
+    extended_desktop = property(fset=extended_desktop)
+
+
+class CrossFire(AdapterBase):
+
+    @property
+    def is_prefered_adapter(self):
+        lpPreferred = INT()
+        lpNumComb = INT()
+        ppCrossfireComb = (ADLCrossfireComb * 3)()
+        iAdapterIndex = INT(self._adapter_index)
+        with ADL2_Main_Control_Create as context:
+            if _ADL2_Adapter_Crossfire_Caps(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(lpPreferred),
+                    ctypes.byref(lpNumComb),
+                    ctypes.byref(ppCrossfireComb),
+            ) == ADL_OK:
+                return lpPreferred.value == self._adapter_index
+
+    @property
+    def is_combination_supported(self):
+        lpCrossfireInfo = self.__crossfire_info
+
+        if lpCrossfireInfo is not None:
+            return lpCrossfireInfo.iSupported == ADL_TRUE
+
+    @property
+    def state(self):
+        """
+        ADL_XFIREX_STATE_NOINTERCONNECT
+        ADL_XFIREX_STATE_DOWNGRADEPIPES
+        ADL_XFIREX_STATE_DOWNGRADEMEM
+        ADL_XFIREX_STATE_REVERSERECOMMENDED
+        ADL_XFIREX_STATE_3DACTIVE
+        ADL_XFIREX_STATE_MASTERONSLAVE
+        ADL_XFIREX_STATE_NODISPLAYCONNECT
+        ADL_XFIREX_STATE_NOPRIMARYVIEW
+        ADL_XFIREX_STATE_DOWNGRADEVISMEM
+        ADL_XFIREX_STATE_LESSTHAN8LANE_MASTER
+        ADL_XFIREX_STATE_LESSTHAN8LANE_SLAVE
+        ADL_XFIREX_STATE_PEERTOPEERFAILED
+        ADL_XFIREX_STATE_MEMISDOWNGRADED
+        ADL_XFIREX_STATE_PIPESDOWNGRADED
+        ADL_XFIREX_STATE_XFIREXACTIVE
+        ADL_XFIREX_STATE_VISMEMISDOWNGRADED
+        ADL_XFIREX_STATE_INVALIDINTERCONNECTION
+        ADL_XFIREX_STATE_NONP2PMODE
+        ADL_XFIREX_STATE_DOWNGRADEMEMBANKS
+        ADL_XFIREX_STATE_MEMBANKSDOWNGRADED
+        ADL_XFIREX_STATE_DUALDISPLAYSALLOWED
+        ADL_XFIREX_STATE_P2P_APERTURE_MAPPING
+        ADL_XFIREX_STATE_P2PFLUSH_REQUIRED
+        ADL_XFIREX_STATE_XSP_CONNECTED
+        ADL_XFIREX_STATE_ENABLE_CF_REBOOT_REQUIRED
+        ADL_XFIREX_STATE_DISABLE_CF_REBOOT_REQUIRED
+        ADL_XFIREX_STATE_DRV_HANDLE_DOWNGRADE_KEY
+        ADL_XFIREX_STATE_CF_RECONFIG_REQUIRED
+        ADL_XFIREX_STATE_ERRORGETTINGSTATUS
+        """
+        lpCrossfireInfo = self.__crossfire_info
+
+        if lpCrossfireInfo is not None:
+            if lpCrossfireInfo.iErrorCode:
+                return lpCrossfireInfo.iErrorCode
+
+            return lpCrossfireInfo.iState
+
+    @property
+    def __crossfire_info(self):
+        lpPreferred = INT()
+        lpNumComb = INT()
+        ppCrossfireComb = (ADLCrossfireComb * 3)()
+        iAdapterIndex = INT(self._adapter_index)
+
+        with ADL2_Main_Control_Create as context:
+            if _ADL2_Adapter_Crossfire_Caps(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(lpPreferred),
+                    ctypes.byref(lpNumComb),
+                    ctypes.byref(ppCrossfireComb),
+            ) == ADL_OK:
+
+                for i in range(lpNumComb.value):
+                    lpCrossfireComb = ppCrossfireComb[i]
+
+                    for j in range(lpCrossfireComb.iNumLinkAdapter.value):
+                        adapter_index = lpCrossfireComb.iAdaptLink[j]
+                        if adapter_index == self._adapter_index:
+                            break
+                    else:
+                        continue
+
+                    break
+                else:
+                    return ADL_XFIREX_STATE_ERRORGETTINGSTATUS
+
+                lpCrossfireInfo = ADLCrossfireInfo()
+                if _ADL2_Adapter_Crossfire_Get(
+                        context,
+                        iAdapterIndex,
+                        ctypes.byref(lpCrossfireComb),
+                        ctypes.byref(lpCrossfireInfo)
+                ) == ADL_OK:
+                    return lpCrossfireInfo
+
+    @property
+    def adapters(self):
+        lpPreferred = INT()
+        lpNumComb = INT()
+        ppCrossfireComb = (ADLCrossfireComb * 3)()
+        iAdapterIndex = INT(self._adapter_index)
+
+        with ADL2_Main_Control_Create as context:
+            if _ADL2_Adapter_Crossfire_Caps(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(lpPreferred),
+                    ctypes.byref(lpNumComb),
+                    ctypes.byref(ppCrossfireComb),
+            ) == ADL_OK:
+                adapter_indexes = []
+
+                for i in range(lpNumComb.value):
+                    comb = ppCrossfireComb[i]
+
+                    for j in range(comb.iNumLinkAdapter.value):
+                        adapter_index = comb.iAdaptLink[j]
+                        if (
+                                adapter_index not in adapter_indexes and
+                                adapter_index != self._adapter_index
+                        ):
+                            adapter_indexes += [Adapter(adapter_index)]
+
+                return adapter_indexes
+
+    @adapters.setter
+    def adapters(self, value):
+        """
+        OK so this is the skinny on how I think this thing works..
+
+        use the getter of this property it will return all adapters that are in the chain (excluding self)
+        when you query for the state of the crossfire it is going to tell you if it is running or not.. the
+        adapters returned from the getter of this property show a connection, it does not show if the connection
+        is turned on or not that is what the state method does. you pass an adapter that has been returned from the
+        getter tro the state to determine if the link is active between this adapter and the supplied adapter. and if
+        the state of the connection reports as not active and you want it to be active pass that same adapyter to
+        this property. or none if you weant to disable the connections to this adapter..
+
+        card1 === card2 === card3
+
+        If this adapter is card2 and you pass NULL it is going to turn oiff all crossfire connections. because it
+        breaks the link between the 3 of them. if this card is card1 or card 3 and NULL is passed the other 2 cards
+        will remain connected to each other.
+
+        I am kind of bull shitting my way through this as I have never set up crossfire before.. I do have a spare
+        card I will test it out with and see what happens.
+
+        :param value: the adapter to enable the cross fire connection to
+            or None if you want to disable crossfire for this adapter.
+
+        """
+        iAdapterIndex = INT(self._adapter_index)
+        lpCrossfireComb = NULL
+
+        if value is not None:
+            lpPreferred = INT()
+            lpNumComb = INT()
+            ppCrossfireComb = (ADLCrossfireComb * 3)()
+
+            with ADL2_Main_Control_Create as context:
+                if _ADL2_Adapter_Crossfire_Caps(
+                        context,
+                        iAdapterIndex,
+                        ctypes.byref(lpPreferred),
+                        ctypes.byref(lpNumComb),
+                        ctypes.byref(ppCrossfireComb),
+                ) == ADL_OK:
+                    for i in range(lpNumComb.value):
+                        lpCrossfireComb = ppCrossfireComb[i]
+                        adapter_indexes = []
+
+                        for j in range(lpCrossfireComb.iNumLinkAdapter.value):
+                            adapter_indexes += [lpCrossfireComb.iAdaptLink[j]]
+
+                        if self._adapter_index in adapter_indexes and value._adapter_index in adapter_indexes:
+                            break
+                    else:
+                        return
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_Adapter_Crossfire_Set(
+                context,
+                iAdapterIndex,
+                lpCrossfireComb
+            )
+
+
+class Firmware(AdapterBase):
+
+    @property
+    def __bios_info(self):
+        lpBiosInfo = AdapterInfo()
+        iAdapterIndex = INT(self._adapter_index)
+
+        with ADL2_Main_Control_Create as context:
+            if _ADL2_Adapter_VideoBiosInfo_Get(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(lpBiosInfo),
+            ) == ADL_OK:
+                return lpBiosInfo
+
+    @property
+    def date(self):
+        lpBiosInfo = self.__bios_info
+        if lpBiosInfo is not None:
+            return self._get_string(lpBiosInfo.strDate)
+
+    @property
+    def part_number(self):
+        lpBiosInfo = self.__bios_info
+        if lpBiosInfo is not None:
+            return self._get_string(lpBiosInfo.strPartNumber)
+
+    @property
+    def version(self):
+        lpBiosInfo = self.__bios_info
+        if lpBiosInfo is not None:
+            return self._get_string(lpBiosInfo.strVersion)
+
+
+class Memory(AdapterBase):
+
+    @property
+    def __memory_info(self):
+        lpMemoryInfo = ADLMemoryInfo()
+        iAdapterIndex = INT(self._adapter_index)
+
+        with ADL2_Main_Control_Create as context:
+            if _ADL2_Adapter_MemoryInfo_Get(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(lpMemoryInfo),
+            ) == ADL_OK:
+                return lpMemoryInfo
+
+    @property
+    def size(self):
+        lpMemoryInfo = self.__memory_info
+        if lpMemoryInfo is not None:
+            return lpMemoryInfo.iMemorySize.value
+
+    @property
+    def type(self):
+        lpMemoryInfo = self.__memory_info
+        if lpMemoryInfo is not None:
+            return self._get_string(lpMemoryInfo.strMemoryType)
+
+    @property
+    def bandwidth(self):
+        lpMemoryInfo = self.__memory_info
+        if lpMemoryInfo is not None:
+            return lpMemoryInfo.iMemoryBandwidth.value
+
+    @property
+    def clock(self):
+        lpCoreClock = INT()
+        lpMemoryClock = INT()
+        iAdapterIndex = INT(self._adapter_index)
+
+        with ADL2_Main_Control_Create as context:
+            if _ADL2_Adapter_ObservedClockInfo_Get(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(lpCoreClock),
+                    ctypes.byref(lpMemoryClock),
+            ) == ADL_OK:
+                return lpMemoryClock.value

@@ -38,7 +38,6 @@ from .overdrive5_h import *
 from .overdrive6_h import *
 from .overdrive8_h import *
 from .overdriven_h import *
-from .overscan_h import *
 from .powerxpress_h import *
 from .underscan_h import *
 from .workstation_h import *
