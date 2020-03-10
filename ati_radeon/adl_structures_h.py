@@ -3268,10 +3268,10 @@ ADLAdapterCapsX2._fields_ = [
 
 
 class _ADL_ERROR_RECORD_SEVERITY(ENUM):
-    ADL_GLOBALLY_UNCORRECTED = 1
-    ADL_LOCALLY_UNCORRECTED = 2
-    ADL_DEFFERRED = 3
-    ADL_CORRECTED = 4
+    ADL_GLOBALLY_UNCORRECTED = EnumItem(1).set_string('Globally Uncorrected')
+    ADL_LOCALLY_UNCORRECTED = EnumItem(2).set_string('Locally Uncorrected')
+    ADL_DEFFERRED = EnumItem(3).set_string('Deferred')
+    ADL_CORRECTED = EnumItem(4).set_string('Corrected')
 
 
 ADL_ERROR_RECORD_SEVERITY = _ADL_ERROR_RECORD_SEVERITY

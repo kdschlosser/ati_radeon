@@ -1090,16 +1090,12 @@ from .crossdisplay_h import CrossDisplay  # NOQA
 # _ADL2_FPS_Settings_Reset
 #
 #
-# _ADL2_Adapter_ClockInfo_Get
-# _ADL2_Display_AdapterID_Get
 #
 #
-# _ADL2_Adapter_EDC_ErrorRecords_Get
-# _ADL2_Adapter_EDC_ErrorInjection_Set
+#
+
 # _ADL2_Adapter_Graphic_Core_Info_Get
-# _ADL2_Adapter_PMLog_Support_Get
-# _ADL2_Adapter_PMLog_Start
-# _ADL2_Adapter_PMLog_Stop
+
 
 
 class PortConnector(object):
@@ -1620,8 +1616,217 @@ class Slot(object):
             )
 
 
+class FPS(object):
+
+    def __init__(self, adapter_index):
+        self._adapter_index = adapter_index
+
+    @property
+    def is_supported(self):
+        iAdapterIndex = INT(self._adapter_index)
+        lpSupported = INT()
+        lpVersion = INT()
+
+        with ADL2_Main_Control_Create as context:
+            if _ADL2_FPS_Caps(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(lpSupported),
+                    ctypes.byref(lpVersion)
+            ) == ADL_OK:
+                return bool(lpSupported.value)
+
+        return False
+
+    @property
+    def version(self):
+        iAdapterIndex = INT(self._adapter_index)
+        lpSupported = INT()
+        lpVersion = INT()
+
+        with ADL2_Main_Control_Create as context:
+            if _ADL2_FPS_Caps(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(lpSupported),
+                    ctypes.byref(lpVersion)
+            ) == ADL_OK:
+                return lpVersion.value
+
+    @property
+    def _fps_settings(self):
+        iAdapterIndex = INT(self._adapter_index)
+        lpFPSSettings = ADLFPSSettingsOutput()
+
+        with ADL2_Main_Control_Create as context:
+            if _ADL2_FPS_Settings_Get(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(lpFPSSettings),
+            ) == ADL_OK:
+                return lpFPSSettings
+
+    @property
+    def monitor_power(self):
+        lpFPSSettings = self._fps_settings
+
+        if lpFPSSettings.bACFPSEnabled.value:
+            return 'AC'
+
+        elif lpFPSSettings.bDCFPSEnabled.value:
+            return 'DC'
+
+        return ''
+
+    @property
+    def is_enabled(self):
+        lpFPSSettings = self._fps_settings
+
+        return bool(lpFPSSettings.bACFPSEnabled.value) or bool(lpFPSSettings.bDCFPSEnabled.value)
+
+    @property
+    def value(self):
+        lpFPSSettings = self._fps_settings
+
+        if lpFPSSettings.bACFPSEnabled.value:
+            return lpFPSSettings.ulACFPSCurrent.value
+
+        elif lpFPSSettings.bDCFPSEnabled.value:
+            return lpFPSSettings.ulDCFPSCurrent.value
+
+    @property
+    def maximum(self):
+        lpFPSSettings = self._fps_settings
+
+        if lpFPSSettings.bACFPSEnabled.value:
+            return lpFPSSettings.ulACFPSMaximum.value
+
+        elif lpFPSSettings.bDCFPSEnabled.value:
+            return lpFPSSettings.ulDCFPSMaximum.value
+
+    @property
+    def minimum(self):
+        lpFPSSettings = self._fps_settings
+
+        if lpFPSSettings.bACFPSEnabled.value:
+            return lpFPSSettings.ulACFPSMinimum.value
+
+        elif lpFPSSettings.bDCFPSEnabled.value:
+            return lpFPSSettings.ulDCFPSMinimum.value
+
+
+class ErrorRecord(object):
+
+    def __init__(self, record):
+        self.__record = record
+
+    @property
+    def severity(self):
+        # Severity
+        return str(self.__record.Severity.value)
+
+    @property
+    def is_count_valid(self):
+        # countValid
+        return bool(self.__record.countValid.value)
+
+    @property
+    def count(self):
+        # count
+        return self.__record.count.value
+
+    @property
+    def is_location_vlid(self):
+        # locationValid
+        return bool(self.__record.locationValid.value)
+
+    @property
+    def cu(self):
+        # CU
+        return self.__record.CU.value
+
+    @property
+    def location_name(self):
+        # StructureName
+        return self.__record.StructureName.value
+
+    @property
+    def timestamp(self):
+        # tiestamp
+        return self.__record.tiestamp.value
+
+
 class Adapter(AdapterBase):
-    
+
+    @property
+    def error_records(self):
+        iAdapterIndex = INT(self._adapter_index)
+        errorRecords = (ADLErrorRecord * ADL_MAX_ERROR_RECORDS_COUNT)()
+        pErrorrecordCount = INT()
+
+        with ADL2_Main_Control_Create as context:
+            if _ADL2_Display_AdapterID_Get(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(pErrorrecordCount),
+                    errorRecords
+            ) != ADL_OK:
+                return []
+
+        res = []
+        for i in range(pErrorrecordCount.value):
+            res += [ErrorRecord(errorRecords[i])]
+
+        return res
+
+    # _ADL2_Adapter_PMLog_Support_Get
+    # _ADL2_Adapter_PMLog_Start
+    # _ADL2_Adapter_PMLog_Stop
+
+    @property
+    def adapter_id(self):
+        iAdapterIndex = INT(self._adapter_index)
+        lpAdapterID = INT()
+
+        with ADL2_Main_Control_Create as context:
+            if _ADL2_Display_AdapterID_Get(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(lpAdapterID),
+            ) == ADL_OK:
+                return lpAdapterID.value
+
+
+    @property
+    def core_clock(self):
+        iAdapterIndex = INT(self._adapter_index)
+        lpClockInfo = ADLClockInfo()
+
+        with ADL2_Main_Control_Create as context:
+            if _ADL2_Adapter_ClockInfo_Get(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(lpClockInfo),
+            ) == ADL_OK:
+                return lpClockInfo.iCoreClock.value
+
+    @property
+    def memory_clock(self):
+        iAdapterIndex = INT(self._adapter_index)
+        lpClockInfo = ADLClockInfo()
+
+        with ADL2_Main_Control_Create as context:
+            if _ADL2_Adapter_ClockInfo_Get(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(lpClockInfo),
+            ) == ADL_OK:
+                return lpClockInfo.iMemoryClock.value
+
+    @property
+    def fps(self):
+        return FPS(self._adapter_index)
+
     @property
     def ports(self):
         pAdapterCaps = ADLAdapterCapsX2()
