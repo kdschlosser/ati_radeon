@@ -3325,14 +3325,14 @@ ADLErrorRecord._fields_ = [
 
 
 class _ADL_EDC_BLOCK_ID(ENUM):
-    ADL_EDC_BLOCK_ID_SQCIS = 1
-    ADL_EDC_BLOCK_ID_SQCDS = 2
-    ADL_EDC_BLOCK_ID_SGPR = 3
-    ADL_EDC_BLOCK_ID_VGPR = 4
-    ADL_EDC_BLOCK_ID_LDS = 5
-    ADL_EDC_BLOCK_ID_GDS = 6
-    ADL_EDC_BLOCK_ID_TCL1 = 7
-    ADL_EDC_BLOCK_ID_TCL2 = 8
+    ADL_EDC_BLOCK_ID_SQCIS = EnumItem(1).set_string('SQCIS')
+    ADL_EDC_BLOCK_ID_SQCDS = EnumItem(2).set_string('SQCDS')
+    ADL_EDC_BLOCK_ID_SGPR = EnumItem(3).set_string('SGPR')
+    ADL_EDC_BLOCK_ID_VGPR = EnumItem(4).set_string('VGPR')
+    ADL_EDC_BLOCK_ID_LDS = EnumItem(5).set_string('LDS')
+    ADL_EDC_BLOCK_ID_GDS = EnumItem(6).set_string('GDS')
+    ADL_EDC_BLOCK_ID_TCL1 = EnumItem(7).set_string('TCL1')
+    ADL_EDC_BLOCK_ID_TCL2 = EnumItem(8).set_string('TCL2')
 
 
 ADL_EDC_BLOCK_ID = _ADL_EDC_BLOCK_ID
@@ -3348,9 +3348,9 @@ ADL_EDC_BLOCK_ID_TCL2 = _ADL_EDC_BLOCK_ID.ADL_EDC_BLOCK_ID_TCL2
 
 
 class _ADL_ERROR_INJECTION_MODE(ENUM):
-    ADL_ERROR_INJECTION_MODE_SINGLE = 1
-    ADL_ERROR_INJECTION_MODE_MULTIPLE = 2
-    ADL_ERROR_INJECTION_MODE_ADDRESS = 3
+    ADL_ERROR_INJECTION_MODE_SINGLE = EnumItem(1).set_string('Single')
+    ADL_ERROR_INJECTION_MODE_MULTIPLE = EnumItem(2).set_string('Multiple')
+    ADL_ERROR_INJECTION_MODE_ADDRESS = EnumItem(3).set_string('Address')
 
 
 ADL_ERROR_INJECTION_MODE = _ADL_ERROR_INJECTION_MODE
@@ -3727,10 +3727,10 @@ ADLODNPerformanceLevelsX2._fields_ = [
 
 
 class _ADLODNCurrentPowerType(ENUM):
-    ODN_GPU_TOTAL_POWER = 0
-    ODN_GPU_PPT_POWER = 1
-    ODN_GPU_SOCKET_POWER = 2
-    ODN_GPU_CHIP_POWER = 3
+    ODN_GPU_TOTAL_POWER = EnumItem(0).set_string('Total Power')
+    ODN_GPU_PPT_POWER = EnumItem(1).set_string('PPT Power')
+    ODN_GPU_SOCKET_POWER = EnumItem(2).set_string('Socket Power')
+    ODN_GPU_CHIP_POWER = EnumItem(3).set_string('Chip Power')
 
 
 ADLODNCurrentPowerType = _ADLODNCurrentPowerType
@@ -3828,34 +3828,34 @@ _ADLPMLogDataOutput._fields_ = [
 
 
 class _ADLSensorType(ENUM):
-    SENSOR_MAXTYPES = 0
-    PMLOG_CLK_GFXCLK = 1
-    PMLOG_CLK_MEMCLK = 2
-    PMLOG_CLK_SOCCLK = 3
-    PMLOG_CLK_UVDCLK1 = 4
-    PMLOG_CLK_UVDCLK2 = 5
-    PMLOG_CLK_VCECLK = 6
-    PMLOG_CLK_VCNCLK = 7
-    PMLOG_TEMPERATURE_EDGE = 8
-    PMLOG_TEMPERATURE_MEM = 9
-    PMLOG_TEMPERATURE_VRVDDC = 10
-    PMLOG_TEMPERATURE_VRMVDD = 11
-    PMLOG_TEMPERATURE_LIQUID = 12
-    PMLOG_TEMPERATURE_PLX = 13
-    PMLOG_FAN_RPM = 14
-    PMLOG_FAN_PERCENTAGE = 15
-    PMLOG_SOC_VOLTAGE = 16
-    PMLOG_SOC_POWER = 17
-    PMLOG_SOC_CURRENT = 18
-    PMLOG_INFO_ACTIVITY_GFX = 19
-    PMLOG_INFO_ACTIVITY_MEM = 20
-    PMLOG_GFX_VOLTAGE = 21
-    PMLOG_MEM_VOLTAGE = 22
-    PMLOG_ASIC_POWER = 23
-    PMLOG_TEMPERATURE_VRSOC = 24
-    PMLOG_TEMPERATURE_VRMVDD0 = 25
-    PMLOG_TEMPERATURE_VRMVDD1 = 26
-    PMLOG_TEMPERATURE_HOTSPOT = 27
+    SENSOR_MAXTYPES = EnumItem(0).set_string('MaxTypes')
+    PMLOG_CLK_GFXCLK = EnumItem(1).set_string('GFX Clock')
+    PMLOG_CLK_MEMCLK = EnumItem(2).set_string('Memory Clock')
+    PMLOG_CLK_SOCCLK = EnumItem(3).set_string('SOC Clock')
+    PMLOG_CLK_UVDCLK1 = EnumItem(4).set_string('UVD Clock 1')
+    PMLOG_CLK_UVDCLK2 = EnumItem(5).set_string('UVD Clock 2')
+    PMLOG_CLK_VCECLK = EnumItem(6).set_string('VCE Clock')
+    PMLOG_CLK_VCNCLK = EnumItem(7).set_string('VCN Clock')
+    PMLOG_TEMPERATURE_EDGE = EnumItem(8).set_string('Temperature Edge')
+    PMLOG_TEMPERATURE_MEM = EnumItem(9).set_string('Temperature Memory')
+    PMLOG_TEMPERATURE_VRVDDC = EnumItem(10).set_string('Temperature VRVDDC')
+    PMLOG_TEMPERATURE_VRMVDD = EnumItem(11).set_string('Temperature VRMVDD')
+    PMLOG_TEMPERATURE_LIQUID = EnumItem(12).set_string('Temperature Liquid')
+    PMLOG_TEMPERATURE_PLX = EnumItem(13).set_string('Temperature PLX')
+    PMLOG_FAN_RPM = EnumItem(14).set_string('Fan RPM')
+    PMLOG_FAN_PERCENTAGE = EnumItem(15).set_string('Fan Percentage')
+    PMLOG_SOC_VOLTAGE = EnumItem(16).set_string('SOC Voltage')
+    PMLOG_SOC_POWER = EnumItem(17).set_string('SOC Power')
+    PMLOG_SOC_CURRENT = EnumItem(18).set_string('SOC Current')
+    PMLOG_INFO_ACTIVITY_GFX = EnumItem(19).set_string('GFX Activity')
+    PMLOG_INFO_ACTIVITY_MEM = EnumItem(20).set_string('Memory Activity')
+    PMLOG_GFX_VOLTAGE = EnumItem(21).set_string('GFX Voltage')
+    PMLOG_MEM_VOLTAGE = EnumItem(22).set_string('Memory Voltage')
+    PMLOG_ASIC_POWER = EnumItem(23).set_string('ASIC Power')
+    PMLOG_TEMPERATURE_VRSOC = EnumItem(24).set_string('Temperature VRSOC')
+    PMLOG_TEMPERATURE_VRMVDD0 = EnumItem(25).set_string('Temperature VRMVDD0')
+    PMLOG_TEMPERATURE_VRMVDD1 = EnumItem(26).set_string('Temperature VRMVDD1')
+    PMLOG_TEMPERATURE_HOTSPOT = EnumItem(27).set_string('Temperature Hotspot')
 
 
 ADLSensorType = _ADLSensorType
@@ -3970,7 +3970,7 @@ _ADLFPSSettingsInput._fields_ = [
 # / \nosubgrouping
 # ////////////////////////////////////////////////////////////////////////////////////
 class DUMMYENUM(ENUM):
-    ADL_PMLOG_MAX_SUPPORTED_SENSORS = 256
+    ADL_PMLOG_MAX_SUPPORTED_SENSORS = EnumItem(256).set_string('Max Supported Sensors')
 
 
 ADL_PMLOG_MAX_SUPPORTED_SENSORS = DUMMYENUM.ADL_PMLOG_MAX_SUPPORTED_SENSORS
@@ -3984,35 +3984,37 @@ _ADLPMLogSupportInfo._fields_ = [
 ]
 
 
+
+
 class _ADL_PMLOG_SENSORS(ENUM):
-    ADL_SENSOR_MAXTYPES = 0
-    ADL_PMLOG_CLK_GFXCLK = 1
-    ADL_PMLOG_CLK_MEMCLK = 2
-    ADL_PMLOG_CLK_SOCCLK = 3
-    ADL_PMLOG_CLK_UVDCLK1 = 4
-    ADL_PMLOG_CLK_UVDCLK2 = 5
-    ADL_PMLOG_CLK_VCECLK = 6
-    ADL_PMLOG_CLK_VCNCLK = 7
-    ADL_PMLOG_TEMPERATURE_EDGE = 8
-    ADL_PMLOG_TEMPERATURE_MEM = 9
-    ADL_PMLOG_TEMPERATURE_VRVDDC = 10
-    ADL_PMLOG_TEMPERATURE_VRMVDD = 11
-    ADL_PMLOG_TEMPERATURE_LIQUID = 12
-    ADL_PMLOG_TEMPERATURE_PLX = 13
-    ADL_PMLOG_FAN_RPM = 14
-    ADL_PMLOG_FAN_PERCENTAGE = 15
-    ADL_PMLOG_SOC_VOLTAGE = 16
-    ADL_PMLOG_SOC_POWER = 17
-    ADL_PMLOG_SOC_CURRENT = 18
-    ADL_PMLOG_INFO_ACTIVITY_GFX = 19
-    ADL_PMLOG_INFO_ACTIVITY_MEM = 20
-    ADL_PMLOG_GFX_VOLTAGE = 21
-    ADL_PMLOG_MEM_VOLTAGE = 22
-    ADL_PMLOG_ASIC_POWER = 23
-    ADL_PMLOG_TEMPERATURE_VRSOC = 24
-    ADL_PMLOG_TEMPERATURE_VRMVDD0 = 25
-    ADL_PMLOG_TEMPERATURE_VRMVDD1 = 26
-    ADL_PMLOG_TEMPERATURE_HOTSPOT = 27
+    ADL_SENSOR_MAXTYPES = EnumItem(0).set_string('MaxTypes')
+    ADL_PMLOG_CLK_GFXCLK = EnumItem(1).set_string('GFX Clock')
+    ADL_PMLOG_CLK_MEMCLK = EnumItem(2).set_string('Memory Clock')
+    ADL_PMLOG_CLK_SOCCLK = EnumItem(3).set_string('SOC Clock')
+    ADL_PMLOG_CLK_UVDCLK1 = EnumItem(4).set_string('UVD Clock 1')
+    ADL_PMLOG_CLK_UVDCLK2 = EnumItem(5).set_string('UVD Clock 2')
+    ADL_PMLOG_CLK_VCECLK = EnumItem(6).set_string('VCE Clock')
+    ADL_PMLOG_CLK_VCNCLK = EnumItem(7).set_string('VCN Clock')
+    ADL_PMLOG_TEMPERATURE_EDGE = EnumItem(8).set_string('Temperature Edge')
+    ADL_PMLOG_TEMPERATURE_MEM = EnumItem(9).set_string('Temperature Memory')
+    ADL_PMLOG_TEMPERATURE_VRVDDC = EnumItem(10).set_string('Temperature VRVDDC')
+    ADL_PMLOG_TEMPERATURE_VRMVDD = EnumItem(11).set_string('Temperature VRMVDD')
+    ADL_PMLOG_TEMPERATURE_LIQUID = EnumItem(12).set_string('Temperature Liquid')
+    ADL_PMLOG_TEMPERATURE_PLX = EnumItem(13).set_string('Temperature PLX')
+    ADL_PMLOG_FAN_RPM = EnumItem(14).set_string('Fan RPM')
+    ADL_PMLOG_FAN_PERCENTAGE = EnumItem(15).set_string('Fan Percentage')
+    ADL_PMLOG_SOC_VOLTAGE = EnumItem(16).set_string('SOC Voltage')
+    ADL_PMLOG_SOC_POWER = EnumItem(17).set_string('SOC Power')
+    ADL_PMLOG_SOC_CURRENT = EnumItem(18).set_string('SOC Current')
+    ADL_PMLOG_INFO_ACTIVITY_GFX = EnumItem(19).set_string('GFX Activity')
+    ADL_PMLOG_INFO_ACTIVITY_MEM = EnumItem(20).set_string('Memory Activity')
+    ADL_PMLOG_GFX_VOLTAGE = EnumItem(21).set_string('GFX Voltage')
+    ADL_PMLOG_MEM_VOLTAGE = EnumItem(22).set_string('Memory Voltage')
+    ADL_PMLOG_ASIC_POWER = EnumItem(23).set_string('ASIC Power')
+    ADL_PMLOG_TEMPERATURE_VRSOC = EnumItem(24).set_string('Temperature VRSOC')
+    ADL_PMLOG_TEMPERATURE_VRMVDD0 = EnumItem(25).set_string('Temperature VRMVDD0')
+    ADL_PMLOG_TEMPERATURE_VRMVDD1 = EnumItem(26).set_string('Temperature VRMVDD1')
+    ADL_PMLOG_TEMPERATURE_HOTSPOT = EnumItem(27).set_string('Temperature Hotspot')
 
 
 ADL_PMLOG_SENSORS = _ADL_PMLOG_SENSORS
@@ -4185,8 +4187,8 @@ _ADLRASResetErrorCounts._fields_ = [
 
 
 class _ADL_RAS_ERROR_INJECTION_MODE(ENUM):
-    ADL_RAS_ERROR_INJECTION_MODE_SINGLE = 1
-    ADL_RAS_ERROR_INJECTION_MODE_MULTIPLE = 2
+    ADL_RAS_ERROR_INJECTION_MODE_SINGLE = EnumItem(1).set_string('Single')
+    ADL_RAS_ERROR_INJECTION_MODE_MULTIPLE = EnumItem(2).set_string('Multiple')
 
 
 ADL_RAS_ERROR_INJECTION_MODE = _ADL_RAS_ERROR_INJECTION_MODE
@@ -4196,17 +4198,17 @@ ADL_RAS_ERROR_INJECTION_MODE_MULTIPLE = _ADL_RAS_ERROR_INJECTION_MODE.ADL_RAS_ER
 
 
 class _ADL_RAS_BLOCK_ID(ENUM):
-    ADL_RAS_BLOCK_ID_UMC = 0
-    ADL_RAS_BLOCK_ID_SDMA = 1
-    ADL_RAS_BLOCK_ID_GFX_HUB = 2
-    ADL_RAS_BLOCK_ID_MMHUB = 3
-    ADL_RAS_BLOCK_ID_ATHUB = 4
-    ADL_RAS_BLOCK_ID_PCIE_BIF = 5
-    ADL_RAS_BLOCK_ID_HDP = 6
-    ADL_RAS_BLOCK_ID_XGMI_WAFL = 7
-    ADL_RAS_BLOCK_ID_DF = 8
-    ADL_RAS_BLOCK_ID_SMN = 9
-    ADL_RAS_BLOCK_ID_GFX = 10
+    ADL_RAS_BLOCK_ID_UMC = EnumItem(0).set_string('UMC')
+    ADL_RAS_BLOCK_ID_SDMA = EnumItem(1).set_string('SDMA')
+    ADL_RAS_BLOCK_ID_GFX_HUB = EnumItem(2).set_string('GFX Hub')
+    ADL_RAS_BLOCK_ID_MMHUB = EnumItem(3).set_string('MM Hub')
+    ADL_RAS_BLOCK_ID_ATHUB = EnumItem(4).set_string('AT Hub')
+    ADL_RAS_BLOCK_ID_PCIE_BIF = EnumItem(5).set_string('PCIe BIF')
+    ADL_RAS_BLOCK_ID_HDP = EnumItem(6).set_string('HDP')
+    ADL_RAS_BLOCK_ID_XGMI_WAFL = EnumItem(7).set_string('XGMI WAFL')
+    ADL_RAS_BLOCK_ID_DF = EnumItem(8).set_string('DF')
+    ADL_RAS_BLOCK_ID_SMN = EnumItem(9).set_string('SMN')
+    ADL_RAS_BLOCK_ID_GFX = EnumItem(10).set_string('GFX')
 
 
 ADL_RAS_BLOCK_ID = _ADL_RAS_BLOCK_ID
