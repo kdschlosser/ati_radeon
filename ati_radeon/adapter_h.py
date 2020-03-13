@@ -2533,6 +2533,8 @@ class Memory(AdapterBase):
         iEnabled = INT()
         iVersion = INT()
 
+        from .overdrive5_h import _ADL2_Overdrive_Caps
+
         # Repeat for all available adapters in the system
         iAdapterIndex = INT(self._adapter_index)
         with ADL2_Main_Control_Create as context:

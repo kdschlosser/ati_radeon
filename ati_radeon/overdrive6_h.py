@@ -463,10 +463,16 @@ _ADL_Overdrive6_ThermalLimitUnlock_Get = ADL_OVERDRIVE6_THERMALLIMITUNLOCK_GET
 # Function to retrieve the current Thermal Limit Unlock feature status.
 _ADL2_Overdrive6_ThermalLimitUnlock_Get = ADL2_OVERDRIVE6_THERMALLIMITUNLOCK_GET
 
-# Function returns the advanced fan control capability of the specified adapter. Advanced fan control is the feature which makes the fan speed is always kept to a minimum within current settings so the acoustics are also minimized. The end users are able to select the target ASIC temperature and fan PWM% via the CCC or other applications.
+# Function returns the advanced fan control capability of the specified adapter.
+# Advanced fan control is the feature which makes the fan speed is always kept to
+# a minimum within current settings so the acoustics are also minimized.
+# The end users are able to select the target ASIC temperature and fan PWM% via the CCC or other applications.
 _ADL_Overdrive6_AdvancedFan_Caps = ADL_OVERDRIVE6_ADVANCEDFAN_CAPS
 
-# Function returns the advanced fan control capability of the specified adapter. Advanced fan control is the feature which makes the fan speed is always kept to a minimum so the acoustics are also minimized. The end user will be able to select the target ASIC temperature and fan PWM% via the CCC or other applications.
+# Function returns the advanced fan control capability of the specified adapter.
+# Advanced fan control is the feature which makes the fan speed is always kept to
+# a minimum so the acoustics are also minimized.
+# The end user will be able to select the target ASIC temperature and fan PWM% via the CCC or other applications.
 _ADL2_Overdrive6_AdvancedFan_Caps = ADL2_OVERDRIVE6_ADVANCEDFAN_CAPS
 
 # Function returns the target temperature range of the specified adapter .
@@ -809,4 +815,5 @@ __all__ = (
     '_ADL_Overdrive6_FanPWMLimitData_Set',
     '_ADL2_Overdrive6_FanPWMLimitData_Set',
     '_ADL2_Overdrive6_CurrentPower_Get',
+    'OverDrive6'
 )
