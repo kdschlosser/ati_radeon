@@ -45,65 +45,46 @@ from .adl_sdk_h import ADL_MAIN_MALLOC_CALLBACK
 # SOFTWARE.
 
 
-def GetProcAddress(pLibrary, name):
-    return getattr(pLibrary, name, NULL)
-
-
-def int(*args):
-    def wrapper(*func):
-        func = func[0]
-
-        if func is None:
-            return NULL
-
-        func.argtypes = list(args)
-        func.restype = INT
-
-        return func
-
-    return wrapper
-
-
-ADL_MAIN_CONTROLX2_CREATE = int(
+ADL_MAIN_CONTROLX2_CREATE = _int(
     ADL_MAIN_MALLOC_CALLBACK,
     INT,
     ADLThreadingModel
 )
-ADL2_MAIN_CONTROLX2_CREATE = int(
+ADL2_MAIN_CONTROLX2_CREATE = _int(
     ADL_MAIN_MALLOC_CALLBACK,
     INT,
     POINTER(ADL_CONTEXT_HANDLE),
     ADLThreadingModel
 )
-ADL_MAIN_CONTROL_CREATE = int(
+ADL_MAIN_CONTROL_CREATE = _int(
     ADL_MAIN_MALLOC_CALLBACK,
     INT
 )
-ADL2_MAIN_CONTROL_CREATE = int(
+ADL2_MAIN_CONTROL_CREATE = _int(
     ADL_MAIN_MALLOC_CALLBACK,
     INT,
     POINTER(ADL_CONTEXT_HANDLE)
 )
-ADL2_MAIN_CONTROL_REFRESH = int(
+ADL2_MAIN_CONTROL_REFRESH = _int(
     ADL_CONTEXT_HANDLE
 )
-ADL_MAIN_CONTROL_REFRESH = int(
+ADL_MAIN_CONTROL_REFRESH = _int(
 
 )
-ADL_MAIN_CONTROL_DESTROY = int(
+ADL_MAIN_CONTROL_DESTROY = _int(
 
 )
-ADL2_MAIN_CONTROL_DESTROY = int(
+ADL2_MAIN_CONTROL_DESTROY = _int(
     ADL_CONTEXT_HANDLE
 )
-ADL2_GRAPHICS_VERSIONS_GET = int(
+ADL2_GRAPHICS_VERSIONS_GET = _int(
     ADL_CONTEXT_HANDLE,
     POINTER(ADLVersionsInfo)
 )
-ADL_GRAPHICS_VERSIONS_GET = int(
+ADL_GRAPHICS_VERSIONS_GET = _int(
     POINTER(ADLVersionsInfo)
 )
-ADL2_GRAPHICS_VERSIONSX2_GET = int(
+ADL2_GRAPHICS_VERSIONSX2_GET = _int(
     ADL_CONTEXT_HANDLE,
     POINTER(ADLVersionsInfoX2)
 )

@@ -26,9 +26,10 @@
 import ctypes
 import sys
 
+from ctypes.wintypes import INT
+
 
 NULL = None
-INT = ctypes.c_int
 CHAR = ctypes.c_char
 LONG = ctypes.c_long
 FLOAT = ctypes.c_float
@@ -2190,20 +2191,20 @@ ODN_COUNT = ADLODNExtSettingId.ODN_COUNT
 
 # OD8 Capability features bits
 class ADLOD8FeatureControl(ENUM):
-    ADL_OD8_GFXCLK_LIMITS = 1 << 0
-    ADL_OD8_GFXCLK_CURVE = 1 << 1
-    ADL_OD8_UCLK_MAX = 1 << 2
-    ADL_OD8_POWER_LIMIT = 1 << 3
-    ADL_OD8_ACOUSTIC_LIMIT_SCLK = 1 << 4
-    ADL_OD8_FAN_SPEED_MIN = 1 << 5
-    ADL_OD8_TEMPERATURE_FAN = 1 << 6
-    ADL_OD8_TEMPERATURE_SYSTEM = 1 << 7
-    ADL_OD8_MEMORY_TIMING_TUNE = 1 << 8
-    ADL_OD8_FAN_ZERO_RPM_CONTROL = 1 << 9
-    ADL_OD8_AUTO_UV_ENGINE = 1 << 10
-    ADL_OD8_AUTO_OC_ENGINE = 1 << 11
-    ADL_OD8_AUTO_OC_MEMORY = 1 << 12
-    ADL_OD8_FAN_CURVE = 1 << 13
+    ADL_OD8_GFXCLK_LIMITS = EnumItem(1 << 0).set_string('GFX Clock Limits')
+    ADL_OD8_GFXCLK_CURVE = EnumItem(1 << 1).set_string('GFX Clock Curve')
+    ADL_OD8_UCLK_MAX = EnumItem(1 << 2).set_string('UCLK Max')
+    ADL_OD8_POWER_LIMIT = EnumItem(1 << 3).set_string('Power Limit')
+    ADL_OD8_ACOUSTIC_LIMIT_SCLK = EnumItem(1 << 4).set_string('Acoustioc Limit SCLK')
+    ADL_OD8_FAN_SPEED_MIN = EnumItem(1 << 5).set_string('Fan Speed Min')
+    ADL_OD8_TEMPERATURE_FAN = EnumItem(1 << 6).set_string('Temperature Fan')
+    ADL_OD8_TEMPERATURE_SYSTEM = EnumItem(1 << 7).set_string('Temperature System')
+    ADL_OD8_MEMORY_TIMING_TUNE = EnumItem(1 << 8).set_string('Memory Timing Tune')
+    ADL_OD8_FAN_ZERO_RPM_CONTROL = EnumItem(1 << 9).set_string('Fan Zero RPM Control')
+    ADL_OD8_AUTO_UV_ENGINE = EnumItem(1 << 10).set_string('Auto UV Engine')
+    ADL_OD8_AUTO_OC_ENGINE = EnumItem(1 << 11).set_string('Auto OC Engine')
+    ADL_OD8_AUTO_OC_MEMORY = EnumItem(1 << 12).set_string('Auto OC Memory')
+    ADL_OD8_FAN_CURVE = EnumItem(1 << 13).set_string('Fan Curve')
 
 
 ADL_OD8_GFXCLK_LIMITS = ADLOD8FeatureControl.ADL_OD8_GFXCLK_LIMITS
@@ -2223,36 +2224,36 @@ ADL_OD8_FAN_CURVE = ADLOD8FeatureControl.ADL_OD8_FAN_CURVE
 
 
 class _ADLOD8SettingId(ENUM):
-    OD8_GFXCLK_FMAX = 0
-    OD8_GFXCLK_FMIN = 1
-    OD8_GFXCLK_FREQ1 = 2
-    OD8_GFXCLK_VOLTAGE1 = 3
-    OD8_GFXCLK_FREQ2 = 4
-    OD8_GFXCLK_VOLTAGE2 = 5
-    OD8_GFXCLK_FREQ3 = 6
-    OD8_GFXCLK_VOLTAGE3 = 7
-    OD8_UCLK_FMAX = 8
-    OD8_POWER_PERCENTAGE = 9
-    OD8_FAN_MIN_SPEED = 10
-    OD8_FAN_ACOUSTIC_LIMIT = 11
-    OD8_FAN_TARGET_TEMP = 12
-    OD8_OPERATING_TEMP_MAX = 13
-    OD8_AC_TIMING = 14
-    OD8_FAN_ZERORPM_CONTROL = 15
-    OD8_AUTO_UV_ENGINE_CONTROL = 16
-    OD8_AUTO_OC_ENGINE_CONTROL = 17
-    OD8_AUTO_OC_MEMORY_CONTROL = 18
-    OD8_FAN_CURVE_TEMPERATURE_1 = 19
-    OD8_FAN_CURVE_SPEED_1 = 20
-    OD8_FAN_CURVE_TEMPERATURE_2 = 21
-    OD8_FAN_CURVE_SPEED_2 = 22
-    OD8_FAN_CURVE_TEMPERATURE_3 = 23
-    OD8_FAN_CURVE_SPEED_3 = 24
-    OD8_FAN_CURVE_TEMPERATURE_4 = 25
-    OD8_FAN_CURVE_SPEED_4 = 26
-    OD8_FAN_CURVE_TEMPERATURE_5 = 27
-    OD8_FAN_CURVE_SPEED_5 = 28
-    OD8_COUNT = 29
+    OD8_GFXCLK_FMAX = EnumItem(0).set_string('GFX Clock FMax')
+    OD8_GFXCLK_FMIN = EnumItem(1).set_string('GFX Clock FMin')
+    OD8_GFXCLK_FREQ1 = EnumItem(2).set_string('GFX Clock Freq 1')
+    OD8_GFXCLK_VOLTAGE1 = EnumItem(3).set_string('GFC Clock Voltage 1')
+    OD8_GFXCLK_FREQ2 = EnumItem(4).set_string('GFX Clock Freq 2')
+    OD8_GFXCLK_VOLTAGE2 = EnumItem(5).set_string('GFX Clock Voltage 2')
+    OD8_GFXCLK_FREQ3 = EnumItem(6).set_string('GFX Clock Freq 3')
+    OD8_GFXCLK_VOLTAGE3 = EnumItem(7).set_string('GFX Clock Voltage 3')
+    OD8_UCLK_FMAX = EnumItem(8).set_string('U Clock FMax')
+    OD8_POWER_PERCENTAGE = EnumItem(9).set_string('Power Percentage')
+    OD8_FAN_MIN_SPEED = EnumItem(10).set_string('Fan Min Speed')
+    OD8_FAN_ACOUSTIC_LIMIT = EnumItem(11).set_string('Fan Acoustic Limit')
+    OD8_FAN_TARGET_TEMP = EnumItem(12).set_string('Fan Target Temperature')
+    OD8_OPERATING_TEMP_MAX = EnumItem(13).set_string('Operating Temperature Max')
+    OD8_AC_TIMING = EnumItem(14).set_string('AC Timing')
+    OD8_FAN_ZERORPM_CONTROL = EnumItem(15).set_string('Fan Zero RPM Control')
+    OD8_AUTO_UV_ENGINE_CONTROL = EnumItem(16).set_string('Auto UV Engine Control')
+    OD8_AUTO_OC_ENGINE_CONTROL = EnumItem(17).set_string('Auto OC Engine Control')
+    OD8_AUTO_OC_MEMORY_CONTROL = EnumItem(18).set_string('Auto OS Memory Control')
+    OD8_FAN_CURVE_TEMPERATURE_1 = EnumItem(19).set_string('Fan Curve Temperature 1')
+    OD8_FAN_CURVE_SPEED_1 = EnumItem(20).set_string('Fan Curve Speed 1')
+    OD8_FAN_CURVE_TEMPERATURE_2 = EnumItem(21).set_string('Fan Curve Temperature 2')
+    OD8_FAN_CURVE_SPEED_2 = EnumItem(22).set_string('Fan Curve Speed 2')
+    OD8_FAN_CURVE_TEMPERATURE_3 = EnumItem(23).set_string('Fan Curve Temperature 3')
+    OD8_FAN_CURVE_SPEED_3 = EnumItem(24).set_string('Fan Curve Speed 3')
+    OD8_FAN_CURVE_TEMPERATURE_4 = EnumItem(25).set_string('Fan Curve Temperature 4')
+    OD8_FAN_CURVE_SPEED_4 = EnumItem(26).set_string('Fan Curve Speed 4')
+    OD8_FAN_CURVE_TEMPERATURE_5 = EnumItem(27).set_string('Fan Curve Temperature 5')
+    OD8_FAN_CURVE_SPEED_5 = EnumItem(28).set_string('Fan Curve Speed 5')
+    OD8_COUNT = EnumItem(29).set_string('ODN Count')
 
 
 ADLOD8SettingId = _ADLOD8SettingId

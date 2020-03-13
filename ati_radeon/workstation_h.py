@@ -44,88 +44,69 @@ from .adl_structures_h import *  # NOQA
 # SOFTWARE.
 
 
-def GetProcAddress(pLibrary, name):
-    return getattr(pLibrary, name, NULL)
-
-
-def int(*args):
-    def wrapper(*func):
-        func = func[0]
-
-        if func is None:
-            return NULL
-
-        func.argtypes = list(args)
-        func.restype = INT
-
-        return func
-
-    return wrapper
-
-
-ADL2_WORKSTATION_CAPS = int(
+ADL2_WORKSTATION_CAPS = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(INT),
     POINTER(INT)
 )
-ADL_WORKSTATION_CAPS = int(
+ADL_WORKSTATION_CAPS = _int(
     INT,
     POINTER(INT),
     POINTER(INT)
 )
-ADL2_WORKSTATION_STEREO_GET = int(
+ADL2_WORKSTATION_STEREO_GET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(INT),
     POINTER(INT)
 )
-ADL_WORKSTATION_STEREO_GET = int(
+ADL_WORKSTATION_STEREO_GET = _int(
     INT,
     POINTER(INT),
     POINTER(INT)
 )
-ADL2_WORKSTATION_STEREO_SET = int(
+ADL2_WORKSTATION_STEREO_SET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     INT
 )
-ADL_WORKSTATION_STEREO_SET = int(
+ADL_WORKSTATION_STEREO_SET = _int(
     INT,
     INT
 )
-ADL2_WORKSTATION_ADAPTERNUMOFGLSYNCCONNECTORS_GET = int(
+ADL2_WORKSTATION_ADAPTERNUMOFGLSYNCCONNECTORS_GET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(INT)
 )
-ADL_WORKSTATION_ADAPTERNUMOFGLSYNCCONNECTORS_GET = int(
+ADL_WORKSTATION_ADAPTERNUMOFGLSYNCCONNECTORS_GET = _int(
     INT,
     POINTER(INT)
 )
-ADL2_WORKSTATION_DISPLAYGENLOCKCAPABLE_GET = int(
+ADL2_WORKSTATION_DISPLAYGENLOCKCAPABLE_GET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     INT,
     POINTER(INT)
 )
-ADL_WORKSTATION_DISPLAYGENLOCKCAPABLE_GET = int(
+ADL_WORKSTATION_DISPLAYGENLOCKCAPABLE_GET = _int(
     INT,
     INT,
     POINTER(INT)
 )
-ADL2_WORKSTATION_GLSYNCMODULEDETECT_GET = int(
+ADL2_WORKSTATION_GLSYNCMODULEDETECT_GET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     INT,
     POINTER(ADLGLSyncModuleID)
 )
-ADL_WORKSTATION_GLSYNCMODULEDETECT_GET = int(
+ADL_WORKSTATION_GLSYNCMODULEDETECT_GET = _int(
     INT,
     INT,
     POINTER(ADLGLSyncModuleID)
 )
-ADL2_WORKSTATION_GLSYNCMODULEINFO_GET = int(
+ADL2_WORKSTATION_GLSYNCMODULEINFO_GET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     INT,
@@ -135,7 +116,7 @@ ADL2_WORKSTATION_GLSYNCMODULEINFO_GET = int(
     POINTER(INT),
     POINTER(POINTER(ADLGLSyncPortCaps))
 )
-ADL_WORKSTATION_GLSYNCMODULEINFO_GET = int(
+ADL_WORKSTATION_GLSYNCMODULEINFO_GET = _int(
     INT,
     INT,
     POINTER(INT),
@@ -144,31 +125,31 @@ ADL_WORKSTATION_GLSYNCMODULEINFO_GET = int(
     POINTER(INT),
     POINTER(POINTER(ADLGLSyncPortCaps))
 )
-ADL2_WORKSTATION_GLSYNCGENLOCKCONFIGURATION_GET = int(
+ADL2_WORKSTATION_GLSYNCGENLOCKCONFIGURATION_GET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     INT,
     INT,
     POINTER(ADLGLSyncGenlockConfig)
 )
-ADL_WORKSTATION_GLSYNCGENLOCKCONFIGURATION_GET = int(
+ADL_WORKSTATION_GLSYNCGENLOCKCONFIGURATION_GET = _int(
     INT,
     INT,
     INT,
     POINTER(ADLGLSyncGenlockConfig)
 )
-ADL2_WORKSTATION_GLSYNCGENLOCKCONFIGURATION_SET = int(
+ADL2_WORKSTATION_GLSYNCGENLOCKCONFIGURATION_SET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     INT,
     ADLGLSyncGenlockConfig
 )
-ADL_WORKSTATION_GLSYNCGENLOCKCONFIGURATION_SET = int(
+ADL_WORKSTATION_GLSYNCGENLOCKCONFIGURATION_SET = _int(
     INT,
     INT,
     ADLGLSyncGenlockConfig
 )
-ADL2_WORKSTATION_GLSYNCPORTSTATE_GET = int(
+ADL2_WORKSTATION_GLSYNCPORTSTATE_GET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     INT,
@@ -177,7 +158,7 @@ ADL2_WORKSTATION_GLSYNCPORTSTATE_GET = int(
     POINTER(ADLGlSyncPortInfo),
     POINTER(POINTER(INT))
 )
-ADL_WORKSTATION_GLSYNCPORTSTATE_GET = int(
+ADL_WORKSTATION_GLSYNCPORTSTATE_GET = _int(
     INT,
     INT,
     INT,
@@ -185,40 +166,40 @@ ADL_WORKSTATION_GLSYNCPORTSTATE_GET = int(
     POINTER(ADLGlSyncPortInfo),
     POINTER(POINTER(INT))
 )
-ADL2_WORKSTATION_GLSYNCPORTSTATE_SET = int(
+ADL2_WORKSTATION_GLSYNCPORTSTATE_SET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     INT,
     ADLGlSyncPortControl
 )
-ADL_WORKSTATION_GLSYNCPORTSTATE_SET = int(
+ADL_WORKSTATION_GLSYNCPORTSTATE_SET = _int(
     INT,
     INT,
     ADLGlSyncPortControl
 )
-ADL2_WORKSTATION_DISPLAYGLSYNCMODE_GET = int(
+ADL2_WORKSTATION_DISPLAYGLSYNCMODE_GET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     INT,
     POINTER(ADLGlSyncMode)
 )
-ADL_WORKSTATION_DISPLAYGLSYNCMODE_GET = int(
+ADL_WORKSTATION_DISPLAYGLSYNCMODE_GET = _int(
     INT,
     INT,
     POINTER(ADLGlSyncMode)
 )
-ADL2_WORKSTATION_DISPLAYGLSYNCMODE_SET = int(
+ADL2_WORKSTATION_DISPLAYGLSYNCMODE_SET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     INT,
     ADLGlSyncMode
 )
-ADL_WORKSTATION_DISPLAYGLSYNCMODE_SET = int(
+ADL_WORKSTATION_DISPLAYGLSYNCMODE_SET = _int(
     INT,
     INT,
     ADLGlSyncMode
 )
-ADL2_WORKSTATION_GLSYNCSUPPORTEDTOPOLOGY_GET = int(
+ADL2_WORKSTATION_GLSYNCSUPPORTEDTOPOLOGY_GET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     INT,
@@ -226,43 +207,43 @@ ADL2_WORKSTATION_GLSYNCSUPPORTEDTOPOLOGY_GET = int(
     POINTER(INT),
     POINTER(POINTER(ADLGlSyncMode2))
 )
-ADL_WORKSTATION_GLSYNCSUPPORTEDTOPOLOGY_GET = int(
+ADL_WORKSTATION_GLSYNCSUPPORTEDTOPOLOGY_GET = _int(
     INT,
     INT,
     POINTER(ADLGlSyncMode2),
     POINTER(INT),
     POINTER(POINTER(ADLGlSyncMode2))
 )
-ADL2_WORKSTATION_LOADBALANCING_GET = int(
+ADL2_WORKSTATION_LOADBALANCING_GET = _int(
     ADL_CONTEXT_HANDLE,
     POINTER(INT),
     POINTER(INT),
     POINTER(INT)
 )
-ADL_WORKSTATION_LOADBALANCING_GET = int(
+ADL_WORKSTATION_LOADBALANCING_GET = _int(
     POINTER(INT),
     POINTER(INT),
     POINTER(INT)
 )
-ADL2_WORKSTATION_LOADBALANCING_SET = int(
+ADL2_WORKSTATION_LOADBALANCING_SET = _int(
     ADL_CONTEXT_HANDLE,
     INT
 )
-ADL_WORKSTATION_LOADBALANCING_SET = int(
+ADL_WORKSTATION_LOADBALANCING_SET = _int(
     INT
 )
-ADL2_WORKSTATION_LOADBALANCING_CAPS = int(
+ADL2_WORKSTATION_LOADBALANCING_CAPS = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(INT),
     POINTER(INT)
 )
-ADL_WORKSTATION_LOADBALANCING_CAPS = int(
+ADL_WORKSTATION_LOADBALANCING_CAPS = _int(
     INT,
     POINTER(INT),
     POINTER(INT)
 )
-ADL2_WORKSTATION_DEEPBITDEPTH_GET = int(
+ADL2_WORKSTATION_DEEPBITDEPTH_GET = _int(
     ADL_CONTEXT_HANDLE,
     POINTER(INT),
     POINTER(INT),
@@ -271,7 +252,7 @@ ADL2_WORKSTATION_DEEPBITDEPTH_GET = int(
     POINTER(INT),
     POINTER(INT)
 )
-ADL_WORKSTATION_DEEPBITDEPTH_GET = int(
+ADL_WORKSTATION_DEEPBITDEPTH_GET = _int(
     POINTER(INT),
     POINTER(INT),
     POINTER(INT),
@@ -279,40 +260,40 @@ ADL_WORKSTATION_DEEPBITDEPTH_GET = int(
     POINTER(INT),
     POINTER(INT)
 )
-ADL2_WORKSTATION_DEEPBITDEPTH_SET = int(
+ADL2_WORKSTATION_DEEPBITDEPTH_SET = _int(
     ADL_CONTEXT_HANDLE,
-    INT,
-    INT,
-    INT
-)
-ADL_WORKSTATION_DEEPBITDEPTH_SET = int(
     INT,
     INT,
     INT
 )
-ADL2_WORKSTATION_ECC_CAPS = int(
+ADL_WORKSTATION_DEEPBITDEPTH_SET = _int(
+    INT,
+    INT,
+    INT
+)
+ADL2_WORKSTATION_ECC_CAPS = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(INT)
 )
-ADL_WORKSTATION_ECC_CAPS = int(
+ADL_WORKSTATION_ECC_CAPS = _int(
     INT,
     POINTER(INT)
 )
-ADL2_WORKSTATION_ECC_GET = int(
+ADL2_WORKSTATION_ECC_GET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(INT),
     POINTER(INT),
     POINTER(INT)
 )
-ADL_WORKSTATION_ECC_GET = int(
+ADL_WORKSTATION_ECC_GET = _int(
     INT,
     POINTER(INT),
     POINTER(INT),
     POINTER(INT)
 )
-ADL2_WORKSTATION_ECCX2_GET = int(
+ADL2_WORKSTATION_ECCX2_GET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(INT),
@@ -320,28 +301,28 @@ ADL2_WORKSTATION_ECCX2_GET = int(
     POINTER(INT),
     POINTER(INT)
 )
-ADL_WORKSTATION_ECCX2_GET = int(
+ADL_WORKSTATION_ECCX2_GET = _int(
     INT,
     POINTER(INT),
     POINTER(INT),
     POINTER(INT),
     POINTER(INT)
 )
-ADL2_WORKSTATION_ECCDATA_GET = int(
+ADL2_WORKSTATION_ECCDATA_GET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(ADLECCData)
 )
-ADL_WORKSTATION_ECCDATA_GET = int(
+ADL_WORKSTATION_ECCDATA_GET = _int(
     INT,
     POINTER(ADLECCData)
 )
-ADL2_WORKSTATION_ECC_SET = int(
+ADL2_WORKSTATION_ECC_SET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     INT
 )
-ADL_WORKSTATION_ECC_SET = int(
+ADL_WORKSTATION_ECC_SET = _int(
     INT,
     INT
 )
@@ -461,34 +442,51 @@ _ADL2_Workstation_DeepBitDepth_Set = ADL2_WORKSTATION_DEEPBITDEPTH_SET
 # Function to set requested state of Deep Bit Depth and related settings.
 _ADL_Workstation_DeepBitDepth_Set = ADL_WORKSTATION_DEEPBITDEPTH_SET
 
-# Function to get ECC (Error Correction Code) Capabilities on the specified adapter. This function implements the CI call to get ECC (Error Correction Code) Capabilities on the specified adapter.
+# Function to get ECC (Error Correction Code) Capabilities on the specified adapter.
+# This function implements the CI call to get ECC (Error Correction Code) Capabilities on the specified adapter.
 _ADL2_Workstation_ECC_Caps = ADL2_WORKSTATION_ECC_CAPS
 
-# Function to get ECC (Error Correction Code) Capabilities on the specified adapter. This function implements the CI call to get ECC (Error Correction Code) Capabilities on the specified adapter.
+# Function to get ECC (Error Correction Code) Capabilities on the specified adapter.
+# This function implements the CI call to get ECC (Error Correction Code) Capabilities on the specified adapter.
 _ADL_Workstation_ECC_Caps = ADL_WORKSTATION_ECC_CAPS
 
-# Function to get ECC (Error Correction Code) current and desired states on the specified adapter. This function implements the CI call to get ECC (Error Correction Code) current mode(driver applied mode) and the desired mode (user requested mode) on the specified adapter.
+# Function to get ECC (Error Correction Code) current and desired states on the specified adapter.
+# This function implements the CI call to get ECC (Error Correction Code) current mode(driver applied mode)
+# and the desired mode (user requested mode) on the specified adapter.
 _ADL2_Workstation_ECC_Get = ADL2_WORKSTATION_ECC_GET
 
-# Function to get ECC (Error Correction Code) current and desired states on the specified adapter. This function implements the CI call to get ECC (Error Correction Code) current mode(driver applied mode) and the desired mode (user requested mode) on the specified adapter.
+# Function to get ECC (Error Correction Code) current and desired states on the specified adapter.
+# This function implements the CI call to get ECC (Error Correction Code) current mode(driver applied mode)
+# and the desired mode (user requested mode) on the specified adapter.
 _ADL_Workstation_ECC_Get = ADL_WORKSTATION_ECC_GET
 
-# Function to get ECC (Error Correction Code) current and desired states on the specified adapter. This function implements the CI call to get ECC (Error Correction Code) current mode(driver applied mode) and the desired mode (user requested mode) on the specified adapter.
+# Function to get ECC (Error Correction Code) current and desired states on the specified adapter.
+# This function implements the CI call to get ECC (Error Correction Code) current mode(driver applied mode)
+# and the desired mode (user requested mode) on the specified adapter.
 _ADL2_Workstation_ECCX2_Get = ADL2_WORKSTATION_ECCX2_GET
 
-# Function to get ECC (Error Correction Code) current and desired states on the specified adapter. This function implements the CI call to get ECC (Error Correction Code) current mode(driver applied mode) and the desired mode (user requested mode) on the specified adapter.
+# Function to get ECC (Error Correction Code) current and desired states on the specified adapter.
+# This function implements the CI call to get ECC (Error Correction Code) current mode(driver applied mode)
+# and the desired mode (user requested mode) on the specified adapter.
 _ADL_Workstation_ECCX2_Get = ADL_WORKSTATION_ECCX2_GET
 
-# Function to get ECC statistics on the specified adapter. This function implements the CI call to get SEC(Single Error Correct) and DED(Double Error Detect) Counts on the specified adapter.
+# Function to get ECC statistics on the specified adapter.
+# This function implements the CI call to get SEC(Single Error Correct) and DED(Double Error Detect)
+# Counts on the specified adapter.
 _ADL2_Workstation_ECCData_Get = ADL2_WORKSTATION_ECCDATA_GET
 
-# Function to get ECC statistics on the specified adapter. This function implements the CI call to get SEC(Single Error Correct) and DED(Double Error Detect) Counts on the specified adapter.
+# Function to get ECC statistics on the specified adapter. This function implements the
+# CI call to get SEC(Single Error Correct) and DED(Double Error Detect) Counts on the specified adapter.
 _ADL_Workstation_ECCData_Get = ADL_WORKSTATION_ECCDATA_GET
 
-# Function to set ECC Mode on the specified adapter This function implements the CI call to set ECC (Error Correction Code) to turn on and off this feature on the specified adapter.
+# Function to set ECC Mode on the specified adapter
+# This function implements the CI call to set ECC (Error Correction Code) to turn on and
+# off this feature on the specified adapter.
 _ADL2_Workstation_ECC_Set = ADL2_WORKSTATION_ECC_SET
 
-# Function to set ECC Mode on the specified adapter This function implements the CI call to set ECC (Error Correction Code) to turn on and off this feature on the specified adapter.
+# Function to set ECC Mode on the specified adapter
+# This function implements the CI call to set ECC (Error Correction Code) to turn on and
+# off this feature on the specified adapter.
 _ADL_Workstation_ECC_Set = ADL_WORKSTATION_ECC_SET
 
 

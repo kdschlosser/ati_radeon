@@ -44,123 +44,103 @@ from .adl_structures_h import *  # NOQA
 # SOFTWARE.
 
 
-def GetProcAddress(pLibrary, name):
-    return getattr(pLibrary, name, NULL)
-
-
-# noinspection PyShadowingBuiltins
-def int(*args):
-    def wrapper(*func):
-        func = func[0]
-
-        if func is None:
-            return NULL
-
-        func.argtypes = list(args)
-        func.restype = INT
-
-        return func
-
-    return wrapper
-
-
-ADL2_OVERDRIVEN_CAPABILITIES_GET = int(
+ADL2_OVERDRIVEN_CAPABILITIES_GET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(ADLODNCapabilities)
 )
-ADL2_OVERDRIVEN_CAPABILITIESX2_GET = int(
+ADL2_OVERDRIVEN_CAPABILITIESX2_GET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(ADLODNCapabilitiesX2)
 )
-ADL2_OVERDRIVEN_SYSTEMCLOCKS_GET = int(
+ADL2_OVERDRIVEN_SYSTEMCLOCKS_GET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(ADLODNPerformanceLevels)
 )
-ADL2_OVERDRIVEN_SYSTEMCLOCKS_SET = int(
+ADL2_OVERDRIVEN_SYSTEMCLOCKS_SET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(ADLODNPerformanceLevels)
 )
-ADL2_OVERDRIVEN_SYSTEMCLOCKSX2_GET = int(
+ADL2_OVERDRIVEN_SYSTEMCLOCKSX2_GET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(ADLODNPerformanceLevelsX2)
 )
-ADL2_OVERDRIVEN_SYSTEMCLOCKSX2_SET = int(
+ADL2_OVERDRIVEN_SYSTEMCLOCKSX2_SET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(ADLODNPerformanceLevelsX2)
 )
-ADL2_OVERDRIVEN_MEMORYCLOCKSX2_GET = int(
+ADL2_OVERDRIVEN_MEMORYCLOCKSX2_GET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(ADLODNPerformanceLevelsX2)
 )
-ADL2_OVERDRIVEN_MEMORYCLOCKSX2_SET = int(
+ADL2_OVERDRIVEN_MEMORYCLOCKSX2_SET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(ADLODNPerformanceLevelsX2)
 )
-ADL2_OVERDRIVEN_MEMORYCLOCKS_GET = int(
+ADL2_OVERDRIVEN_MEMORYCLOCKS_GET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(ADLODNPerformanceLevels)
 )
-ADL2_OVERDRIVEN_MEMORYCLOCKS_SET = int(
+ADL2_OVERDRIVEN_MEMORYCLOCKS_SET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(ADLODNPerformanceLevels)
 )
-ADL2_OVERDRIVEN_FANCONTROL_GET = int(
+ADL2_OVERDRIVEN_FANCONTROL_GET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(ADLODNFanControl)
 )
-ADL2_OVERDRIVEN_FANCONTROL_SET = int(
+ADL2_OVERDRIVEN_FANCONTROL_SET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(ADLODNFanControl)
 )
-ADL2_OVERDRIVEN_POWERLIMIT_GET = int(
+ADL2_OVERDRIVEN_POWERLIMIT_GET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(ADLODNPowerLimitSetting)
 )
-ADL2_OVERDRIVEN_POWERLIMIT_SET = int(
+ADL2_OVERDRIVEN_POWERLIMIT_SET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(ADLODNPowerLimitSetting)
 )
-ADL2_OVERDRIVEN_TEMPERATURE_GET = int(
+ADL2_OVERDRIVEN_TEMPERATURE_GET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     INT,
     POINTER(INT)
 )
-ADL2_OVERDRIVEN_PERFORMANCESTATUS_GET = int(
+ADL2_OVERDRIVEN_PERFORMANCESTATUS_GET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(ADLODNPerformanceStatus)
 )
-ADL2_CUSTOMFAN_CAPS = int(
+ADL2_CUSTOMFAN_CAPS = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(INT)
 )
-ADL2_CUSTOMFAN_GET = int(
+ADL2_CUSTOMFAN_GET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(ADLODNFanControl)
 )
-ADL2_CUSTOMFAN_SET = int(
+ADL2_CUSTOMFAN_SET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(ADLODNFanControl)
 )
-ADL2_OVERDRIVEN_MEMORYTIMINGLEVEL_GET = int(
+ADL2_OVERDRIVEN_MEMORYTIMINGLEVEL_GET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(INT),
@@ -169,24 +149,24 @@ ADL2_OVERDRIVEN_MEMORYTIMINGLEVEL_GET = int(
     POINTER(INT),
     POINTER(POINTER(INT))
 )
-ADL2_OVERDRIVEN_MEMORYTIMINGLEVEL_SET = int(
+ADL2_OVERDRIVEN_MEMORYTIMINGLEVEL_SET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     INT
 )
-ADL2_OVERDRIVEN_ZERORPMFAN_GET = int(
+ADL2_OVERDRIVEN_ZERORPMFAN_GET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(INT),
     POINTER(INT),
     POINTER(INT)
 )
-ADL2_OVERDRIVEN_ZERORPMFAN_SET = int(
+ADL2_OVERDRIVEN_ZERORPMFAN_SET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     INT
 )
-ADL2_OVERDRIVEN_SETTINGSEXT_GET = int(
+ADL2_OVERDRIVEN_SETTINGSEXT_GET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(INT),
@@ -194,7 +174,7 @@ ADL2_OVERDRIVEN_SETTINGSEXT_GET = int(
     POINTER(POINTER(ADLODNExtSingleInitSetting)),
     POINTER(POINTER(INT))
 )
-ADL2_OVERDRIVEN_SETTINGSEXT_SET = int(
+ADL2_OVERDRIVEN_SETTINGSEXT_SET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     INT,
@@ -408,19 +388,15 @@ __all__ = (
     '_ADL2_OverdriveN_ZeroRPMFan_Set',
     '_ADL2_OverdriveN_SettingsExt_Get',
     '_ADL2_OverdriveN_SettingsExt_Set',
+    'OverDriveN'
 
 )
 
 
 from .adl_sdk_h import ADL2_Main_Control_Create  # NOQA
 
-try:
-    __builtin__ = __import__('__builtin__')
-except ImportError:
-    __builtin__ = __import__('builtins')
 
-
-class OverdriveN(object):
+class OverDriveN(object):
 
     def __init__(self, adapter_index):
         self._adapter_index = adapter_index
@@ -586,16 +562,16 @@ class OverdriveN(object):
 
 
 # noinspection PyUnresolvedReferences
-class ParameterRange(__builtin__.int):
+class ParameterRange(int):
 
     def __init__(self, value=None):
         if value is None:
-            __builtin__.int.__init__(self)
+            super(ParameterRange, self).__init__()
         else:
             try:
-                __builtin__.int.__init__(self, value)
+                super(ParameterRange, self).__init__(value)
             except TypeError:
-                __builtin__.int.__init__(self)
+                super(ParameterRange, self).__init__()
 
         self.__obj = None
 

@@ -44,37 +44,18 @@ from .adl_structures_h import *  # NOQA
 # SOFTWARE.
 
 
-def GetProcAddress(pLibrary, name):
-    return getattr(pLibrary, name, NULL)
-
-
-def int(*args):
-    def wrapper(*func):
-        func = func[0]
-
-        if func is None:
-            return NULL
-
-        func.argtypes = list(args)
-        func.restype = INT
-
-        return func
-
-    return wrapper
-
-
-ADL2_CONTROLLER_COLOR_SET = int(
+ADL2_CONTROLLER_COLOR_SET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     INT,
     ADLGamma
 )
-ADL_CONTROLLER_COLOR_SET = int(
+ADL_CONTROLLER_COLOR_SET = _int(
     INT,
     INT,
     ADLGamma
 )
-ADL2_CONTROLLER_COLOR_GET = int(
+ADL2_CONTROLLER_COLOR_GET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     INT,
@@ -83,7 +64,7 @@ ADL2_CONTROLLER_COLOR_GET = int(
     POINTER(ADLGamma),
     POINTER(ADLGamma)
 )
-ADL_CONTROLLER_COLOR_GET = int(
+ADL_CONTROLLER_COLOR_GET = _int(
     INT,
     INT,
     POINTER(ADLGamma),

@@ -44,56 +44,37 @@ from .adl_structures_h import *  # NOQA
 # SOFTWARE.
 
 
-def GetProcAddress(pLibrary, name):
-    return getattr(pLibrary, name, NULL)
-
-
-def int(*args):
-    def wrapper(*func):
-        func = func[0]
-
-        if func is None:
-            return NULL
-
-        func.argtypes = list(args)
-        func.restype = INT
-
-        return func
-
-    return wrapper
-
-
-ADL2_DISPLAY_UNDERSCANSUPPORT_GET = int(
+ADL2_DISPLAY_UNDERSCANSUPPORT_GET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     INT,
     POINTER(INT)
 )
-ADL2_DISPLAY_UNDERSCANSTATE_GET = int(
+ADL2_DISPLAY_UNDERSCANSTATE_GET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     INT,
     POINTER(INT),
     POINTER(INT)
 )
-ADL2_DISPLAY_UNDERSCANSTATE_SET = int(
+ADL2_DISPLAY_UNDERSCANSTATE_SET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     INT,
     INT
 )
-ADL2_DISPLAY_UNDERSCAN_SET = int(
+ADL2_DISPLAY_UNDERSCAN_SET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     INT,
     INT
 )
-ADL_DISPLAY_UNDERSCAN_SET = int(
+ADL_DISPLAY_UNDERSCAN_SET = _int(
     INT,
     INT,
     INT
 )
-ADL2_DISPLAY_UNDERSCAN_GET = int(
+ADL2_DISPLAY_UNDERSCAN_GET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     INT,
@@ -103,7 +84,7 @@ ADL2_DISPLAY_UNDERSCAN_GET = int(
     POINTER(INT),
     POINTER(INT)
 )
-ADL_DISPLAY_UNDERSCAN_GET = int(
+ADL_DISPLAY_UNDERSCAN_GET = _int(
     INT,
     INT,
     POINTER(INT),
@@ -114,18 +95,18 @@ ADL_DISPLAY_UNDERSCAN_GET = int(
 )
 
 
-ADL2_DISPLAY_OVERSCAN_SET = int(
+ADL2_DISPLAY_OVERSCAN_SET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     INT,
     INT
 )
-ADL_DISPLAY_OVERSCAN_SET = int(
+ADL_DISPLAY_OVERSCAN_SET = _int(
     INT,
     INT,
     INT
 )
-ADL2_DISPLAY_OVERSCAN_GET = int(
+ADL2_DISPLAY_OVERSCAN_GET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     INT,
@@ -135,7 +116,7 @@ ADL2_DISPLAY_OVERSCAN_GET = int(
     POINTER(INT),
     POINTER(INT)
 )
-ADL_DISPLAY_OVERSCAN_GET = int(
+ADL_DISPLAY_OVERSCAN_GET = _int(
     INT,
     INT,
     POINTER(INT),
@@ -239,9 +220,7 @@ __all__ = (
     'ValueWrapper'
 )
 
-
-from .adl_sdk_h import ADL2_Main_Control_Create  # NOQA
-
+# functions are used in adapter_h
 
 # noinspection PyUnresolvedReferences
 class ValueWrapper(__builtin__.int):

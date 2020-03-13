@@ -45,201 +45,182 @@ from .adl_structures_h import *  # NOQA
 # SOFTWARE.
 
 
-def GetProcAddress(pLibrary, name):
-    return getattr(pLibrary, name, NULL)
-
-
-def int(*args):
-    def wrapper(*func):
-        func = func[0]
-
-        if func is None:
-            return NULL
-
-        func.argtypes = list(args)
-        func.restype = INT
-
-        return func
-
-    return wrapper
-
-
-ADL2_ADAPTER_ACTIVE_GET = int(
+ADL2_ADAPTER_ACTIVE_GET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(INT)
 )
-ADL_ADAPTER_ACTIVE_GET = int(
+ADL_ADAPTER_ACTIVE_GET = _int(
     INT,
     POINTER(INT)
 )
-ADL2_ADAPTER_ASPECTS_GET = int(
+ADL2_ADAPTER_ASPECTS_GET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(CHAR),
     INT
 )
-ADL_ADAPTER_ASPECTS_GET = int(
+ADL_ADAPTER_ASPECTS_GET = _int(
     INT,
     POINTER(CHAR),
     INT
 )
-ADL2_ADAPTER_NUMBEROFADAPTERS_GET = int(
+ADL2_ADAPTER_NUMBEROFADAPTERS_GET = _int(
     ADL_CONTEXT_HANDLE,
     POINTER(INT)
 )
-ADL_ADAPTER_NUMBEROFADAPTERS_GET = int(
+ADL_ADAPTER_NUMBEROFADAPTERS_GET = _int(
     POINTER(INT)
 )
-ADL2_FLUSH_DRIVER_DATA = int(
+ADL2_FLUSH_DRIVER_DATA = _int(
     ADL_CONTEXT_HANDLE,
     INT
 )
-ADL_FLUSH_DRIVER_DATA = int(
+ADL_FLUSH_DRIVER_DATA = _int(
     INT
 )
-ADL2_ADAPTER_ADAPTERINFO_GET = int(
+ADL2_ADAPTER_ADAPTERINFO_GET = _int(
     ADL_CONTEXT_HANDLE,
     LPAdapterInfo,
     INT
 )
-ADL_ADAPTER_ADAPTERINFO_GET = int(
+ADL_ADAPTER_ADAPTERINFO_GET = _int(
     LPAdapterInfo,
     INT
 )
-ADL2_ADAPTER_ADAPTERINFOX2_GET = int(
+ADL2_ADAPTER_ADAPTERINFOX2_GET = _int(
     ADL_CONTEXT_HANDLE,
     POINTER(POINTER(AdapterInfo))
 )
-ADL_ADAPTER_ADAPTERINFOX2_GET = int(
+ADL_ADAPTER_ADAPTERINFOX2_GET = _int(
     POINTER(POINTER(AdapterInfo))
 )
-ADL2_ADAPTER_ASICFAMILYTYPE_GET = int(
+ADL2_ADAPTER_ASICFAMILYTYPE_GET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(INT),
     POINTER(INT)
 )
-ADL_ADAPTER_ASICFAMILYTYPE_GET = int(
+ADL_ADAPTER_ASICFAMILYTYPE_GET = _int(
     INT,
     POINTER(INT),
     POINTER(INT)
 )
-ADL2_ADAPTER_SPEED_CAPS = int(
+ADL2_ADAPTER_SPEED_CAPS = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(INT),
     POINTER(INT)
 )
-ADL_ADAPTER_SPEED_CAPS = int(
+ADL_ADAPTER_SPEED_CAPS = _int(
     INT,
     POINTER(INT),
     POINTER(INT)
 )
-ADL2_ADAPTER_SPEED_GET = int(
+ADL2_ADAPTER_SPEED_GET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(INT),
     POINTER(INT)
 )
-ADL_ADAPTER_SPEED_GET = int(
+ADL_ADAPTER_SPEED_GET = _int(
     INT,
     POINTER(INT),
     POINTER(INT)
 )
-ADL2_ADAPTER_SPEED_SET = int(
+ADL2_ADAPTER_SPEED_SET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     INT
 )
-ADL_ADAPTER_SPEED_SET = int(
+ADL_ADAPTER_SPEED_SET = _int(
     INT,
     INT
 )
-ADL2_ADAPTER_ACCESSIBILITY_GET = int(
+ADL2_ADAPTER_ACCESSIBILITY_GET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(INT)
 )
-ADL_ADAPTER_ACCESSIBILITY_GET = int(
+ADL_ADAPTER_ACCESSIBILITY_GET = _int(
     INT,
     POINTER(INT)
 )
-ADL2_ADAPTER_VIDEOBIOSINFO_GET = int(
+ADL2_ADAPTER_VIDEOBIOSINFO_GET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(ADLBiosInfo)
 )
-ADL_ADAPTER_VIDEOBIOSINFO_GET = int(
+ADL_ADAPTER_VIDEOBIOSINFO_GET = _int(
     INT,
     POINTER(ADLBiosInfo)
 )
-ADL2_ADAPTER_ID_GET = int(
+ADL2_ADAPTER_ID_GET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(INT)
 )
-ADL_ADAPTER_ID_GET = int(
+ADL_ADAPTER_ID_GET = _int(
     INT,
     POINTER(INT)
 )
-ADL2_ADAPTERX2_CAPS = int(
+ADL2_ADAPTERX2_CAPS = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(ADLAdapterCapsX2)
 )
-ADL_ADAPTERX2_CAPS = int(
+ADL_ADAPTERX2_CAPS = _int(
     INT,
     POINTER(ADLAdapterCapsX2)
 )
-ADL2_ADAPTER_CROSSFIRE_CAPS = int(
+ADL2_ADAPTER_CROSSFIRE_CAPS = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(INT),
     POINTER(INT),
     POINTER(POINTER(ADLCrossfireComb))
 )
-ADL_ADAPTER_CROSSFIRE_CAPS = int(
+ADL_ADAPTER_CROSSFIRE_CAPS = _int(
     INT,
     POINTER(INT),
     POINTER(INT),
     POINTER(POINTER(ADLCrossfireComb))
 )
-ADL2_ADAPTER_CROSSFIRE_GET = int(
+ADL2_ADAPTER_CROSSFIRE_GET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(ADLCrossfireComb),
     POINTER(ADLCrossfireInfo)
 )
-ADL_ADAPTER_CROSSFIRE_GET = int(
+ADL_ADAPTER_CROSSFIRE_GET = _int(
     INT,
     POINTER(ADLCrossfireComb),
     POINTER(ADLCrossfireInfo)
 )
-ADL2_ADAPTER_CROSSFIRE_SET = int(
+ADL2_ADAPTER_CROSSFIRE_SET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(ADLCrossfireComb)
 )
-ADL_ADAPTER_CROSSFIRE_SET = int(
+ADL_ADAPTER_CROSSFIRE_SET = _int(
     INT,
     POINTER(ADLCrossfireComb)
 )
-ADL2_ADAPTER_MVPU_SET = int(
+ADL2_ADAPTER_MVPU_SET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     INT
 )
-ADL2_ADAPTER_MEMORYINFO_GET = int(
+ADL2_ADAPTER_MEMORYINFO_GET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(ADLMemoryInfo)
 )
-ADL_ADAPTER_MEMORYINFO_GET = int(
+ADL_ADAPTER_MEMORYINFO_GET = _int(
     INT,
     POINTER(ADLMemoryInfo)
 )
-ADL2_ADAPTER_CONFIGMEMORY_GET = int(
+ADL2_ADAPTER_CONFIGMEMORY_GET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     INT,
@@ -250,7 +231,7 @@ ADL2_ADAPTER_CONFIGMEMORY_GET = int(
     POINTER(INT),
     POINTER(POINTER(ADLMemoryRequired))
 )
-ADL_ADAPTER_CONFIGMEMORY_GET = int(
+ADL_ADAPTER_CONFIGMEMORY_GET = _int(
     INT,
     INT,
     INT,
@@ -260,18 +241,18 @@ ADL_ADAPTER_CONFIGMEMORY_GET = int(
     POINTER(INT),
     POINTER(POINTER(ADLMemoryRequired))
 )
-ADL2_ADAPTER_OBSERVEDCLOCKINFO_GET = int(
+ADL2_ADAPTER_OBSERVEDCLOCKINFO_GET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(INT),
     POINTER(INT)
 )
-ADL_ADAPTER_OBSERVEDCLOCKINFO_GET = int(
+ADL_ADAPTER_OBSERVEDCLOCKINFO_GET = _int(
     INT,
     POINTER(INT),
     POINTER(INT)
 )
-ADL2_ADAPTER_BOARDLAYOUT_GET = int(
+ADL2_ADAPTER_BOARDLAYOUT_GET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(INT),
@@ -280,7 +261,7 @@ ADL2_ADAPTER_BOARDLAYOUT_GET = int(
     POINTER(INT),
     POINTER(POINTER(ADLConnectorInfo))
 )
-ADL_ADAPTER_BOARDLAYOUT_GET = int(
+ADL_ADAPTER_BOARDLAYOUT_GET = _int(
     INT,
     POINTER(INT),
     POINTER(INT),
@@ -288,164 +269,164 @@ ADL_ADAPTER_BOARDLAYOUT_GET = int(
     POINTER(INT),
     POINTER(POINTER(ADLConnectorInfo))
 )
-ADL2_ADAPTER_SUPPORTEDCONNECTIONS_GET = int(
+ADL2_ADAPTER_SUPPORTEDCONNECTIONS_GET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     ADLDevicePort,
     POINTER(ADLSupportedConnections)
 )
-ADL_ADAPTER_SUPPORTEDCONNECTIONS_GET = int(
+ADL_ADAPTER_SUPPORTEDCONNECTIONS_GET = _int(
     INT,
     ADLDevicePort,
     POINTER(ADLSupportedConnections)
 )
-ADL2_ADAPTER_CONNECTIONSTATE_GET = int(
+ADL2_ADAPTER_CONNECTIONSTATE_GET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     ADLDevicePort,
     POINTER(ADLConnectionState)
 )
-ADL_ADAPTER_CONNECTIONSTATE_GET = int(
+ADL_ADAPTER_CONNECTIONSTATE_GET = _int(
     INT,
     ADLDevicePort,
     POINTER(ADLConnectionState)
 )
-ADL2_ADAPTER_EMULATIONMODE_SET = int(
+ADL2_ADAPTER_EMULATIONMODE_SET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     ADLDevicePort,
     INT
 )
-ADL_ADAPTER_EMULATIONMODE_SET = int(
+ADL_ADAPTER_EMULATIONMODE_SET = _int(
     INT,
     ADLDevicePort,
     INT
 )
-ADL2_ADAPTER_CONNECTIONDATA_SET = int(
+ADL2_ADAPTER_CONNECTIONDATA_SET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     ADLDevicePort,
     ADLConnectionData
 )
-ADL_ADAPTER_CONNECTIONDATA_SET = int(
+ADL_ADAPTER_CONNECTIONDATA_SET = _int(
     INT,
     ADLDevicePort,
     ADLConnectionData
 )
-ADL2_ADAPTER_CONNECTIONDATA_GET = int(
+ADL2_ADAPTER_CONNECTIONDATA_GET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     ADLDevicePort,
     INT,
     POINTER(ADLConnectionData)
 )
-ADL_ADAPTER_CONNECTIONDATA_GET = int(
+ADL_ADAPTER_CONNECTIONDATA_GET = _int(
     INT,
     ADLDevicePort,
     INT,
     POINTER(ADLConnectionData)
 )
-ADL2_ADAPTER_CONNECTIONDATA_REMOVE = int(
+ADL2_ADAPTER_CONNECTIONDATA_REMOVE = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     ADLDevicePort
 )
-ADL_ADAPTER_CONNECTIONDATA_REMOVE = int(
+ADL_ADAPTER_CONNECTIONDATA_REMOVE = _int(
     INT,
     ADLDevicePort
 )
-ADL2_ADAPTER_EDIDMANAGEMENT_CAPS = int(
+ADL2_ADAPTER_EDIDMANAGEMENT_CAPS = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(INT)
 )
-ADL_ADAPTER_EDIDMANAGEMENT_CAPS = int(
+ADL_ADAPTER_EDIDMANAGEMENT_CAPS = _int(
     INT,
     POINTER(INT)
 )
-ADL2_WORKSTATION_GLOBALEDIDPERSISTENCE_GET = int(
+ADL2_WORKSTATION_GLOBALEDIDPERSISTENCE_GET = _int(
     ADL_CONTEXT_HANDLE,
     POINTER(INT),
     POINTER(INT)
 )
-ADL_WORKSTATION_GLOBALEDIDPERSISTENCE_GET = int(
+ADL_WORKSTATION_GLOBALEDIDPERSISTENCE_GET = _int(
     POINTER(INT),
     POINTER(INT)
 )
-ADL2_WORKSTATION_GLOBALEDIDPERSISTENCE_SET = int(
+ADL2_WORKSTATION_GLOBALEDIDPERSISTENCE_SET = _int(
     ADL_CONTEXT_HANDLE,
     INT
 )
-ADL_WORKSTATION_GLOBALEDIDPERSISTENCE_SET = int(
+ADL_WORKSTATION_GLOBALEDIDPERSISTENCE_SET = _int(
     INT
 )
-ADL2_FPS_CAPS = int(
+ADL2_FPS_CAPS = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(INT),
     POINTER(INT)
 )
-ADL2_FPS_SETTINGS_GET = int(
+ADL2_FPS_SETTINGS_GET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(ADLFPSSettingsOutput)
 )
-ADL2_FPS_SETTINGS_SET = int(
+ADL2_FPS_SETTINGS_SET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     ADLFPSSettingsInput
 )
-ADL2_FPS_SETTINGS_RESET = int(
+ADL2_FPS_SETTINGS_RESET = _int(
     ADL_CONTEXT_HANDLE,
     INT
 )
-ADL2_ADAPTER_CLOCKINFO_GET = int(
+ADL2_ADAPTER_CLOCKINFO_GET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(ADLClockInfo)
 )
-ADL_ADAPTER_CLOCKINFO_GET = int(
+ADL_ADAPTER_CLOCKINFO_GET = _int(
     INT,
     POINTER(ADLClockInfo)
 )
-ADL2_DISPLAY_ADAPTERID_GET = int(
+ADL2_DISPLAY_ADAPTERID_GET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(INT)
 )
-ADL_DISPLAY_ADAPTERID_GET = int(
+ADL_DISPLAY_ADAPTERID_GET = _int(
     INT,
     POINTER(INT)
 )
-ADL2_ADAPTER_EDC_ERRORRECORDS_GET = int(
+ADL2_ADAPTER_EDC_ERRORRECORDS_GET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(INT),
     POINTER(ADLErrorRecord)
 )
-ADL2_ADAPTER_EDC_ERRORINJECTION_SET = int(
+ADL2_ADAPTER_EDC_ERRORINJECTION_SET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(ADLErrorInjection)
 )
-ADL2_ADAPTER_GRAPHIC_CORE_INFO_GET = int(
+ADL2_ADAPTER_GRAPHIC_CORE_INFO_GET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(ADLGraphicCoreInfo)
 )
-ADL2_ADAPTER_PMLOG_SUPPORT_GET = int(
+ADL2_ADAPTER_PMLOG_SUPPORT_GET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(ADLPMLogSupportInfo)
 )
-ADL2_ADAPTER_PMLOG_START = int(
+ADL2_ADAPTER_PMLOG_START = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     POINTER(ADLPMLogStartInput),
     POINTER(ADLPMLogStartOutput),
     ADL_D3DKMT_HANDLE
 )
-ADL2_ADAPTER_PMLOG_STOP = int(
+ADL2_ADAPTER_PMLOG_STOP = _int(
     ADL_CONTEXT_HANDLE,
     INT,
     ADL_D3DKMT_HANDLE
@@ -2545,3 +2526,35 @@ class Memory(AdapterBase):
                     ctypes.byref(lpMemoryClock),
             ) == ADL_OK:
                 return lpMemoryClock.value
+
+    @property
+    def overdrive(self):
+        iSupported = INT()
+        iEnabled = INT()
+        iVersion = INT()
+
+        # Repeat for all available adapters in the system
+        iAdapterIndex = INT(self._adapter_index)
+        with ADL2_Main_Control_Create as context:
+            if _ADL2_Overdrive_Caps(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(iSupported),
+                    ctypes.byref(iEnabled),
+                    ctypes.byref(iVersion)
+            ) == ADL_OK:
+                if iVersion.value == 5:
+                    from .overdrive5_h import OverDrive5
+                    return OverDrive5(self._adapter_index)
+
+                elif iVersion.value == 6:
+                    from .overdrive6_h import OverDrive6
+                    return OverDrive6(self._adapter_index)
+
+                elif iVersion.value == 7:
+                    from .overdriven_h import OverDriveN
+                    return OverDriveN(self._adapter_index)
+
+                elif iVersion.value == 8:
+                    from .overdrive8_h import OverDrive8
+                    return OverDrive8(self._adapter_index)

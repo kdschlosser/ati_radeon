@@ -44,30 +44,11 @@ from .adl_structures_h import *  # NOQA
 # SOFTWARE.
 
 
-def GetProcAddress(pLibrary, name):
-    return getattr(pLibrary, name, NULL)
-
-
-def int(*args):
-    def wrapper(*func):
-        func = func[0]
-
-        if func is None:
-            return NULL
-
-        func.argtypes = list(args)
-        func.restype = INT
-
-        return func
-
-    return wrapper
-
-
-ADL2_GRAPHICS_PLATFORM_GET = int(
+ADL2_GRAPHICS_PLATFORM_GET = _int(
     ADL_CONTEXT_HANDLE,
     POINTER(INT)
 )
-ADL_GRAPHICS_PLATFORM_GET = int(
+ADL_GRAPHICS_PLATFORM_GET = _int(
     POINTER(INT)
 )
 
