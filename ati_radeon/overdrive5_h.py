@@ -480,7 +480,6 @@ class IntValueWrapper(int):
         return self._obj.max_value
 
 
-
 class FloatValueWrapper(float):
 
     def __init__(self, value=None):
@@ -519,6 +518,10 @@ class PowerThreshold(IntValueWrapper):
     @property
     def step(self):
         return self._obj.step
+
+    @property
+    def default(self):
+        return self._obj.default
 
 
 class ODValue(IntValueWrapper):
@@ -1017,13 +1020,13 @@ class OverDrive5(object):
         return res
 
     @property
-    def _temperatures(self):
+    def temperatures(self):
         res = []
         iAdapterIndex = INT(self._adapter_index)
 
         with ADL2_Main_Control_Create as context:
             for i, termalControllerInfo in enumerate(self._thermal_controller_infos):
-                if termalControllerInfo.iThermalDomain.value == ADL_DL_THERMAL_DOMAIN_GPU:
+                if termalControllerInfo.iThermalDomain == ADL_DL_THERMAL_DOMAIN_GPU:
                     adlTemperature = ADLTemperature()
                     adlTemperature.iSize = ctypes.sizeof(ADLTemperature)
                     if _ADL2_Overdrive5_Temperature_Get(
@@ -1032,7 +1035,7 @@ class OverDrive5(object):
                         i,
                         ctypes.byref(adlTemperature)
                     ) == ADL_OK:
-                        res += [adlTemperature.iTemperature.value / 1000.0]
+                        res += [adlTemperature.iTemperature / 1000.0]
         return res
 
     @property
@@ -1073,15 +1076,17 @@ class OverDrive5(object):
             ) != ADL_OK:
                 return
 
-            min_power_threshold = powerControlInfo.iMinValue.value
-            max_power_threshold = powerControlInfo.iMaxValue.value
-            step_power_threshold = powerControlInfo.iStepValue.value
+            min_power_threshold = powerControlInfo.iMinValue
+            max_power_threshold = powerControlInfo.iMaxValue
+            step_power_threshold = powerControlInfo.iStepValue
             current_power_threshold = powerControlCurrent.value
+            default_power_threshold = powerControlDefault.value
 
             class PThreshold(object):
                 min_value = min_power_threshold
                 max_value = max_power_threshold
                 step = step_power_threshold
+                default = default_power_threshold
 
             power_threshold = PowerThreshold(current_power_threshold)
             power_threshold._set_object(PThreshold)

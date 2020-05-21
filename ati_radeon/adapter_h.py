@@ -2509,6 +2509,76 @@ class Adapter(object):
 
     extended_desktop = property(fset=extended_desktop)
 
+    @property
+    def _overdrive(self):
+        iSupported = INT()
+        iEnabled = INT()
+        iVersion = INT()
+
+        from .overdrive5_h import _ADL2_Overdrive_Caps
+
+        # Repeat for all available adapters in the system
+        iAdapterIndex = INT(self._adapter_index)
+        with ADL2_Main_Control_Create as context:
+            if _ADL2_Overdrive_Caps(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(iSupported),
+                    ctypes.byref(iEnabled),
+                    ctypes.byref(iVersion)
+            ) == ADL_OK:
+                if iVersion.value == 5:
+                    from .overdrive5_h import OverDrive5
+                    return OverDrive5(self._adapter_index)
+
+                elif iVersion.value == 6:
+                    from .overdrive6_h import OverDrive6
+                    return OverDrive6(self._adapter_index)
+
+                elif iVersion.value == 7:
+                    from .overdriven_h import OverDriveN
+                    return OverDriveN(self._adapter_index)
+
+                elif iVersion.value == 8:
+                    from .overdrive8_h import OverDrive8
+                    return OverDrive8(self._adapter_index)
+
+    @property
+    def is_power_control_supported(self):
+        from .overdrive5_h import OverDrive5
+        from .overdrive6_h import OverDrive6
+        from .overdriven_h import OverDriveN
+        from .overdrive8_h import OverDrive8
+
+        overdrive = self._overdrive
+
+        if isinstance(overdrive, OverDrive5):
+            return overdrive.is_power_control_supported
+
+    @property
+    def power_control(self):
+        from .overdrive5_h import OverDrive5
+        from .overdrive6_h import OverDrive6
+        from .overdriven_h import OverDriveN
+        from .overdrive8_h import OverDrive8
+
+        overdrive = self._overdrive
+
+        if isinstance(overdrive, OverDrive5):
+            return overdrive.power_control
+
+    @property
+    def temperatures(self):
+        from .overdrive5_h import OverDrive5
+        from .overdrive6_h import OverDrive6
+        from .overdriven_h import OverDriveN
+        from .overdrive8_h import OverDrive8
+
+        overdrive = self._overdrive
+
+        if isinstance(overdrive, OverDrive5):
+            return overdrive.temperatures
+
 
 class DisplayConnection(object):
 

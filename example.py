@@ -27,6 +27,20 @@ for adapter in ati_radeon.adapters:
     print('speed', adapter.speed)
     print('default_speed', adapter.default_speed)
     print('is_gpu_accessable', adapter.is_gpu_accessable)
+    print('is_power_control_supported', adapter.is_power_control_supported)
+    print()
+    print('power_control')
+    power_control = adapter.power_control
+    print('    value', power_control)
+    print('    min', power_control.min)
+    print('    max', power_control.max)
+    print('    step', power_control.step)
+    print('    default', power_control.default)
+    print()
+    print('temperatures')
+    temperatures = adapter.temperatures
+    for temperature in temperatures:
+        print('   ', temperature)
 
     print()
     print('fan_speeds')
