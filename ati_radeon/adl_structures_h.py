@@ -265,8 +265,14 @@ class ADLODPerformanceLevels(ctypes.Structure):
     pass
 
 
+LPADLODPerformanceLevels = ctypes.POINTER(ADLODPerformanceLevels)
+
+
 class ADLCrossfireComb(ctypes.Structure):
     pass
+
+
+LPADLCrossfireComb = POINTER(ADLCrossfireComb)
 
 
 class ADLCrossfireInfo(ctypes.Structure):
@@ -963,6 +969,7 @@ _TEMP_AdapterInfo = [
     # found from OS
     ('iPresent', INT),
 ]
+
 
 
 if defined(_WIN32) or defined(_WIN64):
@@ -2042,7 +2049,7 @@ ADLODPerformanceLevels._fields_ = [
     ('iReserved', INT),
     # / Array of performance state descriptors. Must have
     # ADLODParameters.iNumberOfPerformanceLevels elements.
-    ('aLevels', ADLODPerformanceLevel * 1),
+    ('aLevels', ctypes.POINTER(ADLODPerformanceLevel)),
 ]
 # /////////////////////////////////////////////////////////////////////////////////////
 # /\brief Structure containing information about the proper CrossfireX
@@ -4292,6 +4299,128 @@ _ADLSGApplicationInfo._fields_ = [
 ]
 
 
+class _ADL_RIS_NOTFICATION_REASON(ctypes.Structure):
+
+    _fields_ = [
+        ('GlobalEnableChanged', INT),
+        ('GlobalSharpeningDegreeChanged', INT)
+    ]
+
+
+ADL_RIS_NOTFICATION_REASON = _ADL_RIS_NOTFICATION_REASON
+
+
+class _ADL_RIS_SETTINGS(ctypes.Structure):
+
+    _fields_ = [
+        ('GlobalEnable', INT),
+        ('GlobalSharpeningDegree', INT),
+        ('GlobalSharpeningDegree_MinLimit', INT),
+        ('GlobalSharpeningDegree_MaxLimit', INT),
+        ('GlobalSharpeningDegree_Step', INT),
+    ]
+
+
+ADL_RIS_SETTINGS = _ADL_RIS_SETTINGS
+
+
+class _ADL_DELAG_NOTFICATION_REASON(ctypes.Structure):
+
+    _fields_ = [
+        ('HotkeyChanged', INT),
+        ('GlobalEnableChanged', INT),
+        ('GlobalLimitFPSChanged', INT)
+    ]
+
+
+ADL_DELAG_NOTFICATION_REASON = _ADL_DELAG_NOTFICATION_REASON
+
+
+class _ADL_DELAG_SETTINGS(ctypes.Structure):
+
+    _fields_ = [
+        ('Hotkey', INT),
+        ('GlobalEnable', INT),
+        ('GlobalLimitFPS', INT),
+        ('GlobalLimitFPS_MinLimit', INT),
+        ('GlobalLimitFPS_MaxLimit', INT),
+        ('GlobalLimitFPS_Step', INT),
+    ]
+
+
+ADL_DELAG_SETTINGS = _ADL_DELAG_SETTINGS
+
+
+class _ADL_BOOST_NOTFICATION_REASON(ctypes.Structure):
+
+    _fields_ = [
+        ('HotkeyChanged', INT),
+        ('GlobalEnableChanged', INT),
+        ('GlobalMinResChanged', INT)
+    ]
+
+
+ADL_BOOST_NOTFICATION_REASON = _ADL_BOOST_NOTFICATION_REASON
+
+
+class _ADL_BOOST_SETTINGS(ctypes.Structure):
+
+    _fields_ = [
+        ('Hotkey', INT),
+        ('GlobalEnable', INT),
+        ('GlobalMinRes', INT),
+        ('GlobalMinRes_MinLimit', INT),
+        ('GlobalMinRes_MaxLimit', INT),
+        ('GlobalMinRes_Step', INT),
+    ]
+
+
+ADL_BOOST_SETTINGS = _ADL_BOOST_SETTINGS
+
+
+class _ADL_CHILL_NOTFICATION_REASON(ctypes.Structure):
+
+    _fields_ = [
+        ('HotkeyChanged', INT),
+        ('GlobalEnableChanged', INT),
+        ('GlobalMinFPSChanged', INT),
+        ('GlobalMaxFPSChanged', INT)
+
+    ]
+
+
+ADL_CHILL_NOTFICATION_REASON = _ADL_CHILL_NOTFICATION_REASON
+
+
+class _ADL_CHILL_SETTINGS(ctypes.Structure):
+
+    _fields_ = [
+        ('Hotkey', INT),
+        ('GlobalEnable', INT),
+        ('GlobalMinFPS', INT),
+        ('GlobalMaxFPS', INT),
+        ('GlobalFPS_MinLimit', INT),
+        ('GlobalFPS_MaxLimit', INT),
+        ('GlobalFPS_Step', INT),
+    ]
+
+
+ADL_CHILL_SETTINGS = _ADL_CHILL_SETTINGS
+
+
+
+class _ADL_ERROR_REASON(ctypes.Structure):
+
+    _fields_ = [
+        ('boost', INT),
+        ('delag', INT),
+        ('chill', INT)
+    ]
+
+
+ADL_ERROR_REASON = _ADL_ERROR_REASON
+
+
 def GetProcAddress(pLibrary, name):
     return getattr(pLibrary, name, NULL)
 
@@ -5671,16 +5800,15 @@ __all__ = (
     'long',
     'sys',
     'tagADLBezelTransientMode',
+    'ADL_RIS_NOTFICATION_REASON',
+    'ADL_RIS_SETTINGS',
+    'ADL_DELAG_NOTFICATION_REASON',
+    'ADL_DELAG_SETTINGS',
+    'ADL_BOOST_NOTFICATION_REASON',
+    'ADL_BOOST_SETTINGS',
+    'ADL_CHILL_NOTFICATION_REASON',
+    'ADL_CHILL_SETTINGS',
+    'ADL_ERROR_REASON',
+    'LPADLCrossfireComb',
+    'LPADLODPerformanceLevels'
 )
-
-
-if __name__ == '__main__':
-    with open(__file__, 'r') as f:
-        data = f.read()
-
-    for key in sorted(globals().keys()):
-        if key.startswith('__') and key.endswith('__'):
-            continue
-
-        print "    '" + key + "',"
-

@@ -348,7 +348,8 @@ def Init(hDLL):
     _ADL2_Adapter_Tear_Free_Cap = ADL2_ADAPTER_TEAR_FREE_CAP(
           GetProcAddress(hDLL, "ADL2_Adapter_Tear_Free_Cap")
     )
-    
+
+
 __all__ = (
     '_ADL2_DesktopConfig_Get',
     '_ADL_DesktopConfig_Get',
@@ -374,4 +375,3 @@ __all__ = (
     '_ADL_Adapter_Tear_Free_Get',
     '_ADL2_Adapter_Tear_Free_Cap',
 )
-

@@ -24,7 +24,7 @@
 
 # ***********************************************************************************
 from .adl_structures_h import *  # NOQA
-
+from . import utils
 
 # Copyright (c) 2016 Advanced Micro Devices, Inc. All rights reserved.
 # MIT LICENSE:
@@ -94,6 +94,40 @@ ADL2_ADAPTER_ADAPTERINFOX2_GET = _int(
 )
 ADL_ADAPTER_ADAPTERINFOX2_GET = _int(
     POINTER(POINTER(AdapterInfo))
+)
+ADL2_ADAPTER_REGVALUESTRING_GET = _int(
+    ADL_CONTEXT_HANDLE,
+    INT,
+    INT,
+    POINTER(CHAR),
+    POINTER(CHAR),
+    INT,
+    POINTER(CHAR)
+)
+ADL_ADAPTER_REGVALUESTRING_GET = _int(
+    INT,
+    INT,
+    POINTER(CHAR),
+    POINTER(CHAR),
+    INT,
+    POINTER(CHAR)
+)
+ADL2_ADAPTER_REGVALUESTRING_SET = _int(
+    ADL_CONTEXT_HANDLE,
+    INT,
+    INT,
+    POINTER(CHAR),
+    POINTER(CHAR),
+    INT,
+    POINTER(CHAR)
+)
+ADL_ADAPTER_REGVALUESTRING_SET = _int(
+    INT,
+    INT,
+    POINTER(CHAR),
+    POINTER(CHAR),
+    INT,
+    POINTER(CHAR)
 )
 ADL2_ADAPTER_ASICFAMILYTYPE_GET = _int(
     ADL_CONTEXT_HANDLE,
@@ -380,6 +414,53 @@ ADL2_FPS_SETTINGS_RESET = _int(
     ADL_CONTEXT_HANDLE,
     INT
 )
+ADL2_RIS_SETTINGS_SET = _int(
+    ADL_CONTEXT_HANDLE,
+    INT,
+    ADL_RIS_SETTINGS,
+    ADL_RIS_NOTFICATION_REASON
+)
+ADL2_RIS_SETTINGS_GET = _int(
+    ADL_CONTEXT_HANDLE,
+    INT,
+    POINTER(ADL_RIS_SETTINGS)
+)
+ADL2_CHILL_SETTINGSX2_SET = _int(
+    ADL_CONTEXT_HANDLE,
+    INT,
+    ADL_CHILL_SETTINGS,
+    ADL_CHILL_NOTFICATION_REASON,
+    POINTER(ADL_ERROR_REASON)
+)
+ADL2_CHILL_SETTINGSX2_GET = _int(
+    ADL_CONTEXT_HANDLE,
+    INT,
+    POINTER(ADL_CHILL_SETTINGS)
+)
+ADL2_DELAG_SETTINGS_SET = _int(
+    ADL_CONTEXT_HANDLE,
+    INT,
+    ADL_DELAG_SETTINGS,
+    ADL_DELAG_NOTFICATION_REASON,
+    POINTER(ADL_ERROR_REASON)
+)
+ADL2_DELAG_SETTINGS_GET = _int(
+    ADL_CONTEXT_HANDLE,
+    INT,
+    POINTER(ADL_DELAG_SETTINGS)
+)
+ADL2_BOOST_SETTINGS_SET = _int(
+    ADL_CONTEXT_HANDLE,
+    INT,
+    ADL_BOOST_SETTINGS,
+    ADL_BOOST_NOTFICATION_REASON,
+    POINTER(ADL_ERROR_REASON)
+)
+ADL2_BOOST_SETTINGS_GET = _int(
+    ADL_CONTEXT_HANDLE,
+    INT,
+    POINTER(ADL_BOOST_SETTINGS)
+)
 ADL2_ADAPTER_CLOCKINFO_GET = _int(
     ADL_CONTEXT_HANDLE,
     INT,
@@ -468,6 +549,18 @@ _ADL2_Adapter_AdapterInfoX2_Get = ADL2_ADAPTER_ADAPTERINFOX2_GET
 
 # Retrieves all OS-known adapter information.
 _ADL_Adapter_AdapterInfoX2_Get = ADL_ADAPTER_ADAPTERINFOX2_GET
+
+# ADL local interface. Function to query a string registry value set by driver.
+_ADL2_Adapter_RegValueString_Get = ADL2_ADAPTER_REGVALUESTRING_GET
+
+# ADL local interface. Function to query a string registry value set by driver.
+_ADL_Adapter_RegValueString_Get = ADL_ADAPTER_REGVALUESTRING_GET
+
+# ADL local interface. Function to set a driver registry string value.
+_ADL2_Adapter_RegValueString_Set = ADL2_ADAPTER_REGVALUESTRING_SET
+
+# ADL local interface. Function to set a driver registry string value.
+_ADL_Adapter_RegValueString_Set = ADL_ADAPTER_REGVALUESTRING_SET
 
 # Function to get the ASICFamilyType from the adapter.
 _ADL2_Adapter_ASICFamilyType_Get = ADL2_ADAPTER_ASICFAMILYTYPE_GET
@@ -632,6 +725,38 @@ _ADL2_FPS_Settings_Set = ADL2_FPS_SETTINGS_SET
 # Function to reset FPS Global Settings.
 _ADL2_FPS_Settings_Reset = ADL2_FPS_SETTINGS_RESET
 
+# Function to set RIS settings This function sets the user input values to
+# RIS feature.
+_ADL2_RIS_Settings_Set = ADL2_RIS_SETTINGS_SET
+
+# Function to get the RIS settings This function retrieves the RIS settings
+# for a specified display adapter.
+_ADL2_RIS_Settings_Get = ADL2_RIS_SETTINGS_GET
+
+# Function to set CHILL settings This function sets the user input values
+# to CHILL feature.
+_ADL2_CHILL_SettingsX2_Set = ADL2_CHILL_SETTINGSX2_SET
+
+# Function to get the CHILL settings This function retrieves the CHILL settings
+# for a specified display adapter.
+_ADL2_CHILL_SettingsX2_Get = ADL2_CHILL_SETTINGSX2_GET
+
+# Function to set DELAG settings This function sets the user input values to
+# DELAG feature.
+_ADL2_DELAG_Settings_Set = ADL2_DELAG_SETTINGS_SET
+
+# Function to get the DELAG settings This function retrieves the DELAG settings
+# for a specified display adapter.
+_ADL2_DELAG_Settings_Get = ADL2_DELAG_SETTINGS_GET
+
+# Function to set BOOST settings This function sets the user input values
+# to BOOST feature.
+_ADL2_BOOST_Settings_Set = ADL2_BOOST_SETTINGS_SET
+
+# Function to get the BOOST settings This function retrieves the BOOST settings
+# for a specified display adapter.
+_ADL2_BOOST_Settings_Get = ADL2_BOOST_SETTINGS_GET
+
 # Function to retrieve clock information for an adapter.
 _ADL2_Adapter_ClockInfo_Get = ADL2_ADAPTER_CLOCKINFO_GET
 
@@ -676,6 +801,10 @@ def Init(hDLL):
     global _ADL_Adapter_AdapterInfo_Get
     global _ADL2_Adapter_AdapterInfoX2_Get
     global _ADL_Adapter_AdapterInfoX2_Get
+    global _ADL2_Adapter_RegValueString_Get
+    global _ADL_Adapter_RegValueString_Get
+    global _ADL2_Adapter_RegValueString_Set
+    global _ADL_Adapter_RegValueString_Set
     global _ADL2_Adapter_ASICFamilyType_Get
     global _ADL_Adapter_ASICFamilyType_Get
     global _ADL2_Adapter_Speed_Caps
@@ -729,6 +858,14 @@ def Init(hDLL):
     global _ADL2_FPS_Settings_Get
     global _ADL2_FPS_Settings_Set
     global _ADL2_FPS_Settings_Reset
+    global _ADL2_RIS_Settings_Set
+    global _ADL2_RIS_Settings_Get
+    global _ADL2_CHILL_SettingsX2_Set
+    global _ADL2_CHILL_SettingsX2_Get
+    global _ADL2_DELAG_Settings_Set
+    global _ADL2_DELAG_Settings_Get
+    global _ADL2_BOOST_Settings_Set
+    global _ADL2_BOOST_Settings_Get
     global _ADL2_Adapter_ClockInfo_Get
     global _ADL_Adapter_ClockInfo_Get
     global _ADL2_Display_AdapterID_Get
@@ -775,6 +912,19 @@ def Init(hDLL):
     )
     _ADL_Adapter_AdapterInfoX2_Get = ADL_ADAPTER_ADAPTERINFOX2_GET(
           GetProcAddress(hDLL, "ADL_Adapter_AdapterInfoX2_Get")
+    )
+    _ADL2_Adapter_RegValueString_Get = ADL2_ADAPTER_REGVALUESTRING_GET(
+        GetProcAddress(hDLL, "ADL2_Adapter_RegValueString_Get")
+    )
+    _ADL_Adapter_RegValueString_Get = ADL_ADAPTER_REGVALUESTRING_GET(
+        GetProcAddress(hDLL, "ADL_Adapter_RegValueString_Get")
+    )
+
+    _ADL2_Adapter_RegValueString_Set = ADL2_ADAPTER_REGVALUESTRING_SET(
+        GetProcAddress(hDLL, "ADL2_Adapter_RegValueString_Set")
+    )
+    _ADL_Adapter_RegValueString_Set = ADL_ADAPTER_REGVALUESTRING_SET(
+        GetProcAddress(hDLL, "ADL_Adapter_RegValueString_Set")
     )
     _ADL2_Adapter_ASICFamilyType_Get = ADL2_ADAPTER_ASICFAMILYTYPE_GET(
           GetProcAddress(hDLL, "ADL2_Adapter_ASICFamilyType_Get")
@@ -935,6 +1085,30 @@ def Init(hDLL):
     _ADL2_FPS_Settings_Reset = ADL2_FPS_SETTINGS_RESET(
           GetProcAddress(hDLL, "ADL2_FPS_Settings_Reset")
     )
+    _ADL2_RIS_Settings_Set = ADL2_RIS_SETTINGS_SET(
+        GetProcAddress(hDLL, "ADL2_RIS_Settings_Set")
+    )
+    _ADL2_RIS_Settings_Get = ADL2_RIS_SETTINGS_GET(
+        GetProcAddress(hDLL, "ADL2_RIS_Settings_Get")
+    )
+    _ADL2_CHILL_SettingsX2_Set = ADL2_CHILL_SETTINGSX2_SET(
+        GetProcAddress(hDLL, "ADL2_CHILL_SettingsX2_Set")
+    )
+    _ADL2_CHILL_SettingsX2_Get = ADL2_CHILL_SETTINGSX2_GET(
+        GetProcAddress(hDLL, "ADL2_CHILL_SettingsX2_Get")
+    )
+    _ADL2_DELAG_Settings_Set = ADL2_DELAG_SETTINGS_SET(
+        GetProcAddress(hDLL, "ADL2_DELAG_Settings_Set")
+    )
+    _ADL2_DELAG_Settings_Get = ADL2_DELAG_SETTINGS_GET(
+        GetProcAddress(hDLL, "ADL2_DELAG_Settings_Get")
+    )
+    _ADL2_BOOST_Settings_Set = ADL2_BOOST_SETTINGS_SET(
+        GetProcAddress(hDLL, "ADL2_BOOST_Settings_Set")
+    )
+    _ADL2_BOOST_Settings_Get = ADL2_BOOST_SETTINGS_GET(
+        GetProcAddress(hDLL, "ADL2_BOOST_Settings_Get")
+    )
     _ADL2_Adapter_ClockInfo_Get = ADL2_ADAPTER_CLOCKINFO_GET(
           GetProcAddress(hDLL, "ADL2_Adapter_ClockInfo_Get")
     )
@@ -966,6 +1140,7 @@ def Init(hDLL):
           GetProcAddress(hDLL, "ADL2_Adapter_PMLog_Stop")
     )
 
+
 __all__ = (
     '_ADL2_Adapter_Active_Get',
     '_ADL_Adapter_Active_Get',
@@ -979,6 +1154,10 @@ __all__ = (
     '_ADL_Adapter_AdapterInfo_Get',
     '_ADL2_Adapter_AdapterInfoX2_Get',
     '_ADL_Adapter_AdapterInfoX2_Get',
+    '_ADL2_Adapter_RegValueString_Get',
+    '_ADL_Adapter_RegValueString_Get',
+    '_ADL2_Adapter_RegValueString_Set',
+    '_ADL_Adapter_RegValueString_Set',
     '_ADL2_Adapter_ASICFamilyType_Get',
     '_ADL_Adapter_ASICFamilyType_Get',
     '_ADL2_Adapter_Speed_Caps',
@@ -1032,6 +1211,14 @@ __all__ = (
     '_ADL2_FPS_Settings_Get',
     '_ADL2_FPS_Settings_Set',
     '_ADL2_FPS_Settings_Reset',
+    '_ADL2_RIS_Settings_Set',
+    '_ADL2_RIS_Settings_Get',
+    '_ADL2_CHILL_SettingsX2_Set',
+    '_ADL2_CHILL_SettingsX2_Get',
+    '_ADL2_DELAG_Settings_Set',
+    '_ADL2_DELAG_Settings_Get',
+    '_ADL2_BOOST_Settings_Set',
+    '_ADL2_BOOST_Settings_Get',
     '_ADL2_Adapter_ClockInfo_Get',
     '_ADL_Adapter_ClockInfo_Get',
     '_ADL2_Display_AdapterID_Get',
@@ -1078,17 +1265,15 @@ from .crossdisplay_h import CrossDisplay  # NOQA
 # _ADL2_Adapter_Graphic_Core_Info_Get
 
 
-
 class PortConnector(object):
 
     def __init__(
             self,
-            name,
+            type,
             adapter_index,
             device_port,
-            type
     ):
-        self.name = name
+        self.name = str(type)
         self._adapter_index = adapter_index
         self._device_port = device_port
         self._type = type
@@ -1102,10 +1287,10 @@ class PortConnector(object):
 
         with ADL2_Main_Control_Create as context:
             if _ADL2_Adapter_SupportedConnections_Get(
-                    context,
-                    iAdapterIndex,
-                    devicePort,
-                    ctypes.byref(supportedConnections)
+                context,
+                iAdapterIndex,
+                devicePort,
+                ctypes.byref(supportedConnections)
             ) == ADL_OK:
                 return supportedConnections.iSupportedProperties[self._type]
 
@@ -1145,42 +1330,62 @@ class PortConnector(object):
         devicePort = self._device_port
 
         with ADL2_Main_Control_Create as context:
-            if _ADL2_Adapter_ConnectionData_Get(
-                    context,
-                    iAdapterIndex,
-                    devicePort,
-                    ADL_QUERY_CURRENT_DATA,
-                    ctypes.byref(connectionData)
-            ) == ADL_OK:
+            res = _ADL2_Adapter_ConnectionData_Get(
+                context,
+                iAdapterIndex,
+                devicePort,
+                ADL_QUERY_REAL_DATA,
+                ctypes.byref(connectionData)
+            )
+
+            if res == ADL_OK:
                 return connectionData
 
     @property
     def is_connected(self):
-        connectionData = self._connection_data
-        return connectionData.iConnectionType.value == self._type
+        iAdapterIndex = INT(self._adapter_index)
+        lpADLConnectionState = ADLConnectionState()
+
+        devicePort = self._device_port
+
+        with ADL2_Main_Control_Create as context:
+            res = _ADL2_Adapter_ConnectionState_Get(
+                context,
+                iAdapterIndex,
+                devicePort,
+                ctypes.byref(lpADLConnectionState)
+            )
+            if res == ADL_OK:
+                print(lpADLConnectionState.iDisplayIndex.value)
 
     @property
     def bitrate(self):
         connectionData = self._connection_data
+        if connectionData is None:
+            return
+
         valid_properties = connectionData.aConnectionProperties.iValidProperties.value
 
         if valid_properties & ADL_CONNECTION_PROPERTY_BITRATE == ADL_CONNECTION_PROPERTY_BITRATE:
             bitrate = connectionData.aConnectionProperties.iBitrate.value
 
-            if bitrate == ADL_LINK_BITRATE_1_62_GHZ:
-                return '1.62GHz'
-            if bitrate == ADL_LINK_BITRATE_2_7_GHZ:
-                return '2.7GHz'
-            if bitrate == ADL_LINK_BTIRATE_3_24_GHZ:
-                return '3.24GHz'
-            if bitrate == ADL_LINK_BITRATE_5_4_GHZ:
-                return '5.4GHz'
+            mapping = [
+                ADL_LINK_BITRATE_1_62_GHZ,
+                ADL_LINK_BITRATE_2_7_GHZ,
+                ADL_LINK_BTIRATE_3_24_GHZ,
+                ADL_LINK_BITRATE_5_4_GHZ,
+                ADL_LINK_BITRATE_UNKNOWN
+            ]
+            return mapping[mapping.index(bitrate)]
 
-        return 'Unknown'
+        return ADL_LINK_BITRATE_UNKNOWN
 
     @property
     def number_of_lanes(self):
         connectionData = self._connection_data
+        if connectionData is None:
+            return
+
         valid_properties = connectionData.aConnectionProperties.iValidProperties.value
 
         if valid_properties & ADL_CONNECTION_PROPERTY_NUMBER_OF_LANES == ADL_CONNECTION_PROPERTY_NUMBER_OF_LANES:
@@ -1189,142 +1394,77 @@ class PortConnector(object):
     @property
     def three_d_caps(self):
         connectionData = self._connection_data
+        if connectionData is None:
+            return
+
         valid_properties = connectionData.aConnectionProperties.iValidProperties.value
 
         if valid_properties & ADL_CONNECTION_PROPERTY_3DCAPS == ADL_CONNECTION_PROPERTY_3DCAPS:
             caps = connectionData.aConnectionProperties.iStereo3DCaps.value
 
             if caps & ADL_CONNPROP_S3D_ALTERNATE_TO_FRAME_PACK == ADL_CONNPROP_S3D_ALTERNATE_TO_FRAME_PACK:
-                return True
+                return ADL_CONNPROP_S3D_ALTERNATE_TO_FRAME_PACK
 
-        return False
+        return 'Off'
 
     @property
     def output_bandwidth(self):
         connectionData = self._connection_data
+        if connectionData is None:
+            return
+
         valid_properties = connectionData.aConnectionProperties.iValidProperties.value
 
         if valid_properties & ADL_CONNECTION_PROPERTY_OUTPUT_BANDWIDTH == ADL_CONNECTION_PROPERTY_OUTPUT_BANDWIDTH:
             output_bandwidth = connectionData.aConnectionProperties.iOutputBandwidth.value
+            mapping = [
+                ADL_LINK_BITRATE_1_62_GHZ,
+                ADL_LINK_BITRATE_2_7_GHZ,
+                ADL_LINK_BTIRATE_3_24_GHZ,
+                ADL_LINK_BITRATE_5_4_GHZ,
+                ADL_LINK_BITRATE_UNKNOWN
+            ]
+            return mapping[mapping.index(output_bandwidth)]
 
-            if output_bandwidth == ADL_LINK_BITRATE_1_62_GHZ:
-                return '1.62GHz'
-            if output_bandwidth == ADL_LINK_BITRATE_2_7_GHZ:
-                return '2.7GHz'
-            if output_bandwidth == ADL_LINK_BTIRATE_3_24_GHZ:
-                return '3.24GHz'
-            if output_bandwidth == ADL_LINK_BITRATE_5_4_GHZ:
-                return '5.4GHz'
-
-        return 'Unknown'
+        return ADL_LINK_BITRATE_UNKNOWN
 
     @property
     def color_depth(self):
         connectionData = self._connection_data
+        if connectionData is None:
+            return
+
         valid_properties = connectionData.aConnectionProperties.iValidProperties.value
 
         if valid_properties & ADL_CONNECTION_PROPERTY_COLORDEPTH == ADL_CONNECTION_PROPERTY_COLORDEPTH:
             color_depth = connectionData.aConnectionProperties.iColorDepth.value
 
-            if color_depth == ADL_COLORDEPTH_666:
-                return '6bit'
-            if color_depth == ADL_COLORDEPTH_888:
-                return '8bit'
-            if color_depth == ADL_COLORDEPTH_101010:
-                return '10bit'
-            if color_depth == ADL_COLORDEPTH_121212:
-                return '12bit'
-            if color_depth == ADL_COLORDEPTH_141414:
-                return '14bit'
-            if color_depth == ADL_COLORDEPTH_161616:
-                return '16bit'
+            mapping = [
+                ADL_COLORDEPTH_UNKNOWN,
+                ADL_COLORDEPTH_666,
+                ADL_COLORDEPTH_888,
+                ADL_COLORDEPTH_101010,
+                ADL_COLORDEPTH_121212,
+                ADL_COLORDEPTH_141414,
+                ADL_COLORDEPTH_161616
+            ]
+            if color_depth in mapping:
+                return mapping[mapping.index(color_depth)]
 
-            return 'Unknown'
-
-
-class AdapterPort(object):
-
-    def __init__(self, adapter_index, id):
-        self._adapter_index = adapter_index
-        self.id = id
-
-    @property
-    def active_connector(self):
-        for connector in self.supported_connections:
-            if connector.is_connected:
-                return connector
-
-    @property
-    def supported_connections(self):
-        iAdapterIndex = INT(self._adapter_index)
-        supportedConnections = ADLSupportedConnections()
-
-        devicePort = ADLDevicePort()
-        devicePort.iConnectorIndex = INT(self.id)
-        devicePort.aMSTRad.iLinkNumber = INT(1)
-        devicePort.aMSTRad.rad[0] = INT(0)
-
-        with ADL2_Main_Control_Create as context:
-            if _ADL2_Adapter_SupportedConnections_Get(
-                    context,
-                    iAdapterIndex,
-                    devicePort,
-                    ctypes.byref(supportedConnections)
-            ) != ADL_OK:
-                return []
-
-        res = []
-        for i in range(14):
-            if (supportedConnections.iSupportedConnections.value & (1 << i)) != (1 << i):
-                continue
-
-            if i == ADL_CONNECTION_TYPE_VGA:
-                res += [PortConnector('VGA', self._adapter_index, devicePort, i)]
-            elif i == ADL_CONNECTION_TYPE_DVI:
-                res += [PortConnector('DVI-D', self._adapter_index, devicePort, i)]
-            elif i == ADL_CONNECTION_TYPE_DVI_SL:
-                res += [PortConnector('DVI-I', self._adapter_index, devicePort, i)]
-            elif i == ADL_CONNECTION_TYPE_HDMI:
-                res += [PortConnector('HDMI', self._adapter_index, devicePort, i)]
-            elif i == ADL_CONNECTION_TYPE_DISPLAY_PORT:
-                res += [PortConnector('DisplayPort', self._adapter_index, devicePort, i)]
-            elif i == ADL_CONNECTION_TYPE_ACTIVE_DONGLE_DP_DVI_SL:
-                res += [PortConnector('DisplayPort --> DVI-I (Active)', self._adapter_index, devicePort, i)]
-            elif i == ADL_CONNECTION_TYPE_ACTIVE_DONGLE_DP_DVI_DL:
-                res += [PortConnector('DisplayPort --> DVI-D (Active)', self._adapter_index, devicePort, i)]
-            elif i == ADL_CONNECTION_TYPE_ACTIVE_DONGLE_DP_HDMI:
-                res += [PortConnector('DisplayPort --> HDMI (Active)', self._adapter_index, devicePort, i)]
-            elif i == ADL_CONNECTION_TYPE_ACTIVE_DONGLE_DP_VGA:
-                res += [PortConnector('DisplayPort --> VGA (Active)', self._adapter_index, devicePort, i)]
-            elif i == ADL_CONNECTION_TYPE_PASSIVE_DONGLE_DP_HDMI:
-                res += [PortConnector('DisplayPort --> HDMI (Passive)', self._adapter_index, devicePort, i)]
-            elif i == ADL_CONNECTION_TYPE_PASSIVE_DONGLE_DP_DVI:
-                res += [PortConnector('DisplayPort --> DVI (Passive)', self._adapter_index, devicePort, i)]
-            elif i == ADL_CONNECTION_TYPE_MST:
-                res += [PortConnector('Display Branch', self._adapter_index, devicePort, i)]
-            elif i == ADL_CONNECTION_TYPE_ACTIVE_DONGLE:
-                res += [PortConnector('DisplayPort (Active)', self._adapter_index, devicePort, i)]
-            elif i == ADL_CONNECTION_TYPE_VIRTUAL:
-                res += [PortConnector('Virtual', self._adapter_index, devicePort, i)]
-
-        return res
+        return ADL_COLORDEPTH_UNKNOWN
 
     @property
     def _connection_state(self):
         connectionState = ADLConnectionState()
         iAdapterIndex = INT(self._adapter_index)
-
-        devicePort = ADLDevicePort()
-        devicePort.iConnectorIndex = INT(self.id)
-        devicePort.aMSTRad.iLinkNumber = INT(1)
-        devicePort.aMSTRad.rad[0] = INT(0)
+        devicePort = self._device_port
 
         with ADL2_Main_Control_Create as context:
             if _ADL2_Adapter_ConnectionState_Get(
-                    context,
-                    iAdapterIndex,
-                    devicePort,
-                    ctypes.byref(connectionState)
+                context,
+                iAdapterIndex,
+                devicePort,
+                ctypes.byref(connectionState)
             ) == ADL_OK:
                 return connectionState
 
@@ -1332,48 +1472,223 @@ class AdapterPort(object):
     def emulation_status(self):
         connectionState = self._connection_state
 
+        if connectionState is None:
+            return ''
+
         if connectionState.iDisplayIndex.value == -1:
             return ''
 
         status = connectionState.iEmulationStatus.value
 
-        if (
-            status & ADL_EMUL_STATUS_REAL_DEVICE_CONNECTED ==
-            ADL_EMUL_STATUS_REAL_DEVICE_CONNECTED
+        for item in (
+            ADL_EMUL_STATUS_REAL_DEVICE_CONNECTED,
+            ADL_EMUL_STATUS_EMULATED_DEVICE_USED,
+            ADL_EMUL_STATUS_LAST_ACTIVE_DEVICE_USED,
+            ADL_EMUL_STATUS_EMULATED_DEVICE_PRESENT
         ):
-            return 'Real Display'
-
-        if (
-            status & ADL_EMUL_STATUS_EMULATED_DEVICE_USED ==
-            ADL_EMUL_STATUS_EMULATED_DEVICE_USED
-        ):
-            return 'Emulated Display'
-        if (
-            status & ADL_EMUL_STATUS_LAST_ACTIVE_DEVICE_USED ==
-            ADL_EMUL_STATUS_LAST_ACTIVE_DEVICE_USED
-        ):
-            return 'Last Active Display'
-
-        return 'No Display'
+            if status & item == item:
+                return item
 
     @property
     def emulation_mode(self):
         connectionState = self._connection_state
+        if connectionState is None:
+            return ''
+
         mode = connectionState.iEmulationMode.value
-        if mode == ADL_EMUL_MODE_OFF:
-            return 'Off'
-        if mode == ADL_EMUL_MODE_ON_CONNECTED:
-            return 'When Display connected'
-        if mode == ADL_EMUL_MODE_ON_DISCONNECTED:
-            return 'When Display Disconnected'
-        if mode == ADL_EMUL_MODE_ALWAYS:
-            return 'Always'
+
+        mapping = [
+            ADL_EMUL_MODE_OFF,
+            ADL_EMUL_MODE_ON_CONNECTED,
+            ADL_EMUL_MODE_ON_DISCONNECTED,
+            ADL_EMUL_MODE_ALWAYS
+        ]
+
+        return mapping[mapping.index(mode)]
+
+    @emulation_mode.setter
+    def emulation_mode(self, value):
+        for item in (
+            ADL_EMUL_MODE_OFF,
+            ADL_EMUL_MODE_ON_CONNECTED,
+            ADL_EMUL_MODE_ON_DISCONNECTED,
+            ADL_EMUL_MODE_ALWAYS
+        ):
+            if value == str(item):
+                value = item
+            if value == item:
+                break
+
+        else:
+            return
+
+        iEmulationMode = INT(value)
+        iAdapterIndex = INT(self._adapter_index)
+        devicePort = self._device_port
+
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_Adapter_EmulationMode_Set(
+                    context,
+                    iAdapterIndex,
+                    devicePort,
+                    ctypes.byref(iEmulationMode)
+            )
 
     @property
     def device_present(self):
         connectionState = self._connection_state
+        if connectionState is None:
+            return False
+
         status = connectionState.iEmulationStatus.value
-        return status & ADL_EMUL_STATUS_EMULATED_DEVICE_PRESENT == ADL_EMUL_STATUS_EMULATED_DEVICE_PRESENT
+        return (
+            status & ADL_EMUL_STATUS_EMULATED_DEVICE_PRESENT ==
+            ADL_EMUL_STATUS_EMULATED_DEVICE_PRESENT
+        )
+
+
+class AdapterConnector(object):
+
+    def __init__(self, adapter_index, connector_index):
+        self._adapter_index = adapter_index
+        self._connector_index = connector_index
+
+    @property
+    def index(self):
+        return self._connector_index
+
+    @property
+    def active_connector(self):
+        for connector in self:
+            if connector.is_connected:
+                return connector
+
+    def __iter__(self):
+        iAdapterIndex = INT(self._adapter_index)
+        supportedConnections = ADLSupportedConnections()
+
+        devicePort = ADLDevicePort()
+        devicePort.iConnectorIndex = INT(self._connector_index)
+        devicePort.aMSTRad.iLinkNumber = INT(1)
+        # devicePort.aMSTRad.rad = b'\x00'
+
+        with ADL2_Main_Control_Create as context:
+            if _ADL2_Adapter_SupportedConnections_Get(
+                context,
+                iAdapterIndex,
+                devicePort,
+                ctypes.byref(supportedConnections)
+            ) == ADL_OK:
+
+                mapping = [
+                    ADL_CONNECTION_TYPE_VGA,
+                    ADL_CONNECTION_TYPE_DVI,
+                    ADL_CONNECTION_TYPE_DVI_SL,
+                    ADL_CONNECTION_TYPE_HDMI,
+                    ADL_CONNECTION_TYPE_DISPLAY_PORT,
+                    ADL_CONNECTION_TYPE_ACTIVE_DONGLE_DP_DVI_SL,
+                    ADL_CONNECTION_TYPE_ACTIVE_DONGLE_DP_DVI_DL,
+                    ADL_CONNECTION_TYPE_ACTIVE_DONGLE_DP_HDMI,
+                    ADL_CONNECTION_TYPE_ACTIVE_DONGLE_DP_VGA,
+                    ADL_CONNECTION_TYPE_PASSIVE_DONGLE_DP_HDMI,
+                    ADL_CONNECTION_TYPE_PASSIVE_DONGLE_DP_DVI,
+                    ADL_CONNECTION_TYPE_MST,
+                    ADL_CONNECTION_TYPE_ACTIVE_DONGLE,
+                    ADL_CONNECTION_TYPE_VIRTUAL
+                ]
+                for item in mapping:
+                    if (supportedConnections.iSupportedConnections & (1 << item)) == (1 << item):
+                        yield PortConnector(item, self._adapter_index, devicePort)
+
+    @property
+    def _connection_data(self):
+        lpConnectionData = ADLConnectionData()
+        iAdapterIndex = INT(self._adapter_index)
+        iQueryType = INT(ADL_QUERY_CURRENT_DATA)
+
+        devicePort = ADLDevicePort()
+        devicePort.iConnectorIndex = INT(self._connector_index)
+        devicePort.aMSTRad.iLinkNumber = INT(1)
+        # devicePort.aMSTRad.rad = b'\x00'
+        with ADL2_Main_Control_Create as context:
+            _ADL2_Adapter_ConnectionData_Get(
+                context,
+                iAdapterIndex,
+                devicePort,
+                iQueryType,
+                ctypes.byref(lpConnectionData)
+            )
+
+            return lpConnectionData
+
+    @property
+    def child_ports(self):
+        lpConnectionData = self._connection_data
+        if lpConnectionData is None:
+            return
+
+        for i in range(lpConnectionData.iNumberofPorts):
+            from .adl_sdk_h import libc
+
+            active_bit = i
+            active = False
+
+            if (1 << i) & lpConnectionData.iActiveConnections.value == 1 << i:
+                active = True
+
+            else:
+                if i + 1 == lpConnectionData.iNumberofPorts.value:
+                    if (1 << 7) & lpConnectionData.iActiveConnections.value == 1 << 7:
+                        active = True
+                        active_bit = 7
+
+            devicePort = ADLDevicePort()
+            devicePort.iConnectorIndex = INT(self._connector_index)
+            devicePort.aMSTRad.iLinkNumber = 2
+            libc.memset(devicePort.aMSTRad.rad, 0, ADL_MAX_RAD_LINK_COUNT)
+            libc.memcpy(devicePort.aMSTRad.rad, (CHAR * 2)(b'\x00'), devicePort.aMSTRad.iLinkNumber)
+            devicePort.aMSTRad.rad[2] = CHAR(bytes(active_bit + 1))
+
+            iAdapterIndex = INT(self._adapter_index)
+            supportedConnections = ADLSupportedConnections()
+
+            with ADL2_Main_Control_Create as context:
+                if _ADL2_Adapter_SupportedConnections_Get(
+                        context,
+                        iAdapterIndex,
+                        devicePort,
+                        ctypes.byref(supportedConnections)
+                ) != ADL_OK:
+                    print('_ADL2_Adapter_SupportedConnections_Get failed')
+                    return
+
+                res = []
+
+                mapping = [
+                    ADL_CONNECTION_TYPE_VGA,
+                    ADL_CONNECTION_TYPE_DVI,
+                    ADL_CONNECTION_TYPE_DVI_SL,
+                    ADL_CONNECTION_TYPE_HDMI,
+                    ADL_CONNECTION_TYPE_DISPLAY_PORT,
+                    ADL_CONNECTION_TYPE_ACTIVE_DONGLE_DP_DVI_SL,
+                    ADL_CONNECTION_TYPE_ACTIVE_DONGLE_DP_DVI_DL,
+                    ADL_CONNECTION_TYPE_ACTIVE_DONGLE_DP_HDMI,
+                    ADL_CONNECTION_TYPE_ACTIVE_DONGLE_DP_VGA,
+                    ADL_CONNECTION_TYPE_PASSIVE_DONGLE_DP_HDMI,
+                    ADL_CONNECTION_TYPE_PASSIVE_DONGLE_DP_DVI,
+                    ADL_CONNECTION_TYPE_MST,
+                    ADL_CONNECTION_TYPE_ACTIVE_DONGLE,
+                    ADL_CONNECTION_TYPE_VIRTUAL
+                ]
+                for item in mapping:
+                    if (supportedConnections.iSupportedConnections & (1 << item)) == (1 << item):
+                        res += [item]
+
+            if active:
+                print('Connection Active')
+            else:
+                print('Connection Inactive')
 
     @property
     def mhl_ports(self):
@@ -1384,17 +1699,17 @@ class AdapterPort(object):
         connectionData.iNumberofPorts = INT(0)
 
         parentDevicePort = ADLDevicePort()
-        parentDevicePort.iConnectorIndex = INT(self.id)
+        parentDevicePort.iConnectorIndex = INT(self._connector_index)
         parentDevicePort.aMSTRad.iLinkNumber = INT(1)
-        parentDevicePort.aMSTRad.rad[0] = INT(0)
+        parentDevicePort.aMSTRad.rad = b'\x00'
 
         with ADL2_Main_Control_Create as context:
             if _ADL2_Adapter_ConnectionData_Get(
-                    context,
-                    iAdapterIndex,
-                    parentDevicePort,
-                    ADL_QUERY_CURRENT_DATA,
-                    ctypes.byref(connectionData)
+                context,
+                iAdapterIndex,
+                parentDevicePort,
+                ADL_QUERY_CURRENT_DATA,
+                ctypes.byref(connectionData)
             ) != ADL_OK:
                 return []
 
@@ -1427,11 +1742,11 @@ class MSTPort(object):
 
         with ADL2_Main_Control_Create as context:
             if _ADL2_Adapter_ConnectionData_Get(
-                    context,
-                    iAdapterIndex,
-                    parentDevicePort,
-                    ADL_QUERY_CURRENT_DATA,
-                    ctypes.byref(connectionData)
+                context,
+                iAdapterIndex,
+                parentDevicePort,
+                ADL_QUERY_CURRENT_DATA,
+                ctypes.byref(connectionData)
             ) == ADL_OK:
                 return connectionData
 
@@ -1466,25 +1781,28 @@ class MSTPort(object):
         num_ports = connectionData.iNumberofPorts.value
 
         if (
-                self._port_num + 1 == num_ports and
-                (1 << 7) & active_connections == (1 << 7)
+            self._port_num + 1 == num_ports and
+            (1 << 7) & active_connections == (1 << 7)
         ):
             active_bit = 7
-
         else:
             active_bit = self._port_num
 
         iAdapterIndex = INT(self._adapter_index)
         devicePort = ADLDevicePort()
         devicePort.iConnectorIndex = self._parent_device_port.iConnectorIndex
-        devicePort.aMSTRad.iLinkNumber = INT(self._parent_device_port.aMSTRad.iLinkNumber.value + 1)
+        devicePort.aMSTRad.iLinkNumber = INT(
+            self._parent_device_port.aMSTRad.iLinkNumber.value + 1
+        )
         ctypes.memset(devicePort.aMSTRad.rad, 0, ADL_MAX_RAD_LINK_COUNT)
         ctypes.memmove(
             devicePort.aMSTRad.rad, 
             self._parent_device_port.aMSTRad.rad, 
             devicePort.aMSTRad.iLinkNumber.value
         )
-        devicePort.aMSTRad.rad[self._parent_device_port.aMSTRad.iLinkNumber.value] = CHAR(active_bit + 1)
+        devicePort.aMSTRad.rad[self._parent_device_port.aMSTRad.iLinkNumber.value] = (
+            CHAR(active_bit + 1)
+        )
 
         supportedConnections = ADLSupportedConnections()
 
@@ -1498,38 +1816,26 @@ class MSTPort(object):
                 return []
 
         res = []
-        for i in range(14):
-            if (supportedConnections.iSupportedConnections.value & (1 << i)) != (1 << i):
-                continue
 
-            if i == ADL_CONNECTION_TYPE_VGA:
-                res += [PortConnector('VGA', self._adapter_index, devicePort, i)]
-            elif i == ADL_CONNECTION_TYPE_DVI:
-                res += [PortConnector('DVI-D', self._adapter_index, devicePort, i)]
-            elif i == ADL_CONNECTION_TYPE_DVI_SL:
-                res += [PortConnector('DVI-I', self._adapter_index, devicePort, i)]
-            elif i == ADL_CONNECTION_TYPE_HDMI:
-                res += [PortConnector('HDMI', self._adapter_index, devicePort, i)]
-            elif i == ADL_CONNECTION_TYPE_DISPLAY_PORT:
-                res += [PortConnector('DisplayPort', self._adapter_index, devicePort, i)]
-            elif i == ADL_CONNECTION_TYPE_ACTIVE_DONGLE_DP_DVI_SL:
-                res += [PortConnector('DisplayPort --> DVI-I (Active)', self._adapter_index, devicePort, i)]
-            elif i == ADL_CONNECTION_TYPE_ACTIVE_DONGLE_DP_DVI_DL:
-                res += [PortConnector('DisplayPort --> DVI-D (Active)', self._adapter_index, devicePort, i)]
-            elif i == ADL_CONNECTION_TYPE_ACTIVE_DONGLE_DP_HDMI:
-                res += [PortConnector('DisplayPort --> HDMI (Active)', self._adapter_index, devicePort, i)]
-            elif i == ADL_CONNECTION_TYPE_ACTIVE_DONGLE_DP_VGA:
-                res += [PortConnector('DisplayPort --> VGA (Active)', self._adapter_index, devicePort, i)]
-            elif i == ADL_CONNECTION_TYPE_PASSIVE_DONGLE_DP_HDMI:
-                res += [PortConnector('DisplayPort --> HDMI (Passive)', self._adapter_index, devicePort, i)]
-            elif i == ADL_CONNECTION_TYPE_PASSIVE_DONGLE_DP_DVI:
-                res += [PortConnector('DisplayPort --> DVI (Passive)', self._adapter_index, devicePort, i)]
-            elif i == ADL_CONNECTION_TYPE_MST:
-                res += [PortConnector('Display Branch', self._adapter_index, devicePort, i)]
-            elif i == ADL_CONNECTION_TYPE_ACTIVE_DONGLE:
-                res += [PortConnector('DisplayPort (Active)', self._adapter_index, devicePort, i)]
-            elif i == ADL_CONNECTION_TYPE_VIRTUAL:
-                res += [PortConnector('Virtual', self._adapter_index, devicePort, i)]
+        mapping = [
+            ADL_CONNECTION_TYPE_VGA,
+            ADL_CONNECTION_TYPE_DVI,
+            ADL_CONNECTION_TYPE_DVI_SL,
+            ADL_CONNECTION_TYPE_HDMI,
+            ADL_CONNECTION_TYPE_DISPLAY_PORT,
+            ADL_CONNECTION_TYPE_ACTIVE_DONGLE_DP_DVI_SL,
+            ADL_CONNECTION_TYPE_ACTIVE_DONGLE_DP_DVI_DL,
+            ADL_CONNECTION_TYPE_ACTIVE_DONGLE_DP_HDMI,
+            ADL_CONNECTION_TYPE_ACTIVE_DONGLE_DP_VGA,
+            ADL_CONNECTION_TYPE_PASSIVE_DONGLE_DP_HDMI,
+            ADL_CONNECTION_TYPE_PASSIVE_DONGLE_DP_DVI,
+            ADL_CONNECTION_TYPE_MST,
+            ADL_CONNECTION_TYPE_ACTIVE_DONGLE,
+            ADL_CONNECTION_TYPE_VIRTUAL
+        ]
+        for item in mapping:
+            if (supportedConnections.iSupportedConnections.value & (1 << item)) == (1 << item):
+                res += [PortConnector(item, self._adapter_index, devicePort)]
 
         return res
 
@@ -1545,34 +1851,7 @@ class Connector(object):
 
     @property
     def type(self):
-        if self._type == ADL_CONNECTOR_TYPE_UNKNOWN:
-            return 'Unknown'
-        if self._type == ADL_CONNECTOR_TYPE_VGA:
-            return 'VGA'
-        if self._type == ADL_CONNECTOR_TYPE_DVI_D:
-            return 'DVI-D'
-        if self._type == ADL_CONNECTOR_TYPE_DVI_I:
-            return 'DVI-I'
-        if self._type == ADL_CONNECTOR_TYPE_ATICVDONGLE_NA:
-            return 'Active Dongle-NA'
-        if self._type == ADL_CONNECTOR_TYPE_ATICVDONGLE_JP:
-            return 'Active Dongle-JP'
-        if self._type == ADL_CONNECTOR_TYPE_ATICVDONGLE_NONI2C:
-            return 'Active Dongle-NONI2C'
-        if self._type == ADL_CONNECTOR_TYPE_ATICVDONGLE_NONI2C_D:
-            return 'Active Dongle-NONI2C-D'
-        if self._type == ADL_CONNECTOR_TYPE_HDMI_TYPE_A:
-            return 'HDMI (type A)'
-        if self._type == ADL_CONNECTOR_TYPE_HDMI_TYPE_B:
-            return 'HDMI (type B)'
-        if self._type == ADL_CONNECTOR_TYPE_DISPLAYPORT:
-            return 'DisplayPort'
-        if self._type == ADL_CONNECTOR_TYPE_EDP:
-            return 'EDP'
-        if self._type == ADL_CONNECTOR_TYPE_MINI_DISPLAYPORT:
-            return 'DisplayPort (Mini)'
-        if self._type == ADL_CONNECTOR_TYPE_VIRTUAL:
-            return 'Virtual'
+        return self._type
 
 
 class Slot(object):
@@ -1586,15 +1865,34 @@ class Slot(object):
 
     @property
     def connectors(self):
+        mapping = [
+            ADL_CONNECTOR_TYPE_UNKNOWN,
+            ADL_CONNECTOR_TYPE_VGA,
+            ADL_CONNECTOR_TYPE_DVI_D,
+            ADL_CONNECTOR_TYPE_DVI_I,
+            ADL_CONNECTOR_TYPE_ATICVDONGLE_NA,
+            ADL_CONNECTOR_TYPE_ATICVDONGLE_JP,
+            ADL_CONNECTOR_TYPE_ATICVDONGLE_NONI2C,
+            ADL_CONNECTOR_TYPE_ATICVDONGLE_NONI2C_D,
+            ADL_CONNECTOR_TYPE_HDMI_TYPE_A,
+            ADL_CONNECTOR_TYPE_HDMI_TYPE_B,
+            ADL_CONNECTOR_TYPE_DISPLAYPORT,
+            ADL_CONNECTOR_TYPE_EDP,
+            ADL_CONNECTOR_TYPE_MINI_DISPLAYPORT,
+            ADL_CONNECTOR_TYPE_VIRTUAL
+        ]
         for connector in self._connectors:
             yield Connector(
                 self,
-                connector.iConnectorIndex.value,
-                connector.iConnectorId.value,
-                connector.iType.value,
-                connector.iOffset.value,
-                connector.iLength.value
+                connector.iConnectorIndex,
+                connector.iConnectorId,
+                mapping[connector.iType],
+                connector.iOffset,
+                connector.iLength
             )
+
+    def __iter__(self):
+        return self.connectors
 
 
 class FPS(object):
@@ -1638,62 +1936,69 @@ class FPS(object):
     def _fps_settings(self):
         iAdapterIndex = INT(self._adapter_index)
         lpFPSSettings = ADLFPSSettingsOutput()
+        lpFPSSettings.ulSize = ctypes.sizeof(ADLFPSSettingsOutput)
 
         with ADL2_Main_Control_Create as context:
-            if _ADL2_FPS_Settings_Get(
+            _ADL2_FPS_Settings_Get(
                     context,
                     iAdapterIndex,
                     ctypes.byref(lpFPSSettings),
-            ) == ADL_OK:
-                return lpFPSSettings
+            )
+            return lpFPSSettings
 
     @property
-    def monitor_power(self):
+    def type(self):
         lpFPSSettings = self._fps_settings
 
-        if lpFPSSettings.bACFPSEnabled.value:
+        if lpFPSSettings.bACFPSEnabled:
             return 'AC'
 
-        elif lpFPSSettings.bDCFPSEnabled.value:
+        if lpFPSSettings.bDCFPSEnabled:
             return 'DC'
 
-        return ''
+        return 'Not Enabled'
 
     @property
     def is_enabled(self):
         lpFPSSettings = self._fps_settings
 
-        return bool(lpFPSSettings.bACFPSEnabled.value) or bool(lpFPSSettings.bDCFPSEnabled.value)
+        return bool(lpFPSSettings.bACFPSEnabled) or bool(lpFPSSettings.bDCFPSEnabled)
 
     @property
     def value(self):
         lpFPSSettings = self._fps_settings
 
-        if lpFPSSettings.bACFPSEnabled.value:
-            return lpFPSSettings.ulACFPSCurrent.value
+        if lpFPSSettings.bACFPSEnabled:
+            return lpFPSSettings.ulACFPSCurrent
 
-        elif lpFPSSettings.bDCFPSEnabled.value:
-            return lpFPSSettings.ulDCFPSCurrent.value
+        if lpFPSSettings.bDCFPSEnabled:
+            return lpFPSSettings.ulDCFPSCurrent
+
+        return -1
 
     @property
     def maximum(self):
         lpFPSSettings = self._fps_settings
 
-        if lpFPSSettings.bACFPSEnabled.value:
-            return lpFPSSettings.ulACFPSMaximum.value
+        if lpFPSSettings.bACFPSEnabled:
+            return lpFPSSettings.ulACFPSMaximum
 
-        elif lpFPSSettings.bDCFPSEnabled.value:
-            return lpFPSSettings.ulDCFPSMaximum.value
+        if lpFPSSettings.bDCFPSEnabled:
+            return lpFPSSettings.ulDCFPSMaximum
+
+        return -1
 
     @property
     def minimum(self):
         lpFPSSettings = self._fps_settings
 
-        if lpFPSSettings.bACFPSEnabled.value:
-            return lpFPSSettings.ulACFPSMinimum.value
+        if lpFPSSettings.bACFPSEnabled:
+            return lpFPSSettings.ulACFPSMinimum
 
-        elif lpFPSSettings.bDCFPSEnabled.value:
-            return lpFPSSettings.ulDCFPSMinimum.value
+        elif lpFPSSettings.bDCFPSEnabled:
+            return lpFPSSettings.ulDCFPSMinimum
+
+        return -1
 
 
 class ErrorRecord(object):
@@ -1717,7 +2022,7 @@ class ErrorRecord(object):
         return self.__record.count.value
 
     @property
-    def is_location_vlid(self):
+    def is_location_valid(self):
         # locationValid
         return bool(self.__record.locationValid.value)
 
@@ -1737,7 +2042,219 @@ class ErrorRecord(object):
         return self.__record.tiestamp.value
 
 
-class Adapter(AdapterBase):
+class Adapter(object):
+
+    def __init__(self, adapter_id, adapter_index):
+        self._adapter_id = adapter_id
+        self._adapter_index = adapter_index
+
+    @property
+    def _adapter_info(self):
+        pNumAdapters = INT(-1)
+
+        with ADL2_Main_Control_Create as context:
+            if _ADL2_Adapter_NumberOfAdapters_Get(
+                    context,
+                    ctypes.byref(pNumAdapters)
+            ) != ADL_OK:
+                raise RuntimeError('Unable to get adapter count')
+
+            adapterInfoArray = (AdapterInfo * pNumAdapters.value)()
+
+            if _ADL2_Adapter_AdapterInfo_Get(
+                    context,
+                    adapterInfoArray,
+                    ctypes.sizeof(adapterInfoArray)
+            ) != ADL_OK:
+                raise RuntimeError("ADL2_Adapter_AdapterInfo_Get failed.")
+
+            return adapterInfoArray[self._adapter_index]
+
+    def __iter__(self):
+
+        from .display_h import _ADL2_Display_DisplayInfo_Get, _ADL2_Display_ConnectedDisplays_Get
+
+        lpInfo = self._adapter_info
+        lpAdapterID = INT()
+        iAdapterIndex = INT(lpInfo.iAdapterIndex)
+        lpConnections = INT()
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_Display_ConnectedDisplays_Get(context, iAdapterIndex, ctypes.byref(lpConnections))
+
+            if _ADL2_Adapter_ID_Get(
+                context,
+                iAdapterIndex,
+                ctypes.byref(lpAdapterID),
+            ) == ADL_OK:
+                if lpAdapterID.value == self._adapter_id:
+                    lpNumDisplays = INT()
+                    lppInfo = LPADLDisplayInfo()
+                    iForceDetect = INT(1)
+
+                    if _ADL2_Display_DisplayInfo_Get(
+                        context,
+                        iAdapterIndex,
+                        ctypes.byref(lpNumDisplays),
+                        ctypes.byref(lppInfo),
+                        iForceDetect
+                    ) == ADL_OK:
+                        for i in range(lpNumDisplays.value):
+                            bitmask = lppInfo[i].iDisplayInfoValue
+
+                            if bitmask | ADL_DISPLAY_DISPLAYINFO_DISPLAYCONNECTED == bitmask:
+                                yield DisplayConnection(self._adapter_index, i)
+
+    @property
+    def supports_edid_management(self):
+        lpSupported = INT()
+        iAdapterIndex = INT(self._adapter_index)
+
+        with ADL2_Main_Control_Create as context:
+            if _ADL2_Adapter_EDIDManagement_Caps(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(lpSupported)
+            ) != ADL_OK:
+                return False
+
+            return bool(lpSupported.value)
+
+    @property
+    def id(self):
+        return self._adapter_id
+
+    @property
+    def index(self):
+        return self._adapter_index
+
+    @property
+    def device_number(self):
+        lpInfo = self._adapter_info
+        if lpInfo is not None:
+            return lpInfo.iDeviceNumber
+
+    @property
+    def bus_number(self):
+        lpInfo = self._adapter_info
+        if lpInfo is not None:
+            return lpInfo.iBusNumber
+
+    @property
+    def vendor_id(self):
+        lpInfo = self._adapter_info
+        if lpInfo is not None:
+            return lpInfo.iVendorID
+
+    @property
+    def name(self):
+        lpInfo = self._adapter_info
+        if lpInfo is not None:
+            return utils.get_string(lpInfo.strAdapterName)
+
+    @property
+    def connectors(self):
+        pAdapterCaps = ADLAdapterCapsX2()
+        iAdapterIndex = INT(self._adapter_index)
+
+        with ADL2_Main_Control_Create as context:
+            if _ADL2_AdapterX2_Caps(
+                context,
+                iAdapterIndex,
+                ctypes.byref(pAdapterCaps)
+            ) != ADL_OK:
+                return []
+
+        res = []
+
+        for i in range(pAdapterCaps.iNumConnectors):
+            res += [AdapterConnector(self._adapter_index, i)]
+
+        return res
+
+    @property
+    def is_overdrive_enabled(self):
+        iSupported = INT()
+        iEnabled = INT()
+        iVersion = INT()
+
+        from .overdrive5_h import _ADL2_Overdrive_Caps
+
+        # Repeat for all available adapters in the system
+        iAdapterIndex = INT(self._adapter_index)
+        with ADL2_Main_Control_Create as context:
+            if _ADL2_Overdrive_Caps(
+                context,
+                iAdapterIndex,
+                ctypes.byref(iSupported),
+                ctypes.byref(iEnabled),
+                ctypes.byref(iVersion)
+            ) == ADL_OK:
+                return bool(iEnabled.value)
+
+    @property
+    def is_overdrive_supported(self):
+        iSupported = INT()
+        iEnabled = INT()
+        iVersion = INT()
+
+        from .overdrive5_h import _ADL2_Overdrive_Caps
+
+        # Repeat for all available adapters in the system
+        iAdapterIndex = INT(self._adapter_index)
+        with ADL2_Main_Control_Create as context:
+            if _ADL2_Overdrive_Caps(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(iSupported),
+                    ctypes.byref(iEnabled),
+                    ctypes.byref(iVersion)
+            ) == ADL_OK:
+                return bool(iSupported.value)
+
+    @property
+    def overdrive_version(self):
+        iSupported = INT()
+        iEnabled = INT()
+        iVersion = INT()
+
+        from .overdrive5_h import _ADL2_Overdrive_Caps
+
+        # Repeat for all available adapters in the system
+        iAdapterIndex = INT(self._adapter_index)
+        with ADL2_Main_Control_Create as context:
+            if _ADL2_Overdrive_Caps(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(iSupported),
+                    ctypes.byref(iEnabled),
+                    ctypes.byref(iVersion)
+            ) == ADL_OK:
+                return iVersion.value
+
+    @property
+    def firmware(self):
+        return Firmware(self._adapter_index)
+
+    @property
+    def fan_speeds(self):
+        return FanSpeeds(self._adapter_index)
+
+    @property
+    def core(self):
+        return Core(self._adapter_index)
+
+    @property
+    def memory(self):
+        return Memory(self._adapter_index)
+
+    @property
+    def crossfire(self):
+        return CrossFire(self._adapter_index)
+
+    @property
+    def crossdisplay(self):
+        return CrossDisplay(self._adapter_index)
 
     @property
     def error_records(self):
@@ -1746,11 +2263,11 @@ class Adapter(AdapterBase):
         pErrorrecordCount = INT()
 
         with ADL2_Main_Control_Create as context:
-            if _ADL2_Display_AdapterID_Get(
-                    context,
-                    iAdapterIndex,
-                    ctypes.byref(pErrorrecordCount),
-                    errorRecords
+            if _ADL2_Adapter_EDC_ErrorRecords_Get(
+                context,
+                iAdapterIndex,
+                ctypes.byref(pErrorrecordCount),
+                errorRecords
             ) != ADL_OK:
                 return []
 
@@ -1760,56 +2277,282 @@ class Adapter(AdapterBase):
 
         return res
 
-    # _ADL2_Adapter_PMLog_Support_Get
-    # _ADL2_Adapter_PMLog_Start
-    # _ADL2_Adapter_PMLog_Stop
-
-    @property
-    def adapter_id(self):
-        iAdapterIndex = INT(self._adapter_index)
-        lpAdapterID = INT()
-
-        with ADL2_Main_Control_Create as context:
-            if _ADL2_Display_AdapterID_Get(
-                    context,
-                    iAdapterIndex,
-                    ctypes.byref(lpAdapterID),
-            ) == ADL_OK:
-                return lpAdapterID.value
-
-
-    @property
-    def core_clock(self):
-        iAdapterIndex = INT(self._adapter_index)
-        lpClockInfo = ADLClockInfo()
-
-        with ADL2_Main_Control_Create as context:
-            if _ADL2_Adapter_ClockInfo_Get(
-                    context,
-                    iAdapterIndex,
-                    ctypes.byref(lpClockInfo),
-            ) == ADL_OK:
-                return lpClockInfo.iCoreClock.value
-
-    @property
-    def memory_clock(self):
-        iAdapterIndex = INT(self._adapter_index)
-        lpClockInfo = ADLClockInfo()
-
-        with ADL2_Main_Control_Create as context:
-            if _ADL2_Adapter_ClockInfo_Get(
-                    context,
-                    iAdapterIndex,
-                    ctypes.byref(lpClockInfo),
-            ) == ADL_OK:
-                return lpClockInfo.iMemoryClock.value
-
     @property
     def fps(self):
         return FPS(self._adapter_index)
 
     @property
-    def ports(self):
+    def supported_aspects(self):
+        iSize = INT(ADL_MAX_CHAR)
+        lpAspects = (CHAR * ADL_MAX_CHAR)()
+        iAdapterIndex = INT(self._adapter_index)
+
+        with ADL2_Main_Control_Create as context:
+            if _ADL2_Adapter_Aspects_Get(context, iAdapterIndex, lpAspects, iSize) == ADL_OK:
+                return utils.get_string(lpAspects).split(';')
+
+        return []
+
+    @property
+    def udid(self):
+        lpInfo = self._adapter_info
+        if lpInfo is not None:
+            return utils.get_string(lpInfo.strUDID)
+
+    @property
+    def function_number(self):
+        lpInfo = self._adapter_info
+        if lpInfo is not None:
+            return lpInfo.iFunctionNumber
+
+    @property
+    def is_present(self):
+        lpInfo = self._adapter_info
+        if lpInfo is not None:
+            return lpInfo.iPresent == 1
+
+    @property
+    def exists(self):
+        if defined(_WIN32) or defined(_WIN64):
+            lpInfo = self._adapter_info
+            if lpInfo is not None:
+                return lpInfo.iExist == 1
+
+    @property
+    def driver_path(self):
+        if defined(_WIN32) or defined(_WIN64):
+            lpInfo = self._adapter_info
+            if lpInfo is not None:
+                return utils.get_string(lpInfo.strDriverPath)
+
+    @property
+    def driver_path_ext(self):
+        if defined(_WIN32) or defined(_WIN64):
+            lpInfo = self._adapter_info
+            if lpInfo is not None:
+                return utils.get_string(lpInfo.strDriverPathExt)
+
+    @property
+    def upnp_path(self):
+        if defined(_WIN32) or defined(_WIN64):
+            lpInfo = self._adapter_info
+            if lpInfo is not None:
+                return utils.get_string(lpInfo.strPNPString)
+
+    @property
+    def display_index(self):
+        if defined(_WIN32) or defined(_WIN64):
+            lpInfo = self._adapter_info
+            if lpInfo is not None:
+                return lpInfo.iOSDisplayIndex
+
+    @property
+    def driver_index(self):
+        if defined(LINUX):
+            lpInfo = self._adapter_info
+            if lpInfo is not None:
+                return lpInfo.iDrvIndex
+
+    @property
+    def screen_config_name(self):
+        if defined(LINUX):
+            lpInfo = self._adapter_info
+            if lpInfo is not None:
+                return utils.get_string(lpInfo.strXScreenConfigName)
+
+    @property
+    def asic_family_type(self):
+        lpAsicTypes = INT()
+        lpValids = INT()
+        iAdapterIndex = INT(self._adapter_index)
+
+        with ADL2_Main_Control_Create as context:
+            if _ADL2_Adapter_ASICFamilyType_Get(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(lpAsicTypes),
+                    ctypes.byref(lpValids)
+            ) == ADL_OK:
+                # not sure what to do with the values
+                mapping = [
+                    ADL_ASIC_UNDEFINED,
+                    ADL_ASIC_DISCRETE,
+                    ADL_ASIC_INTEGRATED,
+                    ADL_ASIC_FIREGL,
+                    ADL_ASIC_FIREMV,
+                    ADL_ASIC_XGP,
+                    ADL_ASIC_FUSION,
+                    ADL_ASIC_FIRESTREAM,
+                    ADL_ASIC_EMBEDDED
+                ]
+                return mapping[mapping.index(lpAsicTypes.value)]
+
+        return ADL_ASIC_UNDEFINED
+
+    @property
+    def can_change_speed(self):
+        lpCaps = INT()
+        lpValid = INT()
+        iAdapterIndex = INT(self._adapter_index)
+
+        with ADL2_Main_Control_Create as context:
+            if _ADL2_Adapter_Speed_Caps(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(lpCaps),
+                    ctypes.byref(lpValid)
+            ) == ADL_OK:
+                return ADL_ADAPTER_SPEEDCAPS_SUPPORTED == lpCaps
+
+    @property
+    def speed(self):
+        lpCurrent = INT()
+        lpDefault = INT()
+        iAdapterIndex = INT(self._adapter_index)
+
+        with ADL2_Main_Control_Create as context:
+            if _ADL2_Adapter_Speed_Get(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(lpCurrent),
+                    ctypes.byref(lpDefault)
+            ) == ADL_OK:
+                # not sure what to do with the values
+
+                mapping = [
+                    ADL_CONTEXT_SPEED_UNFORCED,
+                    ADL_CONTEXT_SPEED_FORCEHIGH,
+                    ADL_CONTEXT_SPEED_FORCELOW,
+                    ADL_ADAPTER_SPEEDCAPS_SUPPORTED
+                ]
+
+                return mapping[lpCurrent.value]
+
+            return 'Unsupported'
+
+    @speed.setter
+    def speed(self, value):
+        if value not in (
+                str(ADL_CONTEXT_SPEED_FORCEHIGH),
+                ADL_CONTEXT_SPEED_FORCEHIGH,
+                str(ADL_CONTEXT_SPEED_UNFORCED),
+                ADL_CONTEXT_SPEED_UNFORCED
+        ):
+            return
+
+        if not isinstance(value, int):
+            if value == 'Force High':
+                value = ADL_CONTEXT_SPEED_FORCEHIGH
+            else:
+                value = ADL_CONTEXT_SPEED_UNFORCED
+
+        iSpeed = INT(value)
+        iAdapterIndex = INT(self._adapter_index)
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_Adapter_Speed_Set(
+                context,
+                iAdapterIndex,
+                iSpeed,
+            )
+
+    @property
+    def default_speed(self):
+        lpCurrent = INT()
+        lpDefault = INT()
+        iAdapterIndex = INT(self._adapter_index)
+
+        with ADL2_Main_Control_Create as context:
+            if _ADL2_Adapter_Speed_Get(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(lpCurrent),
+                    ctypes.byref(lpDefault)
+            ) == ADL_OK:
+                # not sure what to do with the values
+
+                mapping = [
+                    ADL_CONTEXT_SPEED_UNFORCED,
+                    ADL_CONTEXT_SPEED_FORCEHIGH,
+                    ADL_CONTEXT_SPEED_FORCELOW
+                ]
+
+                return mapping[mapping.index(lpDefault.value)]
+
+            return 'Unsupported'
+
+    @property
+    def is_gpu_accessable(self):
+        lpAccessibility = INT()
+        iAdapterIndex = INT(self._adapter_index)
+
+        with ADL2_Main_Control_Create as context:
+            if _ADL2_Adapter_Accessibility_Get(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(lpAccessibility),
+            ) == ADL_OK:
+                return lpAccessibility == 1
+
+    def extended_desktop(self, value):
+        lpNewlyActivate = INT()
+        iStatus = INT(value)
+        iAdapterIndex = INT(self._adapter_index)
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_Adapter_Active_Set(
+                context,
+                iAdapterIndex,
+                iStatus,
+                ctypes.byref(lpNewlyActivate),
+            )
+
+    extended_desktop = property(fset=extended_desktop)
+
+
+class DisplayConnection(object):
+
+    def __init__(self, adapter_index, display_index):
+        self._adapter_index = adapter_index
+        self._display_index = display_index
+
+    @property
+    def num_controllers(self):
+        pAdapterCaps = self._adapter_caps_x2
+
+        if pAdapterCaps is not None:
+            return pAdapterCaps.iNumControllers
+
+    @property
+    def num_gl_sync_connectors(self):
+        pAdapterCaps = self._adapter_caps_x2
+
+        if pAdapterCaps is not None:
+            return pAdapterCaps.iNumOfGLSyncConnectors
+
+    @property
+    def num_overlays(self):
+        pAdapterCaps = self._adapter_caps_x2
+
+        if pAdapterCaps is not None:
+            return pAdapterCaps.iNumOverlays
+
+    @property
+    def num_connectors(self):
+        pAdapterCaps = self._adapter_caps_x2
+
+        if pAdapterCaps is not None:
+            return pAdapterCaps.iNumConnectors
+
+    @property
+    def num_displays(self):
+        pAdapterCaps = self._adapter_caps_x2
+
+        if pAdapterCaps is not None:
+            return pAdapterCaps.iNumDisplays
+
+    @property
+    def _adapter_caps_x2(self):
         pAdapterCaps = ADLAdapterCapsX2()
         iAdapterIndex = INT(self._adapter_index)
 
@@ -1818,15 +2561,56 @@ class Adapter(AdapterBase):
                     context,
                     iAdapterIndex,
                     ctypes.byref(pAdapterCaps)
-            ) != ADL_OK:
-                return []
-            
+            ) == ADL_OK:
+                return pAdapterCaps
+
+    @property
+    def ports(self):
+        pAdapterCaps = self._adapter_caps_x2
+
+        if pAdapterCaps is None:
+            return []
+
         res = []
 
-        for i in range(pAdapterCaps.iNumConnectors.value):
-            res += [AdapterPort(self._adapter_index, i)]
-        
+        for i in range(pAdapterCaps.iNumConnectors):
+            res += [AdapterConnector(self._adapter_index, i)]
+
         return res
+
+
+
+    # _ADL2_Adapter_PMLog_Support_Get
+    # _ADL2_Adapter_PMLog_Start
+    # _ADL2_Adapter_PMLog_Stop
+
+    @property
+    def adapter_id(self):
+        lpAdapterID = INT()
+        iAdapterIndex = INT(self._adapter_index)
+
+        with ADL2_Main_Control_Create as context:
+            if _ADL2_Adapter_ID_Get(
+                context,
+                iAdapterIndex,
+                ctypes.byref(lpAdapterID),
+            ) == ADL_OK:
+                return lpAdapterID.value
+
+    @property
+    def display_adapter_id(self):
+        iAdapterIndex = INT(self._adapter_index)
+        lpAdapterID = INT()
+
+        with ADL2_Main_Control_Create as context:
+            if _ADL2_Display_AdapterID_Get(
+                context,
+                iAdapterIndex,
+                ctypes.byref(lpAdapterID),
+            ) == ADL_OK:
+                return lpAdapterID.value
+
+
 
     @property
     def slots(self):
@@ -1843,41 +2627,34 @@ class Adapter(AdapterBase):
                 iAdapterIndex,
                 ctypes.byref(lpValidFlags),
                 ctypes.byref(lpNumberSlots),
-                ctypes.byref(lppBracketSlot),
+                ctypes.cast(lppBracketSlot, POINTER(POINTER(ADLBracketSlotInfo))),
                 ctypes.byref(lpNumberConnector),
-                ctypes.byref(lppConnector),
+                ctypes.cast(lppConnector, POINTER(POINTER(ADLConnectorInfo))),
             ):
 
-                connectors = {}
+                for slot in lppBracketSlot:
+                    if slot is None:
+                        break
+
+                for slot in lppConnector:
+                    if slot is None:
+                        break
+
+                connectors = []
                 for i in range(lpNumberConnector.value):
                     connector = lppConnector[i]
-                    slot_index = connector.iSlotIndex.value
-
-                    if slot_index not in connectors:
-                        connectors[slot_index] = []
-
-                    connectors[slot_index] += [connector]
+                    connectors += [connector]
 
                 for i in range(lpNumberSlots.value):
                     slot = lppBracketSlot[i]
-                    slot_index = slot.iSlotIndex.value
+                    slot_index = slot.iSlotIndex
                     yield Slot(
                         slot_index,
-                        slot.iLength.value,
-                        slot.iWidth.value,
-                        connectors.get(slot_index, [])
+                        slot.iLength,
+                        slot.iWidth,
+                        connectors
                     )
 
-    @property
-    def aspects(self):
-        iSize = INT(ADL_MAX_CHAR)
-        lpAspects = ctypes.create_string_buffer(ADL_MAX_CHAR)
-        iAdapterIndex = INT(self._adapter_index)
-
-        with ADL2_Main_Control_Create as context:
-            _ADL2_Adapter_Aspects_Get(context, iAdapterIndex, lpAspects, iSize)
-
-        return lpAspects
 
     @property
     def memory(self):
@@ -1887,26 +2664,8 @@ class Adapter(AdapterBase):
     def crossfire(self):
         return CrossFire(self._adapter_index)
 
-    @property
-    def firmware(self):
-        return Firmware(self._adapter_index)
 
-    @property
-    def crossdisplay(self):
-        return CrossDisplay(self._adapter_index)
 
-    @property
-    def adapter_id(self):
-        lpAdapterID = INT()
-        iAdapterIndex = INT(self._adapter_index)
-
-        with ADL2_Main_Control_Create as context:
-            if _ADL2_Adapter_ID_Get(
-                    context,
-                    iAdapterIndex,
-                    ctypes.byref(lpAdapterID),
-            ) == ADL_OK:
-                return lpAdapterID
 
     @property
     def is_active(self):
@@ -1971,299 +2730,52 @@ class Adapter(AdapterBase):
             return _ADL2_Flush_Driver_Data(context, iAdapterIndex) == ADL_OK
 
     @property
-    def supported_aspect_ratios(self):
-        iSize = INT(256)
-        lpAspects = (CHAR * 256)
-        iAdapterIndex = INT(self._adapter_index)
-
-        with ADL2_Main_Control_Create as context:
-            if _ADL_Adapter_Aspects_Get(context, iAdapterIndex, lpAspects, iSize) == ADL_OK:
-                return self._get_string(lpAspects)
-
-    @property
     def _adapter_info(self):
-        lpInfo = AdapterInfo()
-        lpInfo.iSize = ctypes.sizeof(AdapterInfo)
-        iInputSize = INT(ctypes.sizeof(AdapterInfo))
-        iAdapterIndex = INT(self._adapter_index)
+        num_adapters = INT(-1)
 
         with ADL2_Main_Control_Create as context:
-            if _ADL2_Adapter_AdapterInfoX2_Get(
-                    context,
-                    iAdapterIndex,
-                    ctypes.byref(lpInfo),
-                    iInputSize
-            ) == ADL_OK:
-                return lpInfo
 
-    @property
-    def udid(self):
-        lpInfo = self._adapter_info
-        if lpInfo is not None:
-            return self._get_string(lpInfo.strUDID)
-
-    @property
-    def bus_number(self):
-        lpInfo = self._adapter_info
-        if lpInfo is not None:
-            return lpInfo.iBusNumber
-
-    @property
-    def device_number(self):
-        lpInfo = self._adapter_info
-        if lpInfo is not None:
-            return lpInfo.iDeviceNumber
-
-    @property
-    def function_number(self):
-        lpInfo = self._adapter_info
-        if lpInfo is not None:
-            return lpInfo.iFunctionNumber
-
-    @property
-    def vendor_id(self):
-        lpInfo = self._adapter_info
-        if lpInfo is not None:
-            return lpInfo.iVendorID
-
-    @property
-    def adapter_name(self):
-        lpInfo = self._adapter_info
-        if lpInfo is not None:
-            return self._get_string(lpInfo.strAdapterName)
-
-    @property
-    def display_name(self):
-        lpInfo = self._adapter_info
-        if lpInfo is not None:
-            return self._get_string(lpInfo.strDisplayName)
-
-    @property
-    def is_present(self):
-        lpInfo = self._adapter_info
-        if lpInfo is not None:
-            return lpInfo.iPresent == 1
-
-    @property
-    def exists(self):
-        lpInfo = self._adapter_info
-        if lpInfo is not None:
-            return lpInfo.iExist == 1
-
-    @property
-    def driver_path(self):
-        lpInfo = self._adapter_info
-        if lpInfo is not None:
-            return self._get_string(lpInfo.strDriverPath)
-
-    @property
-    def driver_path_ext(self):
-        lpInfo = self._adapter_info
-        if lpInfo is not None:
-            return self._get_string(lpInfo.strDriverPathExt)
-
-    @property
-    def upnp_path(self):
-        lpInfo = self._adapter_info
-        if lpInfo is not None:
-            return self._get_string(lpInfo.strPNPString)
-
-    @property
-    def display_index(self):
-        lpInfo = self._adapter_info
-        if lpInfo is not None:
-            return lpInfo.iOSDisplayIndex
-
-    @property
-    def driver_index(self):
-        lpInfo = self._adapter_info
-        if lpInfo is not None:
-            return lpInfo.iDrvIndex
-
-    @property
-    def asic_family_type(self):
-        lpAsicTypes = INT()
-        lpValids = INT()
-        iAdapterIndex = INT(self._adapter_index)
-
-        with ADL2_Main_Control_Create as context:
-            if _ADL2_Adapter_ASICFamilyType_Get(
-                    context,
-                    iAdapterIndex,
-                    ctypes.byref(lpAsicTypes),
-                    ctypes.byref(lpValids)
-            ) == ADL_OK:
-                # not sure what to do with the values
-                asic_mapping = {
-                    ADL_ASIC_UNDEFINED: 'Undefined',
-                    ADL_ASIC_DISCRETE: 'Discrete',
-                    ADL_ASIC_INTEGRATED: 'Integrated',
-                    ADL_ASIC_FIREGL: 'FireGL',
-                    ADL_ASIC_FIREMV: 'FireMV',
-                    ADL_ASIC_XGP: 'XGP',
-                    ADL_ASIC_FUSION: 'Fusion',
-                    ADL_ASIC_FIRESTREAM: 'Firestream',
-                    ADL_ASIC_EMBEDDED: 'Embedded'
-                }
-
-                return asic_mapping[lpAsicTypes]
-
-    @property
-    def can_change_speed(self):
-        lpCaps = INT()
-        lpValid = INT()
-        iAdapterIndex = INT(self._adapter_index)
-
-        with ADL2_Main_Control_Create as context:
-            if _ADL2_Adapter_Speed_Caps(
-                    context,
-                    iAdapterIndex,
-                    ctypes.byref(lpCaps),
-                    ctypes.byref(lpValid)
-            ) == ADL_OK:
-                return ADL_ADAPTER_SPEEDCAPS_SUPPORTED == lpCaps
-
-    @property
-    def speed(self):
-        lpCurrent = INT()
-        lpDefault = INT()
-        iAdapterIndex = INT(self._adapter_index)
-
-        with ADL2_Main_Control_Create as context:
-            if _ADL_Adapter_Speed_Get(
-                    context,
-                    iAdapterIndex,
-                    ctypes.byref(lpCurrent),
-                    ctypes.byref(lpDefault)
-            ) == ADL_OK:
-                # not sure what to do with the values
-
-                speed_mapping = {
-                    ADL_CONTEXT_SPEED_UNFORCED: 'Unforced',
-                    ADL_CONTEXT_SPEED_FORCEHIGH: 'Force High',
-                    ADL_CONTEXT_SPEED_FORCELOW: 'Force_low',
-
-                }
-
-                return speed_mapping[lpCurrent]
-
-            return 'Unsupported'
-
-    @speed.setter
-    def speed(self, value):
-
-        if not isinstance(value, int):
-            if value not in ('Unforced', 'Force High'):
-                return
-
-            if value == 'Force High':
-                value = ADL_CONTEXT_SPEED_FORCEHIGH
-            else:
-                value = ADL_CONTEXT_SPEED_UNFORCED
-
-        else:
-            if value not in (
-                    ADL_CONTEXT_SPEED_FORCEHIGH,
-                    ADL_CONTEXT_SPEED_UNFORCED
-            ):
-                return
-
-        iSpeed = INT(value)
-        iAdapterIndex = INT(self._adapter_index)
-
-        with ADL2_Main_Control_Create as context:
-            _ADL_Adapter_Speed_Set(
+            if _ADL2_Adapter_NumberOfAdapters_Get(
                 context,
-                iAdapterIndex,
-                iSpeed,
-            )
+                ctypes.byref(num_adapters)
+            ) != ADL_OK:
+                raise RuntimeError('Unable to get adapter count')
 
-    @property
-    def default_speed(self):
-        lpCurrent = INT()
-        lpDefault = INT()
-        iAdapterIndex = INT(self._adapter_index)
+            adapterInfoArray = (AdapterInfo * num_adapters.value)()
 
-        with ADL2_Main_Control_Create as context:
-            if _ADL_Adapter_Speed_Get(
-                    context,
-                    iAdapterIndex,
-                    ctypes.byref(lpCurrent),
-                    ctypes.byref(lpDefault)
-            ) == ADL_OK:
-                # not sure what to do with the values
-
-                speed_mapping = {
-                    ADL_CONTEXT_SPEED_UNFORCED: 'Unforced',
-                    ADL_CONTEXT_SPEED_FORCEHIGH: 'Force High',
-                    ADL_CONTEXT_SPEED_FORCELOW: 'Force_low',
-
-                }
-
-                return speed_mapping[lpDefault]
-
-            return 'Unsupported'
-
-    @property
-    def is_gpu_accessable(self):
-        lpAccessibility = INT()
-        iAdapterIndex = INT(self._adapter_index)
-
-        with ADL2_Main_Control_Create as context:
-            if _ADL2_Adapter_Accessibility_Get(
-                    context,
-                    iAdapterIndex,
-                    ctypes.byref(lpAccessibility),
-            ) == ADL_OK:
-                return lpAccessibility == 1
-
-    @property
-    def core_clock(self):
-        lpCoreClock = INT()
-        lpMemoryClock = INT()
-        iAdapterIndex = INT(self._adapter_index)
-
-        with ADL2_Main_Control_Create as context:
-            if _ADL2_Adapter_ObservedClockInfo_Get(
-                    context,
-                    iAdapterIndex,
-                    ctypes.byref(lpCoreClock),
-                    ctypes.byref(lpMemoryClock),
-            ) == ADL_OK:
-                return lpCoreClock.value
-
-    def extended_desktop(self, value):
-        lpNewlyActivate = INT()
-        iStatus = INT(value)
-        iAdapterIndex = INT(self._adapter_index)
-
-        with ADL2_Main_Control_Create as context:
-            _ADL2_Adapter_Active_Set(
+            if _ADL2_Adapter_AdapterInfo_Get(
                 context,
-                iAdapterIndex,
-                iStatus,
-                ctypes.byref(lpNewlyActivate),
-            )
+                adapterInfoArray,
+                ctypes.sizeof(adapterInfoArray)
+            ) != ADL_OK:
+                raise RuntimeError("ADL2_Adapter_AdapterInfo_Get failed.")
 
-    extended_desktop = property(fset=extended_desktop)
+            for lpInfo in adapterInfoArray:
+                if self._adapter_index == lpInfo.iAdapterIndex:
+                    return lpInfo
 
 
-class CrossFire(AdapterBase):
+class CrossFire(object):
+
+    def __init__(self, adapter_index):
+        self._adapter_index = adapter_index
 
     @property
     def is_prefered_adapter(self):
         lpPreferred = INT()
         lpNumComb = INT()
-        ppCrossfireComb = (ADLCrossfireComb * 3)()
+        ppCrossfireComb = LPADLCrossfireComb()
         iAdapterIndex = INT(self._adapter_index)
         with ADL2_Main_Control_Create as context:
-            if _ADL2_Adapter_Crossfire_Caps(
-                    context,
-                    iAdapterIndex,
-                    ctypes.byref(lpPreferred),
-                    ctypes.byref(lpNumComb),
-                    ctypes.byref(ppCrossfireComb),
-            ) == ADL_OK:
+            res = _ADL2_Adapter_Crossfire_Caps(
+                context,
+                iAdapterIndex,
+                ctypes.byref(lpPreferred),
+                ctypes.byref(lpNumComb),
+                ctypes.byref(ppCrossfireComb),
+            )
+
+            if res == ADL_OK:
                 return lpPreferred.value == self._adapter_index
 
     @property
@@ -2312,46 +2824,59 @@ class CrossFire(AdapterBase):
             if lpCrossfireInfo.iErrorCode:
                 return lpCrossfireInfo.iErrorCode
 
-            return lpCrossfireInfo.iState
+            mapping = [
+                ADL_XFIREX_STATE_NOINTERCONNECT,
+                ADL_XFIREX_STATE_DOWNGRADEPIPES,
+                ADL_XFIREX_STATE_DOWNGRADEMEM,
+                ADL_XFIREX_STATE_REVERSERECOMMENDED,
+                ADL_XFIREX_STATE_3DACTIVE,
+                ADL_XFIREX_STATE_MASTERONSLAVE,
+                ADL_XFIREX_STATE_NODISPLAYCONNECT,
+                ADL_XFIREX_STATE_NOPRIMARYVIEW,
+                ADL_XFIREX_STATE_DOWNGRADEVISMEM,
+                ADL_XFIREX_STATE_LESSTHAN8LANE_MASTER,
+                ADL_XFIREX_STATE_LESSTHAN8LANE_SLAVE,
+                ADL_XFIREX_STATE_PEERTOPEERFAILED,
+                ADL_XFIREX_STATE_MEMISDOWNGRADED,
+                ADL_XFIREX_STATE_PIPESDOWNGRADED,
+                ADL_XFIREX_STATE_XFIREXACTIVE,
+                ADL_XFIREX_STATE_VISMEMISDOWNGRADED,
+                ADL_XFIREX_STATE_INVALIDINTERCONNECTION,
+                ADL_XFIREX_STATE_NONP2PMODE,
+                ADL_XFIREX_STATE_DOWNGRADEMEMBANKS,
+                ADL_XFIREX_STATE_MEMBANKSDOWNGRADED,
+                ADL_XFIREX_STATE_DUALDISPLAYSALLOWED,
+                ADL_XFIREX_STATE_P2P_APERTURE_MAPPING,
+                ADL_XFIREX_STATE_P2PFLUSH_REQUIRED,
+                ADL_XFIREX_STATE_XSP_CONNECTED,
+                ADL_XFIREX_STATE_ENABLE_CF_REBOOT_REQUIRED,
+                ADL_XFIREX_STATE_DISABLE_CF_REBOOT_REQUIRED,
+                ADL_XFIREX_STATE_DRV_HANDLE_DOWNGRADE_KEY,
+                ADL_XFIREX_STATE_CF_RECONFIG_REQUIRED,
+                ADL_XFIREX_STATE_ERRORGETTINGSTATUS
+            ]
+
+            if lpCrossfireInfo.iState in mapping:
+                return mapping[mapping.index(lpCrossfireInfo.iState)]
+
+        return ADL_XFIREX_STATE_ERRORGETTINGSTATUS
 
     @property
     def __crossfire_info(self):
-        lpPreferred = INT()
-        lpNumComb = INT()
-        ppCrossfireComb = (ADLCrossfireComb * 3)()
+        lpCrossfireComb = ADLCrossfireComb()
         iAdapterIndex = INT(self._adapter_index)
+        lpCrossfireInfo = ADLCrossfireInfo()
 
         with ADL2_Main_Control_Create as context:
-            if _ADL2_Adapter_Crossfire_Caps(
-                    context,
-                    iAdapterIndex,
-                    ctypes.byref(lpPreferred),
-                    ctypes.byref(lpNumComb),
-                    ctypes.byref(ppCrossfireComb),
-            ) == ADL_OK:
+            res = _ADL2_Adapter_Crossfire_Get(
+                context,
+                iAdapterIndex,
+                ctypes.byref(lpCrossfireComb),
+                ctypes.byref(lpCrossfireInfo)
+            )
 
-                for i in range(lpNumComb.value):
-                    lpCrossfireComb = ppCrossfireComb[i]
+            return lpCrossfireInfo
 
-                    for j in range(lpCrossfireComb.iNumLinkAdapter.value):
-                        adapter_index = lpCrossfireComb.iAdaptLink[j]
-                        if adapter_index == self._adapter_index:
-                            break
-                    else:
-                        continue
-
-                    break
-                else:
-                    return ADL_XFIREX_STATE_ERRORGETTINGSTATUS
-
-                lpCrossfireInfo = ADLCrossfireInfo()
-                if _ADL2_Adapter_Crossfire_Get(
-                        context,
-                        iAdapterIndex,
-                        ctypes.byref(lpCrossfireComb),
-                        ctypes.byref(lpCrossfireInfo)
-                ) == ADL_OK:
-                    return lpCrossfireInfo
 
     @property
     def adapters(self):
@@ -2445,18 +2970,21 @@ class CrossFire(AdapterBase):
             )
 
 
-class Firmware(AdapterBase):
+class Firmware(object):
+
+    def __init__(self, adapter_index):
+        self._adapter_index = adapter_index
 
     @property
     def __bios_info(self):
-        lpBiosInfo = AdapterInfo()
+        lpBiosInfo = ADLBiosInfo()
         iAdapterIndex = INT(self._adapter_index)
 
         with ADL2_Main_Control_Create as context:
             if _ADL2_Adapter_VideoBiosInfo_Get(
-                    context,
-                    iAdapterIndex,
-                    ctypes.byref(lpBiosInfo),
+                context,
+                iAdapterIndex,
+                ctypes.byref(lpBiosInfo),
             ) == ADL_OK:
                 return lpBiosInfo
 
@@ -2464,22 +2992,25 @@ class Firmware(AdapterBase):
     def date(self):
         lpBiosInfo = self.__bios_info
         if lpBiosInfo is not None:
-            return self._get_string(lpBiosInfo.strDate)
+            return utils.get_string(lpBiosInfo.strDate)
 
     @property
     def part_number(self):
         lpBiosInfo = self.__bios_info
         if lpBiosInfo is not None:
-            return self._get_string(lpBiosInfo.strPartNumber)
+            return utils.get_string(lpBiosInfo.strPartNumber)
 
     @property
     def version(self):
         lpBiosInfo = self.__bios_info
         if lpBiosInfo is not None:
-            return self._get_string(lpBiosInfo.strVersion)
+            return utils.get_string(lpBiosInfo.strVersion)
 
 
-class Memory(AdapterBase):
+class Memory(object):
+
+    def __init__(self, adapter_index):
+        self._adapter_index = adapter_index
 
     @property
     def __memory_info(self):
@@ -2488,9 +3019,9 @@ class Memory(AdapterBase):
 
         with ADL2_Main_Control_Create as context:
             if _ADL2_Adapter_MemoryInfo_Get(
-                    context,
-                    iAdapterIndex,
-                    ctypes.byref(lpMemoryInfo),
+                context,
+                iAdapterIndex,
+                ctypes.byref(lpMemoryInfo),
             ) == ADL_OK:
                 return lpMemoryInfo
 
@@ -2498,22 +3029,22 @@ class Memory(AdapterBase):
     def size(self):
         lpMemoryInfo = self.__memory_info
         if lpMemoryInfo is not None:
-            return lpMemoryInfo.iMemorySize.value
+            return lpMemoryInfo.iMemorySize
 
     @property
     def type(self):
         lpMemoryInfo = self.__memory_info
         if lpMemoryInfo is not None:
-            return self._get_string(lpMemoryInfo.strMemoryType)
+            return utils.get_string(lpMemoryInfo.strMemoryType)
 
     @property
     def bandwidth(self):
         lpMemoryInfo = self.__memory_info
         if lpMemoryInfo is not None:
-            return lpMemoryInfo.iMemoryBandwidth.value
+            return lpMemoryInfo.iMemoryBandwidth
 
     @property
-    def clock(self):
+    def observed_clock(self):
         lpCoreClock = INT()
         lpMemoryClock = INT()
         iAdapterIndex = INT(self._adapter_index)
@@ -2528,7 +3059,24 @@ class Memory(AdapterBase):
                 return lpMemoryClock.value
 
     @property
-    def overdrive(self):
+    def clocks(self):
+        from .overdrive5_h import OverDrive5
+        from .overdrive6_h import OverDrive6
+        from .overdriven_h import OverDriveN
+        from .overdrive8_h import OverDrive8
+
+        overdrive = self._overdrive
+
+        if isinstance(overdrive, OverDrive5):
+            res = []
+
+            for performance_level in overdrive.performance_levels:
+                res += [performance_level.memory_clock]
+
+            return res
+
+    @property
+    def _overdrive(self):
         iSupported = INT()
         iEnabled = INT()
         iVersion = INT()
@@ -2560,3 +3108,172 @@ class Memory(AdapterBase):
                 elif iVersion.value == 8:
                     from .overdrive8_h import OverDrive8
                     return OverDrive8(self._adapter_index)
+
+class Core(object):
+
+    def __init__(self, adapter_index):
+        self._adapter_index = adapter_index
+
+    @property
+    def clock(self):
+        lpCoreClock = INT()
+        lpMemoryClock = INT()
+        iAdapterIndex = INT(self._adapter_index)
+
+        with ADL2_Main_Control_Create as context:
+            if _ADL2_Adapter_ObservedClockInfo_Get(
+                context,
+                iAdapterIndex,
+                ctypes.byref(lpCoreClock),
+                ctypes.byref(lpMemoryClock),
+            ) == ADL_OK:
+                return lpCoreClock.value
+
+    @property
+    def _overdrive(self):
+        iSupported = INT()
+        iEnabled = INT()
+        iVersion = INT()
+
+        from .overdrive5_h import _ADL2_Overdrive_Caps
+
+        # Repeat for all available adapters in the system
+        iAdapterIndex = INT(self._adapter_index)
+        with ADL2_Main_Control_Create as context:
+            if _ADL2_Overdrive_Caps(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(iSupported),
+                    ctypes.byref(iEnabled),
+                    ctypes.byref(iVersion)
+            ) == ADL_OK:
+                if iVersion.value == 5:
+                    from .overdrive5_h import OverDrive5
+                    return OverDrive5(self._adapter_index)
+
+                elif iVersion.value == 6:
+                    from .overdrive6_h import OverDrive6
+                    return OverDrive6(self._adapter_index)
+
+                elif iVersion.value == 7:
+                    from .overdriven_h import OverDriveN
+                    return OverDriveN(self._adapter_index)
+
+                elif iVersion.value == 8:
+                    from .overdrive8_h import OverDrive8
+                    return OverDrive8(self._adapter_index)
+
+    @property
+    def voltages(self):
+        from .overdrive5_h import OverDrive5
+        from .overdrive6_h import OverDrive6
+        from .overdriven_h import OverDriveN
+        from .overdrive8_h import OverDrive8
+
+        overdrive = self._overdrive
+
+        if isinstance(overdrive, OverDrive5):
+            res = []
+
+            for performance_level in overdrive.performance_levels:
+                res += [performance_level.core_voltage]
+
+            return res
+
+    @property
+    def clocks(self):
+        from .overdrive5_h import OverDrive5
+        from .overdrive6_h import OverDrive6
+        from .overdriven_h import OverDriveN
+        from .overdrive8_h import OverDrive8
+
+        overdrive = self._overdrive
+
+        if isinstance(overdrive, OverDrive5):
+            res = []
+
+            for performance_level in overdrive.performance_levels:
+                res += [performance_level.engine_clock]
+
+            return res
+
+    @property
+    def load(self):
+        from .overdrive5_h import OverDrive5
+        from .overdrive6_h import OverDrive6
+        from .overdriven_h import OverDriveN
+        from .overdrive8_h import OverDrive8
+
+        overdrive = self._overdrive
+
+        if isinstance(overdrive, OverDrive5):
+            for performance_level in overdrive.performance_levels:
+                return performance_level.activity_percent
+
+
+class FanSpeeds(object):
+
+    def __init__(self, adapter_index):
+        self._adapter_index = adapter_index
+
+    @property
+    def _overdrive(self):
+        iSupported = INT()
+        iEnabled = INT()
+        iVersion = INT()
+
+        from .overdrive5_h import _ADL2_Overdrive_Caps
+
+        # Repeat for all available adapters in the system
+        iAdapterIndex = INT(self._adapter_index)
+        with ADL2_Main_Control_Create as context:
+            if _ADL2_Overdrive_Caps(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(iSupported),
+                    ctypes.byref(iEnabled),
+                    ctypes.byref(iVersion)
+            ) == ADL_OK:
+                if iVersion.value == 5:
+                    from .overdrive5_h import OverDrive5
+                    return OverDrive5(self._adapter_index)
+
+                elif iVersion.value == 6:
+                    from .overdrive6_h import OverDrive6
+                    return OverDrive6(self._adapter_index)
+
+                elif iVersion.value == 7:
+                    from .overdriven_h import OverDriveN
+                    return OverDriveN(self._adapter_index)
+
+                elif iVersion.value == 8:
+                    from .overdrive8_h import OverDrive8
+                    return OverDrive8(self._adapter_index)
+
+    def __iter__(self):
+        from .overdrive5_h import OverDrive5
+        from .overdrive6_h import OverDrive6
+        from .overdriven_h import OverDriveN
+        from .overdrive8_h import OverDrive8
+
+        overdrive = self._overdrive
+
+        if isinstance(overdrive, OverDrive5):
+            return iter(overdrive.fan_speeds)
+
+    def __getitem__(self, item):
+        fan_speeds = list(self)
+        return fan_speeds[item]
+
+    def __setitem__(self, key, value):
+        from .overdrive5_h import OverDrive5
+        from .overdrive6_h import OverDrive6
+        from .overdriven_h import OverDriveN
+        from .overdrive8_h import OverDrive8
+
+        overdrive = self._overdrive
+
+        if isinstance(overdrive, OverDrive5):
+            overdrive.fan_speeds[key] = value
+
+

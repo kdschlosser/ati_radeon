@@ -3125,12 +3125,12 @@ class Display(object):
 
         with ADL2_Main_Control_Create as context:
             if _ADL2_Display_ImageExpansion_Get(
-                    context,
-                    iAdapterIndex,
-                    iDisplayIndex,
-                    ctypes.byref(lpSupport),
-                    ctypes.byref(lpCurrent),
-                    ctypes.byref(lpDefault),
+                context,
+                iAdapterIndex,
+                iDisplayIndex,
+                ctypes.byref(lpSupport),
+                ctypes.byref(lpCurrent),
+                ctypes.byref(lpDefault),
             ) == ADL_OK:
                 return lpSupport, lpCurrent, lpDefault
 
@@ -3177,10 +3177,10 @@ class Display(object):
 
         with ADL2_Main_Control_Create as context:
             if _ADL2_Display_DitherState_Get(
-                    context,
-                    iAdapterIndex,
-                    iDisplayIndex,
-                    ctypes.byref(iDitherState)
+                context,
+                iAdapterIndex,
+                iDisplayIndex,
+                ctypes.byref(iDitherState)
             ) == ADL_OK:
                 return iDitherState.value
 
@@ -3206,10 +3206,10 @@ class Display(object):
 
         with ADL2_Main_Control_Create as context:
             if _ADL2_Display_SupportedPixelFormat_Get(
-                    context,
-                    iAdapterIndex,
-                    iDisplayIndex,
-                    ctypes.byref(iDitherState)
+                context,
+                iAdapterIndex,
+                iDisplayIndex,
+                ctypes.byref(iDitherState)
             ) == ADL_OK:
                 return iDitherState.value
 
@@ -3217,11 +3217,11 @@ class Display(object):
     def pixel_format(self):
         """
         ADL_DISPLAY_PIXELFORMAT_UNKNOWN
-        ADL_DISPLAY_PIXELFORMAT_RGB
         ADL_DISPLAY_PIXELFORMAT_YCRCB444
         ADL_DISPLAY_PIXELFORMAT_YCRCB422
         ADL_DISPLAY_PIXELFORMAT_RGB_LIMITED_RANGE
         ADL_DISPLAY_PIXELFORMAT_RGB_FULL_RANGE
+        ADL_DISPLAY_PIXELFORMAT_YCRCB420
         :return:
         """
         iPixelFormat = INT()
@@ -3230,15 +3230,41 @@ class Display(object):
 
         with ADL2_Main_Control_Create as context:
             if _ADL2_Display_PixelFormat_Get(
-                    context,
-                    iAdapterIndex,
-                    iDisplayIndex,
-                    ctypes.byref(iPixelFormat)
+                context,
+                iAdapterIndex,
+                iDisplayIndex,
+                ctypes.byref(iPixelFormat)
             ) == ADL_OK:
-                return iPixelFormat.value
+
+                mapping = [
+                    ADL_DISPLAY_PIXELFORMAT_UNKNOWN,
+                    ADL_DISPLAY_PIXELFORMAT_YCRCB444,
+                    ADL_DISPLAY_PIXELFORMAT_YCRCB422,
+                    ADL_DISPLAY_PIXELFORMAT_RGB_LIMITED_RANGE,
+                    ADL_DISPLAY_PIXELFORMAT_RGB_FULL_RANGE,
+                    ADL_DISPLAY_PIXELFORMAT_YCRCB420
+                ]
+                return mapping[mapping.index(iPixelFormat.value)]
+
+        return ADL_DISPLAY_PIXELFORMAT_UNKNOWN
 
     @pixel_format.setter
     def pixel_format(self, value):
+        for item in (
+            ADL_DISPLAY_PIXELFORMAT_UNKNOWN,
+            ADL_DISPLAY_PIXELFORMAT_YCRCB444,
+            ADL_DISPLAY_PIXELFORMAT_YCRCB422,
+            ADL_DISPLAY_PIXELFORMAT_RGB_LIMITED_RANGE,
+            ADL_DISPLAY_PIXELFORMAT_RGB_FULL_RANGE,
+            ADL_DISPLAY_PIXELFORMAT_YCRCB420,
+        ):
+            if value == str(item):
+                value = item
+            if value == item:
+                break
+        else:
+            return
+
         iPixelFormat = INT(value)
         iAdapterIndex = INT(self._adapter_index)
         iDisplayIndex = INT(self._display_index)
@@ -3261,11 +3287,11 @@ class Display(object):
 
         with ADL2_Main_Control_Create as context:
             if _ADL2_Display_AdjustmentCoherent_Get(
-                    context,
-                    iAdapterIndex,
-                    iDisplayIndex,
-                    ctypes.byref(lpAdjustmentCoherentCurrent),
-                    ctypes.byref(lpAdjustmentCoherentDefault)
+                context,
+                iAdapterIndex,
+                iDisplayIndex,
+                ctypes.byref(lpAdjustmentCoherentCurrent),
+                ctypes.byref(lpAdjustmentCoherentDefault)
             ) == ADL_OK:
                 return lpAdjustmentCoherentDefault.value
 
@@ -3279,11 +3305,11 @@ class Display(object):
 
         with ADL2_Main_Control_Create as context:
             if _ADL2_Display_AdjustmentCoherent_Get(
-                    context,
-                    iAdapterIndex,
-                    iDisplayIndex,
-                    ctypes.byref(lpAdjustmentCoherentCurrent),
-                    ctypes.byref(lpAdjustmentCoherentDefault)
+                context,
+                iAdapterIndex,
+                iDisplayIndex,
+                ctypes.byref(lpAdjustmentCoherentCurrent),
+                ctypes.byref(lpAdjustmentCoherentDefault)
             ) == ADL_OK:
                 return lpAdjustmentCoherentCurrent.value
 
@@ -3311,11 +3337,11 @@ class Display(object):
 
         with ADL2_Main_Control_Create as context:
             if _ADL2_Display_ReducedBlanking_Get(
-                    context,
-                    iAdapterIndex,
-                    iDisplayIndex,
-                    ctypes.byref(lpReducedBlankingCurrent),
-                    ctypes.byref(lpReducedBlankingDefault)
+                context,
+                iAdapterIndex,
+                iDisplayIndex,
+                ctypes.byref(lpReducedBlankingCurrent),
+                ctypes.byref(lpReducedBlankingDefault)
             ) == ADL_OK:
                 return lpReducedBlankingDefault.value
 
@@ -3329,11 +3355,11 @@ class Display(object):
 
         with ADL2_Main_Control_Create as context:
             if _ADL2_Display_ReducedBlanking_Get(
-                    context,
-                    iAdapterIndex,
-                    iDisplayIndex,
-                    ctypes.byref(lpReducedBlankingCurrent),
-                    ctypes.byref(lpReducedBlankingDefault)
+                context,
+                iAdapterIndex,
+                iDisplayIndex,
+                ctypes.byref(lpReducedBlankingCurrent),
+                ctypes.byref(lpReducedBlankingDefault)
             ) == ADL_OK:
                 return lpReducedBlankingCurrent.value
 
@@ -3362,12 +3388,12 @@ class Display(object):
 
         with ADL2_Main_Control_Create as context:
             if _ADL2_Display_ReducedBlanking_Get(
-                    context,
-                    iAdapterIndex,
-                    iDisplayIndex,
-                    ctypes.byref(lpSettingsSupported),
-                    ctypes.byref(lpSettingsSupportedEx),
-                    ctypes.byref(lpCurSettings)
+                context,
+                iAdapterIndex,
+                iDisplayIndex,
+                ctypes.byref(lpSettingsSupported),
+                ctypes.byref(lpSettingsSupportedEx),
+                ctypes.byref(lpCurSettings)
             ) == ADL_OK:
                 return (
                     lpSettingsSupported,
@@ -3418,10 +3444,10 @@ class Display(object):
 
         with ADL2_Main_Control_Create as context:
             if _ADL2_Display_UnderscanSupport_Get(
-                    context,
-                    iAdapterIndex,
-                    iDisplayIndex,
-                    ctypes.byref(lpSupport),
+                context,
+                iAdapterIndex,
+                iDisplayIndex,
+                ctypes.byref(lpSupport),
             ) == ADL_OK:
                 return lpSupport.value == 1
 
@@ -3438,14 +3464,14 @@ class Display(object):
 
         with ADL2_Main_Control_Create as context:
             if _ADL2_Display_Overscan_Get(
-                    context,
-                    iAdapterIndex,
-                    iDisplayIndex,
-                    ctypes.byref(lpCurrent),
-                    ctypes.byref(lpDefault),
-                    ctypes.byref(lpMin),
-                    ctypes.byref(lpMax),
-                    ctypes.byref(lpStep)
+                context,
+                iAdapterIndex,
+                iDisplayIndex,
+                ctypes.byref(lpCurrent),
+                ctypes.byref(lpDefault),
+                ctypes.byref(lpMin),
+                ctypes.byref(lpMax),
+                ctypes.byref(lpStep)
             ) == ADL_OK:
                 class Value(object):
                     default = lpDefault.value
@@ -3489,11 +3515,11 @@ class Display(object):
 
         with ADL2_Main_Control_Create as context:
             if _ADL2_Display_UnderscanState_Get(
-                    context,
-                    iAdapterIndex,
-                    iDisplayIndex,
-                    ctypes.byref(lpCurrent),
-                    ctypes.byref(lpDefault)
+                context,
+                iAdapterIndex,
+                iDisplayIndex,
+                ctypes.byref(lpCurrent),
+                ctypes.byref(lpDefault)
             ) == ADL_OK:
                 if not lpCurrent.value:
                     return
@@ -3509,14 +3535,14 @@ class Display(object):
 
         with ADL2_Main_Control_Create as context:
             if _ADL2_Display_Underscan_Get(
-                    context,
-                    iAdapterIndex,
-                    iDisplayIndex,
-                    ctypes.byref(lpCurrent),
-                    ctypes.byref(lpDefault),
-                    ctypes.byref(lpMin),
-                    ctypes.byref(lpMax),
-                    ctypes.byref(lpStep)
+                context,
+                iAdapterIndex,
+                iDisplayIndex,
+                ctypes.byref(lpCurrent),
+                ctypes.byref(lpDefault),
+                ctypes.byref(lpMin),
+                ctypes.byref(lpMax),
+                ctypes.byref(lpStep)
             ) == ADL_OK:
                 class Value(object):
                     default = lpDefault.value
@@ -3592,10 +3618,10 @@ class Display(object):
 
         with ADL2_Main_Control_Create as context:
             if _ADL2_Display_SupportedColorDepth_Get(
-                    context,
-                    iAdapterIndex,
-                    iDisplayIndex,
-                    ctypes.byref(iColorDepth)
+                context,
+                iAdapterIndex,
+                iDisplayIndex,
+                ctypes.byref(iColorDepth)
             ) == ADL_OK:
                 return iColorDepth.value
 
@@ -3603,13 +3629,12 @@ class Display(object):
     def color_depth(self):
         """
         ADL_COLORDEPTH_UNKNOWN
-        ADL_COLORDEPTH_666: Indicates if color depth is 666
-        ADL_COLORDEPTH_888: Indicates if color depth is 888
-        ADL_COLORDEPTH_101010: Indicates if color depth is 101010
-        ADL_COLORDEPTH_121212: Indicates if color depth is 121212
-        ADL_COLORDEPTH_141414: Indicates if color depth is 141414
-        ADL_COLORDEPTH_161616: Indicates if color depth is 161616
-        ADL_COLOR_DEPTH_DEF: Indicates default value of color depth
+        ADL_COLORDEPTH_666: Indicates if color depth is 6bit
+        ADL_COLORDEPTH_888: Indicates if color depth is 8bit
+        ADL_COLORDEPTH_101010: Indicates if color depth is 10bit
+        ADL_COLORDEPTH_121212: Indicates if color depth is 12bit
+        ADL_COLORDEPTH_141414: Indicates if color depth is 14bit
+        ADL_COLORDEPTH_161616: Indicates if color depth is 16bit
         :return:
         """
         iColorDepth = INT()
@@ -3618,15 +3643,43 @@ class Display(object):
 
         with ADL2_Main_Control_Create as context:
             if _ADL2_Display_ColorDepth_Get(
-                    context,
-                    iAdapterIndex,
-                    iDisplayIndex,
-                    ctypes.byref(iColorDepth)
+                context,
+                iAdapterIndex,
+                iDisplayIndex,
+                ctypes.byref(iColorDepth)
             ) == ADL_OK:
-                return iColorDepth.value
+                mapping = [
+                    ADL_COLORDEPTH_UNKNOWN,
+                    ADL_COLORDEPTH_666,
+                    ADL_COLORDEPTH_888,
+                    ADL_COLORDEPTH_101010,
+                    ADL_COLORDEPTH_121212,
+                    ADL_COLORDEPTH_141414,
+                    ADL_COLORDEPTH_161616
+                ]
+
+                return mapping[mapping.index(iColorDepth.value)]
+
+        return ADL_COLORDEPTH_UNKNOWN
 
     @color_depth.setter
     def color_depth(self, value):
+
+        for item in (
+            ADL_COLORDEPTH_666,
+            ADL_COLORDEPTH_888,
+            ADL_COLORDEPTH_101010,
+            ADL_COLORDEPTH_121212,
+            ADL_COLORDEPTH_141414,
+            ADL_COLORDEPTH_161616
+        ):
+            if value == str(item):
+                value = item
+            if value == item:
+                break
+        else:
+            return
+
         iColorDepth = INT(value)
         iAdapterIndex = INT(self._adapter_index)
         iDisplayIndex = INT(self._display_index)
@@ -3740,19 +3793,6 @@ class Display(object):
         if lpInfo is not None:
             return lpInfo & ADL_DISPLAY_CUSTOMMODES != 0
 
-    @staticmethod
-    def _get_string(data):
-        res = ''
-        i = 0
-        while True:
-            char = data[i]
-
-            if char in ('\x00', 0x00):
-                break
-            res += char
-
-        return res
-
 
 class Position(object):
     def __init__(self, adapter_index, display_index):
@@ -3776,19 +3816,19 @@ class Position(object):
 
         with ADL2_Main_Control_Create as context:
             if _ADL2_Display_Position_Get(
-                    context,
-                    iAdapterIndex,
-                    iDisplayIndex,
-                    ctypes.byref(lpX),
-                    ctypes.byref(lpY),
-                    ctypes.byref(lpXDefault),
-                    ctypes.byref(lpYDefault),
-                    ctypes.byref(lpMinX),
-                    ctypes.byref(lpMinY),
-                    ctypes.byref(lpMaxX),
-                    ctypes.byref(lpMaxY),
-                    ctypes.byref(lpStepX),
-                    ctypes.byref(lpStepY),
+                context,
+                iAdapterIndex,
+                iDisplayIndex,
+                ctypes.byref(lpX),
+                ctypes.byref(lpY),
+                ctypes.byref(lpXDefault),
+                ctypes.byref(lpYDefault),
+                ctypes.byref(lpMinX),
+                ctypes.byref(lpMinY),
+                ctypes.byref(lpMaxX),
+                ctypes.byref(lpMaxY),
+                ctypes.byref(lpStepX),
+                ctypes.byref(lpStepY),
             ) == ADL_OK:
                 return (
                     lpX,
@@ -3934,19 +3974,19 @@ class Size(object):
 
         with ADL2_Main_Control_Create as context:
             if _ADL2_Display_Size_Get(
-                    context,
-                    iAdapterIndex,
-                    iDisplayIndex,
-                    ctypes.byref(lpWidth),
-                    ctypes.byref(lpHeight),
-                    ctypes.byref(lpDefaultWidth),
-                    ctypes.byref(lpDefaultHeight),
-                    ctypes.byref(lpMinWidth),
-                    ctypes.byref(lpMinHeight),
-                    ctypes.byref(lpMaxWidth),
-                    ctypes.byref(lpMaxHeight),
-                    ctypes.byref(lpStepWidth),
-                    ctypes.byref(lpStepHeight),
+                context,
+                iAdapterIndex,
+                iDisplayIndex,
+                ctypes.byref(lpWidth),
+                ctypes.byref(lpHeight),
+                ctypes.byref(lpDefaultWidth),
+                ctypes.byref(lpDefaultHeight),
+                ctypes.byref(lpMinWidth),
+                ctypes.byref(lpMinHeight),
+                ctypes.byref(lpMaxWidth),
+                ctypes.byref(lpMaxHeight),
+                ctypes.byref(lpStepWidth),
+                ctypes.byref(lpStepHeight),
             ) == ADL_OK:
                 return (
                     lpWidth,

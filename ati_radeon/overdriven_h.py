@@ -546,7 +546,10 @@ class OverDriveN(object):
         performanceLevelsBuffer = (CHAR * size)()
         ctypes.memset(performanceLevelsBuffer, 0, size)
 
-        odPerformanceLevels = ctypes.cast(performanceLevelsBuffer, POINTER(ADLODNPerformanceLevelsX2))
+        odPerformanceLevels = ctypes.cast(
+            performanceLevelsBuffer,
+            POINTER(ADLODNPerformanceLevelsX2)
+        )
         odPerformanceLevels.iSize = size
         odPerformanceLevels.iMode = ODNControlType_Default
         odPerformanceLevels.iNumberOfPerformanceLevels = num_levels
@@ -696,7 +699,13 @@ class MemoryTimingLevels(object):
             ) == ADL_OK:
 
                 levelList = list(levelList[i].value for i in range(numberLevels.value))
-                return support.value, currentValue.value, defaultValue.value, numberLevels.value, levelList
+                return (
+                    support.value,
+                    currentValue.value,
+                    defaultValue.value,
+                    numberLevels.value,
+                    levelList
+                )
 
     def __iter__(self):
         return iter(self._get[4])
@@ -842,7 +851,11 @@ class FanSpeed(object):
             odNFanControl.iMinFanLimit = value
 
             with ADL2_Main_Control_Create as context:
-                _ADL2_OverdriveN_FanControl_Set(context, iAdapterIndex, ctypes.byref(odNFanControl))
+                _ADL2_OverdriveN_FanControl_Set(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(odNFanControl)
+                )
 
     @property
     def control_mode(self):
@@ -879,7 +892,11 @@ class FanSpeed(object):
             odNFanControl.iTargetFanSpeed = value
 
             with ADL2_Main_Control_Create as context:
-                _ADL2_OverdriveN_FanControl_Set(context, iAdapterIndex, ctypes.byref(odNFanControl))
+                _ADL2_OverdriveN_FanControl_Set(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(odNFanControl)
+                )
 
     @property
     def min_performance_clock(self):
@@ -913,7 +930,11 @@ class FanSpeed(object):
             odNFanControl.iMinPerformanceClock = value
 
             with ADL2_Main_Control_Create as context:
-                _ADL2_OverdriveN_FanControl_Set(context, iAdapterIndex, ctypes.byref(odNFanControl))
+                _ADL2_OverdriveN_FanControl_Set(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(odNFanControl)
+                )
 
     @property
     def target_temperature(self):
@@ -946,7 +967,11 @@ class FanSpeed(object):
             odNFanControl.iTargetTemperature = value
 
             with ADL2_Main_Control_Create as context:
-                _ADL2_OverdriveN_FanControl_Set(context, iAdapterIndex, ctypes.byref(odNFanControl))
+                _ADL2_OverdriveN_FanControl_Set(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(odNFanControl)
+                )
 
     @property
     def fan_speed(self):
@@ -1098,7 +1123,10 @@ class MemoryPerformanceLevel(GPUPerformanceLevel):
         performanceLevelsBuffer_default = (CHAR * size)()
         ctypes.memset(performanceLevelsBuffer_default, 0, size)
 
-        odPerformanceLevels_default = ctypes.cast(performanceLevelsBuffer_default, POINTER(ADLODNPerformanceLevelsX2))
+        odPerformanceLevels_default = ctypes.cast(
+            performanceLevelsBuffer_default,
+            POINTER(ADLODNPerformanceLevelsX2)
+        )
         odPerformanceLevels_default.iSize = size
         odPerformanceLevels_default.iMode = 1  # DEFAULTS
         odPerformanceLevels_default.iNumberOfPerformanceLevels = num_levels

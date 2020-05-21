@@ -60,8 +60,12 @@ LPVOID = POINTER(VOID)
 # / Memory Allocation Call back
 # void* ( __stdcall *ADL_MAIN_MALLOC_CALLBACK )( INT );
 ADL_MAIN_MALLOC_CALLBACK = ctypes.CFUNCTYPE(
-    LPVOID,
-    INT,
+    VOID,
+    ctypes.c_size_t,
+)
+ADL_MAIN_FREE_CALLBACK = ctypes.CFUNCTYPE(
+    None,
+    VOID,
 )
 
 
@@ -74,9 +78,79 @@ def load_library(lib):
             pass
 
 
+_malloc = None
+_free = None
+
+
+_is_init = False
+
+
+libc = None
+
+class Adapters(object):
+
+    def __iter__(self):
+        global _is_init
+
+        if not _is_init:
+            if InitADL() != ADL_OK:
+                raise RuntimeError('Failed to initilize the adl')
+
+            _is_init = True
+
+        num_adapters = INT(-1)
+        from .adapter_h import (
+            _ADL2_Adapter_NumberOfAdapters_Get,
+            _ADL2_Adapter_AdapterInfo_Get,
+            _ADL2_Adapter_ID_Get,
+            Adapter
+        )
+
+        found_ids = []
+
+        with ADL2_Main_Control_Create as context:
+            if _ADL2_Adapter_NumberOfAdapters_Get(
+                context,
+                ctypes.byref(num_adapters)
+            ) != ADL_OK:
+                raise RuntimeError('Unable to get adapter count')
+
+            adapterInfoArray = (AdapterInfo * num_adapters.value)()
+
+            if _ADL2_Adapter_AdapterInfo_Get(
+                context,
+                adapterInfoArray,
+                ctypes.sizeof(adapterInfoArray)
+            ) != ADL_OK:
+                raise RuntimeError("ADL2_Adapter_AdapterInfo_Get failed.")
+
+            for i, lpInfo in enumerate(adapterInfoArray):
+                lpAdapterID = INT()
+                iAdapterIndex = INT(lpInfo.iAdapterIndex)
+
+                if _ADL2_Adapter_ID_Get(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(lpAdapterID)
+                ) != ADL_OK:
+                    continue
+
+                if lpAdapterID.value not in found_ids:
+                    found_ids += [lpAdapterID.value]
+                    yield Adapter(lpAdapterID.value, i)
+
+
 def InitADL():
+    global _malloc
+    global _free
+    global libc
     if defined(LINUX):
+        from ctypes import RTLD_GLOBAL
+
+        ctypes.CDLL("libXext.so.6", mode=RTLD_GLOBAL)
         hDLL = load_library('libatiadlxx.so')
+
+        libc = ctypes.CDLL("libc.so.6")
     else:
         for lib in ('atiadlxx.dll', 'atiadlxy.dll'):
             hDLL = load_library(lib)
@@ -85,18 +159,64 @@ def InitADL():
         else:
             hDLL = NULL
 
+        libc = ctypes.cdll.msvcrt
+
+    _malloc = libc.malloc
+    _malloc.argtypes = [ctypes.c_size_t]
+    _malloc.restype = ctypes.c_void_p
+    _free = libc.free
+    _free.argtypes = [ctypes.c_void_p]
+
     if hDLL is None:
         return ADL_ERR
+
+    from .adapter_h import Init as _adapter_init
+    from .adl_h import Init as adl_init
+    from .appprofiles_h import Init as appprofiles_init
+    from .controller_h import Init as controller_init
+    from .crossdisplay_h import Init as crossdisplay_init
+    from .display_h import Init as display_init
+    from .displaysmanager_h import Init as displaysmanager_init
+    from .graphics_h import Init as graphics_init
+    from .overdrive5_h import Init as overdrive5_init
+    from .overdrive6_h import Init as overdrive6_init
+    from .overdrive8_h import Init as overdrive8_init
+    from .overdriven_h import Init as overdriven_init
+    from .powerxpress_h import Init as powerxpress_init
+    from .underscan_h import Init as underscan_init
+    from .workstation_h import Init as workstation_init
+
+    _adapter_init(hDLL)
+    adl_init(hDLL)
+    appprofiles_init(hDLL)
+    controller_init(hDLL)
+    crossdisplay_init(hDLL)
+    display_init(hDLL)
+    displaysmanager_init(hDLL)
+    graphics_init(hDLL)
+    overdrive5_init(hDLL)
+    overdrive6_init(hDLL)
+    overdrive8_init(hDLL)
+    overdriven_init(hDLL)
+    powerxpress_init(hDLL)
+    underscan_init(hDLL)
+    workstation_init(hDLL)
+
+    libc.strtok.restype = POINTER(ctypes.c_char)
 
     return ADL_OK
 
 
-def _ADL_Main_Memory_Alloc(iSize):
-    lpBuffer = (LPVOID * iSize)()
-    return lpBuffer
+@ADL_MAIN_MALLOC_CALLBACK
+def ADL_Main_Memory_Alloc(iSize):
+    return _malloc(iSize)
 
 
-ADL_Main_Memory_Alloc = ADL_MAIN_MALLOC_CALLBACK(_ADL_Main_Memory_Alloc)
+@ADL_MAIN_FREE_CALLBACK
+def ADL_Main_Memory_Free(lpBuffer):
+    if lpBuffer[0] is not None:
+        _free(lpBuffer[0])
+        lpBuffer[0] = None
 
 
 class _ADL2_Main_Control_Create(object):
@@ -137,6 +257,10 @@ class _ADL2_Main_Control_Create(object):
 
 ADL2_Main_Control_Create = _ADL2_Main_Control_Create()
 
+try:
+    unicode = unicode
+except NameError:
+    unicode = bytes
 
 class AdapterBase(object):
 
@@ -146,12 +270,28 @@ class AdapterBase(object):
     @staticmethod
     def _get_string(data):
         res = ''
-        i = 0
-        while True:
-            char = data[i]
 
-            if char in ('\x00', 0x00):
-                break
-            res += char
+        if isinstance(data, (str, unicode)):
+            data = list(data)
+
+            while data:
+                char = data.pop(0)
+                res += chr(char)
+
+        else:
+            i = 0
+            while True:
+                char = data[i]
+                if isinstance(char, unicode):
+                    char = str(char, encoding='utf-8')
+
+                if char in ('\x00', 0x00):
+                    break
+
+                if isinstance(char, int):
+                    char = chr(char)
+
+                res += char
+                i += 1
 
         return res

@@ -755,6 +755,12 @@ def Init(hDLL):
     )
 
 
+class OverDrive6(object):
+
+    def __init__(self, adapter_index):
+        self._adapter_index = adapter_index
+
+
 __all__ = (
     '_ADL2_Overdrive6_Capabilities_Get',
     '_ADL_Overdrive6_Capabilities_Get',

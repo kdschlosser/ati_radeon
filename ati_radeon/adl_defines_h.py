@@ -26,9 +26,8 @@
 import ctypes
 import sys
 
-from ctypes.wintypes import INT
 
-
+INT = ctypes.c_int
 NULL = None
 CHAR = ctypes.c_char
 LONG = ctypes.c_long
@@ -44,7 +43,6 @@ ULONG = ctypes.c_ulong
 ULONGLONG = ctypes.c_ulonglong
 BOOL = ctypes.c_bool
 USHORT = ctypes.c_ushort
-
 
 
 try:
@@ -90,12 +88,49 @@ class EnumItem(long):
         return super(EnumItem, self).__str__()
 
 
+class Constant(int):
+
+    def __init__(self, value):
+
+        try:
+            super(Constant, self).__init__(value)
+        except TypeError:
+            super(Constant, self).__init__()
+
+        self._string = ''
+        self._value = value
+
+    def set_string(self, value):
+        self._string = value
+        return self
+
+    def __eq__(self, other):
+        if isinstance(other, (int, long)):
+            if other == self._value:
+                return True
+            if str(other) in self._string:
+                return True
+
+            return False
+
+        return other == self._string
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __str__(self):
+        if self._string:
+            return self._string
+
+        return super(Constant, self).__str__()
+
+
 class ENUM(INT):
 
     def __init__(self, value=None):
 
         if value is None:
-            super(ENUM, self).__init__()
+            INT.__init__(self, 0)
         else:
             for k, v in self.__class__.__dict__.items():
                 if k.startswith('_'):
@@ -105,7 +140,7 @@ class ENUM(INT):
                     value = v
                     break
 
-            super(ENUM, self).__init__(value)
+            INT.__init__(self, value)
 
     @property
     def value(self):
@@ -264,30 +299,30 @@ ADL_ERR_NO_XDISPLAY = -21
 # / Define Monitor/CRT display type
 # @{
 # / Define Monitor display type
-ADL_DT_MONITOR = 0
+ADL_DT_MONITOR = Constant(0).set_string('Monitor')
 # / Define TV display type
-ADL_DT_TELEVISION = 1
+ADL_DT_TELEVISION = Constant(1).set_string('Television')
 # / Define LCD display type
-ADL_DT_LCD_PANEL = 2
+ADL_DT_LCD_PANEL = Constant(2).set_string('LCD Panel')
 # / Define DFP display type
-ADL_DT_DIGITAL_FLAT_PANEL = 3
+ADL_DT_DIGITAL_FLAT_PANEL = Constant(3).set_string('Digital Flat Panel')
 # / Define Componment Video display type
-ADL_DT_COMPONENT_VIDEO = 4
+ADL_DT_COMPONENT_VIDEO = Constant(4).set_string('Component Video')
 # / Define Projector display type
-ADL_DT_PROJECTOR = 5
+ADL_DT_PROJECTOR = Constant(5).set_string('Projector')
 # @}
 # / \defgroup define_display_connection_type Display Connection Type
 # @{
 # / Define unknown display output type
-ADL_DOT_UNKNOWN = 0
+ADL_DOT_UNKNOWN = Constant(0).set_string('Unknown')
 # / Define composite display output type
-ADL_DOT_COMPOSITE = 1
+ADL_DOT_COMPOSITE = Constant(1).set_string('Composite')
 # / Define SVideo display output type
-ADL_DOT_SVIDEO = 2
+ADL_DOT_SVIDEO = Constant(2).set_string('SVideo')
 # / Define analog display output type
-ADL_DOT_ANALOG = 3
+ADL_DOT_ANALOG = Constant(3).set_string('Analog')
 # / Define digital display output type
-ADL_DOT_DIGITAL = 4
+ADL_DOT_DIGITAL = Constant(4).set_string('Digital')
 # @}
 # / \defgroup define_color_type Display Color Type and Source
 # / Define Display Color Type and Source
@@ -363,23 +398,23 @@ ADL_DISPLAYDDCINFOEX_FLAG_SUPPORT_xvYCC709 = 1 << 6
 # / \defgroup define_displayinfo_connector Display Connector Type
 # / defines for ADLDisplayInfo.iDisplayConnector
 # @{
-ADL_DISPLAY_CONTYPE_UNKNOWN = 0
-ADL_DISPLAY_CONTYPE_VGA = 1
-ADL_DISPLAY_CONTYPE_DVI_D = 2
-ADL_DISPLAY_CONTYPE_DVI_I = 3
-ADL_DISPLAY_CONTYPE_ATICVDONGLE_NTSC = 4
-ADL_DISPLAY_CONTYPE_ATICVDONGLE_JPN = 5
-ADL_DISPLAY_CONTYPE_ATICVDONGLE_NONI2C_JPN = 6
-ADL_DISPLAY_CONTYPE_ATICVDONGLE_NONI2C_NTSC = 7
-ADL_DISPLAY_CONTYPE_PROPRIETARY = 8
-ADL_DISPLAY_CONTYPE_HDMI_TYPE_A = 10
-ADL_DISPLAY_CONTYPE_HDMI_TYPE_B = 11
-ADL_DISPLAY_CONTYPE_SVIDEO = 12
-ADL_DISPLAY_CONTYPE_COMPOSITE = 13
-ADL_DISPLAY_CONTYPE_RCA_3COMPONENT = 14
-ADL_DISPLAY_CONTYPE_DISPLAYPORT = 15
-ADL_DISPLAY_CONTYPE_EDP = 16
-ADL_DISPLAY_CONTYPE_WIRELESSDISPLAY = 17
+ADL_DISPLAY_CONTYPE_UNKNOWN = Constant(0).set_string('Unknown')
+ADL_DISPLAY_CONTYPE_VGA = Constant(1).set_string('VDA')
+ADL_DISPLAY_CONTYPE_DVI_D = Constant(2).set_string('DVI-D')
+ADL_DISPLAY_CONTYPE_DVI_I = Constant(3).set_string('DVI-I')
+ADL_DISPLAY_CONTYPE_ATICVDONGLE_NTSC = Constant(4).set_string('NTSC I2C Dongle')
+ADL_DISPLAY_CONTYPE_ATICVDONGLE_JPN = Constant(5).set_string('JPN I2C Dongle')
+ADL_DISPLAY_CONTYPE_ATICVDONGLE_NONI2C_JPN = Constant(6).set_string('JPN Dongle')
+ADL_DISPLAY_CONTYPE_ATICVDONGLE_NONI2C_NTSC = Constant(7).set_string('NTSC Dongle')
+ADL_DISPLAY_CONTYPE_PROPRIETARY = Constant(8).set_string('Proprietary')
+ADL_DISPLAY_CONTYPE_HDMI_TYPE_A = Constant(10).set_string('HDMI (type a)')
+ADL_DISPLAY_CONTYPE_HDMI_TYPE_B = Constant(11).set_string('HDMI (type b)')
+ADL_DISPLAY_CONTYPE_SVIDEO = Constant(12).set_string('SVideo')
+ADL_DISPLAY_CONTYPE_COMPOSITE = Constant(13).set_string('Composite')
+ADL_DISPLAY_CONTYPE_RCA_3COMPONENT = Constant(14).set_string('Component')
+ADL_DISPLAY_CONTYPE_DISPLAYPORT = Constant(15).set_string('DisplayPort')
+ADL_DISPLAY_CONTYPE_EDP = Constant(16).set_string('EDP')
+ADL_DISPLAY_CONTYPE_WIRELESSDISPLAY = Constant(17).set_string('Wireless')
 # @}
 # / TV Capabilities and Standards
 # / \defgroup define_tv_caps TV Capabilities and Standards
@@ -474,56 +509,57 @@ ADL_PM_PARAM_DONT_CHANGE = 0
 # / The following defines Bus types
 # @{
 # PCI bus
-ADL_BUSTYPE_PCI = 0
+ADL_BUSTYPE_PCI = Constant(0).set_string('PCI')
 # AGP bus
-ADL_BUSTYPE_AGP = 1
+ADL_BUSTYPE_AGP = Constant(1).set_string('AGP')
 # PCI Express bus
-ADL_BUSTYPE_PCIE = 2
+ADL_BUSTYPE_PCIE = Constant(2).set_string('PCIe')
 # PCI Express 2nd generation bus
-ADL_BUSTYPE_PCIE_GEN2 = 3
+ADL_BUSTYPE_PCIE_GEN2 = Constant(3).set_string('PCIe Gen2')
 # PCI Express 3rd generation bus
-ADL_BUSTYPE_PCIE_GEN3 = 4
+ADL_BUSTYPE_PCIE_GEN3 = Constant(4).set_string('PCIe Gen3')
 # @}
 # / \defgroup define_ws_caps Workstation Capabilities
 # / Workstation values
 # @{
 # / This value indicates that the workstation card supports active stereo
 # though stereo output connector
-ADL_STEREO_SUPPORTED = 1 << 2
+ADL_STEREO_SUPPORTED = Constant(1 << 2).set_string('Stereo Supported')
+# though stereo output connector")
 # / This value indicates that the workstation card supports active stereo
 # via "blue-line"
-ADL_STEREO_BLUE_LINE = 1 << 3
+ADL_STEREO_BLUE_LINE = Constant(1 << 3).set_string('Stereo Blue Line')
 # / This value is used to turn off stereo mode.
-ADL_STEREO_OFF = 0
+ADL_STEREO_OFF = Constant(0).set_string('Stereo Off')
 # / This value indicates that the workstation card supports active stereo.
 # This is also used to set the stereo mode to active though the stereo
 # output connector
-ADL_STEREO_ACTIVE = 1 << 1
+ADL_STEREO_ACTIVE = Constant(1 << 1).set_string('Stereo Active')
 # / This value indicates that the workstation card supports auto-stereo
 # monitors with horizontal interleave. This is also used to set the stereo
 # mode to use the auto-stereo monitor with horizontal interleave
-ADL_STEREO_AUTO_HORIZONTAL = 1 << 30
+ADL_STEREO_AUTO_HORIZONTAL = Constant(1 << 30).set_string('Stereo Auto Horizontal')
 # / This value indicates that the workstation card supports auto-stereo
 # monitors with vertical interleave. This is also used to set the stereo
 # mode to use the auto-stereo monitor with vertical interleave
-ADL_STEREO_AUTO_VERTICAL = 1 << 31
+ADL_STEREO_AUTO_VERTICAL = Constant(1 << 31).set_string('Stereo Auto Vertical')
 # / This value indicates that the workstation card supports passive
 # stereo, ie. non stereo sync
-ADL_STEREO_PASSIVE = 1 << 6
+ADL_STEREO_PASSIVE = Constant(1 << 6).set_string('Stereo Passive')
 # / This value indicates that the workstation card supports auto-stereo
 # monitors with vertical interleave. This is also used to set the stereo
 # mode to use the auto-stereo monitor with vertical interleave
-ADL_STEREO_PASSIVE_HORIZ = 1 << 7
+ADL_STEREO_PASSIVE_HORIZ = Constant(1 << 7).set_string('Stereo Passive Horizontal')
 # / This value indicates that the workstation card supports auto-stereo
 # monitors with vertical interleave. This is also used to set the stereo
 # mode to use the auto-stereo monitor with vertical interleave
-ADL_STEREO_PASSIVE_VERT = 1 << 8
+ADL_STEREO_PASSIVE_VERT = Constant(1 << 8).set_string('Stereo Passive Vertical')
 # / This value indicates that the workstation card supports auto-stereo
 # monitors with Samsung.
-ADL_STEREO_AUTO_SAMSUNG = 1 << 11
+ADL_STEREO_AUTO_SAMSUNG = Constant(1 << 11).set_string('Stereo Auto Samsung')
 # / This value indicates that the workstation card supports auto-stereo
 # monitors with Tridility.
-ADL_STEREO_AUTO_TSL = 1 << 12
+ADL_STEREO_AUTO_TSL = Constant(1 << 12).set_string('Auto Tridility')
 # / This value indicates that the workstation card supports DeepBitDepth
 # (10 bpp)
 ADL_DEEPBITDEPTH_10BPP_SUPPORTED = 1 << 5
@@ -543,13 +579,13 @@ ADL_WORKSTATION_LOADBALANCING_ENABLED = 0x00000001
 # / \defgroup define_adapterspeed speed setting from the adapter
 # @{
 # default asic running speed
-ADL_CONTEXT_SPEED_UNFORCED = 0
+ADL_CONTEXT_SPEED_UNFORCED = Constant(0).set_string('Unforced')
 # asic running speed is forced to high
-ADL_CONTEXT_SPEED_FORCEHIGH = 1
+ADL_CONTEXT_SPEED_FORCEHIGH = Constant(1).set_string('Force High')
 # asic running speed is forced to low
-ADL_CONTEXT_SPEED_FORCELOW = 2
+ADL_CONTEXT_SPEED_FORCELOW = Constant(2).set_string('Force Low')
 # change asic running speed setting is supported
-ADL_ADAPTER_SPEEDCAPS_SUPPORTED = 1 << 0
+ADL_ADAPTER_SPEEDCAPS_SUPPORTED = Constant(1 << 0).set_string('Supported')
 # @}
 # / \defgroup define_glsync Genlock related values
 # / GL-Sync port types (unique values)
@@ -742,65 +778,65 @@ ADL_MAX_GLSYNC_PORT_LEDS = 8
 # adapter CrossfireX combination
 # @{
 # Dongle / cable is missing
-ADL_XFIREX_STATE_NOINTERCONNECT = 1 << 0
+ADL_XFIREX_STATE_NOINTERCONNECT = Constant(1 << 0).set_string('No Interconnect')
 # CrossfireX can be enabled if pipes are downgraded
-ADL_XFIREX_STATE_DOWNGRADEPIPES = 1 << 1
+ADL_XFIREX_STATE_DOWNGRADEPIPES = Constant(1 << 1).set_string('CrossfireX can be enabled if pipes are downgraded')
 # CrossfireX cannot be enabled unless mem downgraded
-ADL_XFIREX_STATE_DOWNGRADEMEM = 1 << 2
+ADL_XFIREX_STATE_DOWNGRADEMEM = Constant(1 << 2).set_string('CrossfireX cannot be enabled unless memory is downgraded')
 # Card reversal recommended, CrossfireX cannot be enabled.
-ADL_XFIREX_STATE_REVERSERECOMMENDED = 1 << 3
+ADL_XFIREX_STATE_REVERSERECOMMENDED = Constant(1 << 3).set_string('CrossfireX cannot be enabled, card reversal recommended')
 # 3D client is active - CrossfireX cannot be safely enabled
-ADL_XFIREX_STATE_3DACTIVE = 1 << 4
+ADL_XFIREX_STATE_3DACTIVE = Constant(1 << 4).set_string('CrossfireX cannot be safely enabled, 3D client is active')
 # Dongle is OK but master is on slave
-ADL_XFIREX_STATE_MASTERONSLAVE = 1 << 5
+ADL_XFIREX_STATE_MASTERONSLAVE = Constant(1 << 5).set_string('Dongle is OK but master is on slave')
 # No (valid) display connected to master card.
-ADL_XFIREX_STATE_NODISPLAYCONNECT = 1 << 6
+ADL_XFIREX_STATE_NODISPLAYCONNECT = Constant(1 << 6).set_string('No (valid) display connected to master card')
 # CrossfireX is enabled but master is not current primary device
-ADL_XFIREX_STATE_NOPRIMARYVIEW = 1 << 7
+ADL_XFIREX_STATE_NOPRIMARYVIEW = Constant(1 << 7).set_string(' CrossfireX is enabled but master is not current primary device')
 # CrossfireX cannot be enabled unless visible mem downgraded
-ADL_XFIREX_STATE_DOWNGRADEVISMEM = 1 << 8
+ADL_XFIREX_STATE_DOWNGRADEVISMEM = Constant(1 << 8).set_string('CrossfireX cannot be enabled unless visible memmemory is downgraded')
 # CrossfireX can be enabled however performance not optimal due to < 8
 # lanes
-ADL_XFIREX_STATE_LESSTHAN8LANE_MASTER = 1 << 9
+ADL_XFIREX_STATE_LESSTHAN8LANE_MASTER = Constant(1 << 9).set_string('CrossfireX can be enabled however performance not optimal due to master having < 8 lanes')
 # CrossfireX can be enabled however performance not optimal due to < 8
 # lanes
-ADL_XFIREX_STATE_LESSTHAN8LANE_SLAVE = 1 << 10
+ADL_XFIREX_STATE_LESSTHAN8LANE_SLAVE = Constant(1 << 10).set_string('CrossfireX can be enabled however performance not optimal due to slave having < 8 lanes')
 # CrossfireX cannot be enabled due to failed peer to peer test
-ADL_XFIREX_STATE_PEERTOPEERFAILED = 1 << 11
+ADL_XFIREX_STATE_PEERTOPEERFAILED = Constant(1 << 11).set_string('CrossfireX cannot be enabled due to failed peer to peer test')
 # Notification that memory is currently downgraded
-ADL_XFIREX_STATE_MEMISDOWNGRADED = 1 << 16
+ADL_XFIREX_STATE_MEMISDOWNGRADED = Constant(1 << 16).set_string('Notification that memory is currently downgraded')
 # Notification that pipes are currently downgraded
-ADL_XFIREX_STATE_PIPESDOWNGRADED = 1 << 17
+ADL_XFIREX_STATE_PIPESDOWNGRADED = Constant(1 << 17).set_string('Notification that pipes are currently downgraded')
 # CrossfireX is enabled on current device
-ADL_XFIREX_STATE_XFIREXACTIVE = 1 << 18
+ADL_XFIREX_STATE_XFIREXACTIVE = Constant(1 << 18).set_string('CrossfireX is enabled')
 # Notification that visible FB memory is currently downgraded
-ADL_XFIREX_STATE_VISMEMISDOWNGRADED = 1 << 19
+ADL_XFIREX_STATE_VISMEMISDOWNGRADED = Constant(1 << 19).set_string('Notification that visible FB memory is currently downgraded')
 # Cannot support current inter-connection configuration
-ADL_XFIREX_STATE_INVALIDINTERCONNECTION = 1 << 20
+ADL_XFIREX_STATE_INVALIDINTERCONNECTION = Constant(1 << 20).set_string('Cannot support current inter-connection configuration')
 # CrossfireX will only work with clients supporting non P2P mode
-ADL_XFIREX_STATE_NONP2PMODE = 1 << 21
+ADL_XFIREX_STATE_NONP2PMODE = Constant(1 << 21).set_string('CrossfireX will only work with clients supporting non P2P mode')
 # CrossfireX cannot be enabled unless memory banks downgraded
-ADL_XFIREX_STATE_DOWNGRADEMEMBANKS = 1 << 22
+ADL_XFIREX_STATE_DOWNGRADEMEMBANKS = Constant(1 << 22).set_string('CrossfireX cannot be enabled unless memory banks downgraded')
 # Notification that memory banks are currently downgraded
-ADL_XFIREX_STATE_MEMBANKSDOWNGRADED = 1 << 23
+ADL_XFIREX_STATE_MEMBANKSDOWNGRADED = Constant(1 << 23).set_string('Notification that memory banks are currently downgraded')
 # Extended desktop or clone mode is allowed.
-ADL_XFIREX_STATE_DUALDISPLAYSALLOWED = 1 << 24
+ADL_XFIREX_STATE_DUALDISPLAYSALLOWED = Constant(1 << 24).set_string(' Extended desktop or clone mode is allowed.')
 # P2P mapping was through peer aperture
-ADL_XFIREX_STATE_P2P_APERTURE_MAPPING = 1 << 25
+ADL_XFIREX_STATE_P2P_APERTURE_MAPPING = Constant(1 << 25).set_string('P2P mapping was through peer aperture')
 # For back compatible
 ADL_XFIREX_STATE_P2PFLUSH_REQUIRED = ADL_XFIREX_STATE_P2P_APERTURE_MAPPING
 # There is CrossfireX side port connection between GPUs
-ADL_XFIREX_STATE_XSP_CONNECTED = 1 << 26
+ADL_XFIREX_STATE_XSP_CONNECTED = Constant(1 << 26).set_string('There is CrossfireX side port connection between GPUs')
 # System needs a reboot bofore enable CrossfireX
-ADL_XFIREX_STATE_ENABLE_CF_REBOOT_REQUIRED = 1 << 27
+ADL_XFIREX_STATE_ENABLE_CF_REBOOT_REQUIRED = Constant(1 << 27).set_string('System needs a reboot bofore enable CrossfireX')
 # System needs a reboot after disable CrossfireX
-ADL_XFIREX_STATE_DISABLE_CF_REBOOT_REQUIRED = 1 << 28
+ADL_XFIREX_STATE_DISABLE_CF_REBOOT_REQUIRED = Constant(1 << 28).set_string('System needs a reboot after disable CrossfireX')
 # Indicate base driver handles the downgrade key updating
-ADL_XFIREX_STATE_DRV_HANDLE_DOWNGRADE_KEY = 1 << 29
+ADL_XFIREX_STATE_DRV_HANDLE_DOWNGRADE_KEY = Constant(1 << 29).set_string('Indicate base driver handles the downgrade key updating')
 # CrossfireX need to be reconfigured by CCC because of a LDA chain broken
-ADL_XFIREX_STATE_CF_RECONFIG_REQUIRED = 1 << 30
+ADL_XFIREX_STATE_CF_RECONFIG_REQUIRED = Constant(1 << 30).set_string(' CrossfireX need to be reconfigured by CCC because of a LDA chain broken')
 # Could not obtain current status
-ADL_XFIREX_STATE_ERRORGETTINGSTATUS = 1 << 31
+ADL_XFIREX_STATE_ERRORGETTINGSTATUS = Constant(1 << 31).set_string('Could not obtain current status')
 # @}
 # /////////////////////////////////////////////////////////////////////////
 # ADL_DISPLAY_ADJUSTMENT_PIXELFORMAT adjustment values
@@ -812,16 +848,16 @@ ADL_XFIREX_STATE_ERRORGETTINGSTATUS = 1 << 31
 # / Since a display can support multiple formats, these values can be
 # bit-or'ed to indicate the various formats \n
 # @{
-ADL_DISPLAY_PIXELFORMAT_UNKNOWN = 0
-ADL_DISPLAY_PIXELFORMAT_RGB = 1 << 0
+ADL_DISPLAY_PIXELFORMAT_UNKNOWN = Constant(0).set_string('Unknown')
+ADL_DISPLAY_PIXELFORMAT_RGB = Constant(1 << 0).set_string('RGB Full Range')
 # Limited range
-ADL_DISPLAY_PIXELFORMAT_YCRCB444 = 1 << 1
+ADL_DISPLAY_PIXELFORMAT_YCRCB444 = Constant(1 << 0).set_string('YCRCB444')
 # Limited range
-ADL_DISPLAY_PIXELFORMAT_YCRCB422 = 1 << 2
-ADL_DISPLAY_PIXELFORMAT_RGB_LIMITED_RANGE = 1 << 3
+ADL_DISPLAY_PIXELFORMAT_YCRCB422 = Constant(1 << 0).set_string('YCRCB422')
+ADL_DISPLAY_PIXELFORMAT_RGB_LIMITED_RANGE = Constant(1 << 0).set_string('RGB Limited Range')
 # Full range
 ADL_DISPLAY_PIXELFORMAT_RGB_FULL_RANGE = ADL_DISPLAY_PIXELFORMAT_RGB
-ADL_DISPLAY_PIXELFORMAT_YCRCB420 = 1 << 4
+ADL_DISPLAY_PIXELFORMAT_YCRCB420 = Constant(1 << 0).set_string('YCRCB420')
 # @}
 # / \defgroup define_contype Connector Type Values
 # / ADLDisplayConfig.ulConnectorType defines
@@ -845,27 +881,27 @@ ADL_DL_DISPLAYCONFIG_CONTYPE_DISPLAYPORT = 10
 # /////////////////////////////////////////////////////////////////////////
 # / \defgroup define_displayinfomask Display Info Mask Values
 # @{
-ADL_DISPLAY_DISPLAYINFO_DISPLAYCONNECTED = 0x00000001
-ADL_DISPLAY_DISPLAYINFO_DISPLAYMAPPED = 0x00000002
-ADL_DISPLAY_DISPLAYINFO_NONLOCAL = 0x00000004
-ADL_DISPLAY_DISPLAYINFO_FORCIBLESUPPORTED = 0x00000008
-ADL_DISPLAY_DISPLAYINFO_GENLOCKSUPPORTED = 0x00000010
-ADL_DISPLAY_DISPLAYINFO_MULTIVPU_SUPPORTED = 0x00000020
-ADL_DISPLAY_DISPLAYINFO_LDA_DISPLAY = 0x00000040
-ADL_DISPLAY_DISPLAYINFO_MODETIMING_OVERRIDESSUPPORTED = 0x00000080
-ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_SINGLE = 0x00000100
-ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_CLONE = 0x00000200
+ADL_DISPLAY_DISPLAYINFO_DISPLAYCONNECTED = Constant(0x00000001).set_string('DISPLAYCONNECTED')
+ADL_DISPLAY_DISPLAYINFO_DISPLAYMAPPED = Constant(0x00000002).set_string('DISPLAYMAPPED')
+ADL_DISPLAY_DISPLAYINFO_NONLOCAL = Constant(0x00000004).set_string('NONLOCAL')
+ADL_DISPLAY_DISPLAYINFO_FORCIBLESUPPORTED = Constant(0x00000008).set_string('FORCIBLESUPPORTED')
+ADL_DISPLAY_DISPLAYINFO_GENLOCKSUPPORTED = Constant(0x00000010).set_string('GENLOCKSUPPORTED')
+ADL_DISPLAY_DISPLAYINFO_MULTIVPU_SUPPORTED = Constant(0x00000020).set_string('MULTIVPU_SUPPORTED')
+ADL_DISPLAY_DISPLAYINFO_LDA_DISPLAY = Constant(0x00000040).set_string('LDA_DISPLAY')
+ADL_DISPLAY_DISPLAYINFO_MODETIMING_OVERRIDESSUPPORTED = Constant(0x00000080).set_string('MODETIMING_OVERRIDESSUPPORTED')
+ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_SINGLE = Constant(0x00000100).set_string('MANNER_SUPPORTED_SINGLE')
+ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_CLONE = Constant(0x00000200).set_string('MANNER_SUPPORTED_CLONE')
 # / Legacy support for XP
-ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_2VSTRETCH = 0x00000400
-ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_2HSTRETCH = 0x00000800
-ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_EXTENDED = 0x00001000
+ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_2VSTRETCH = Constant(0x00000400).set_string('MANNER_SUPPORTED_2VSTRETCH')
+ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_2HSTRETCH = Constant(0x00000800).set_string('MANNER_SUPPORTED_2HSTRETCH')
+ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_EXTENDED = Constant(0x00001000).set_string('MANNER_SUPPORTED_EXTENDED')
 # / More support manners
-ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_NSTRETCH1GPU = 0x00010000
-ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_NSTRETCHNGPU = 0x00020000
-ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_RESERVED2 = 0x00040000
-ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_RESERVED3 = 0x00080000
+ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_NSTRETCH1GPU = Constant(0x00010000).set_string('MANNER_SUPPORTED_NSTRETCH1GPU')
+ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_NSTRETCHNGPU = Constant(0x00020000).set_string('MANNER_SUPPORTED_NSTRETCHNGPU')
+ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_RESERVED2 = Constant(0x00040000).set_string('MANNER_SUPPORTED_RESERVED2')
+ADL_DISPLAY_DISPLAYINFO_MANNER_SUPPORTED_RESERVED3 = Constant(0x00080000).set_string('MANNER_SUPPORTED_RESERVED3')
 # / Projector display type
-ADL_DISPLAY_DISPLAYINFO_SHOWTYPE_PROJECTOR = 0x00100000
+ADL_DISPLAY_DISPLAYINFO_SHOWTYPE_PROJECTOR = Constant(0x00100000).set_string('SHOWTYPE_PROJECTOR')
 # @}
 # /////////////////////////////////////////////////////////////////////////
 # ADL_ADAPTER_DISPLAY_MANNER_SUPPORTED_ Definitions
@@ -1323,15 +1359,15 @@ ADL_DL_MVPU_STATUS_ON = 1
 # /\defgroup define_Asic_type Detailed asic types
 # / Defines for Adapter ASIC family type
 # @{
-ADL_ASIC_UNDEFINED = 0
-ADL_ASIC_DISCRETE = 1 << 0
-ADL_ASIC_INTEGRATED = 1 << 1
-ADL_ASIC_FIREGL = 1 << 2
-ADL_ASIC_FIREMV = 1 << 3
-ADL_ASIC_XGP = 1 << 4
-ADL_ASIC_FUSION = 1 << 5
-ADL_ASIC_FIRESTREAM = 1 << 6
-ADL_ASIC_EMBEDDED = 1 << 7
+ADL_ASIC_UNDEFINED = Constant(0).set_string('Undefined')
+ADL_ASIC_DISCRETE = Constant(1 << 0).set_string('Discrete')
+ADL_ASIC_INTEGRATED = Constant(1 << 1).set_string('Integrated')
+ADL_ASIC_FIREGL = Constant(1 << 2).set_string('Fire GL')
+ADL_ASIC_FIREMV = Constant(1 << 3).set_string('Fire MV')
+ADL_ASIC_XGP = Constant(1 << 4).set_string('XGP')
+ADL_ASIC_FUSION = Constant(1 << 5).set_string('Fusion')
+ADL_ASIC_FIRESTREAM = Constant(1 << 6).set_string('Fire Stream')
+ADL_ASIC_EMBEDDED = Constant(1 << 7).set_string('Embedded')
 # @}
 # /\defgroup define_detailed_timing_flags Detailed Timimg Flags
 # / Defines for ADLDetailedTiming.sTimingFlags field
@@ -2341,35 +2377,35 @@ ADL_MAX_POWER_POLICY = 6
 # ADL_Adapter_SupportedConnections_Get
 # @{
 # / Indicates the VGA connection type is valid.
-ADL_CONNECTION_TYPE_VGA = 0
+ADL_CONNECTION_TYPE_VGA = Constant(0).set_string('VGA')
 # / Indicates the DVI_I connection type is valid.
-ADL_CONNECTION_TYPE_DVI = 1
+ADL_CONNECTION_TYPE_DVI = Constant(1).set_string('DVI-D')
 # / Indicates the DVI_SL connection type is valid.
-ADL_CONNECTION_TYPE_DVI_SL = 2
+ADL_CONNECTION_TYPE_DVI_SL = Constant(2).set_string('DVI-I')
 # / Indicates the HDMI connection type is valid.
-ADL_CONNECTION_TYPE_HDMI = 3
+ADL_CONNECTION_TYPE_HDMI = Constant(3).set_string('HDMI')
 # / Indicates the DISPLAY PORT connection type is valid.
-ADL_CONNECTION_TYPE_DISPLAY_PORT = 4
+ADL_CONNECTION_TYPE_DISPLAY_PORT = Constant(4).set_string('DisplayPort')
 # / Indicates the Active dongle DP.DVI(single link) connection type is
 # valid.
-ADL_CONNECTION_TYPE_ACTIVE_DONGLE_DP_DVI_SL = 5
+ADL_CONNECTION_TYPE_ACTIVE_DONGLE_DP_DVI_SL = Constant(5).set_string('DisplayPort --> DVI-I (active)')
 # / Indicates the Active dongle DP.DVI(DOUBLE link) connection type is
 # valid.
-ADL_CONNECTION_TYPE_ACTIVE_DONGLE_DP_DVI_DL = 6
+ADL_CONNECTION_TYPE_ACTIVE_DONGLE_DP_DVI_DL = Constant(6).set_string('DisplayPort --> DVI-D (active)')
 # / Indicates the Active dongle DP.HDMI connection type is valid.
-ADL_CONNECTION_TYPE_ACTIVE_DONGLE_DP_HDMI = 7
+ADL_CONNECTION_TYPE_ACTIVE_DONGLE_DP_HDMI = Constant(7).set_string('DisplayPort --> HDMI (active)')
 # / Indicates the Active dongle DP.VGA connection type is valid.
-ADL_CONNECTION_TYPE_ACTIVE_DONGLE_DP_VGA = 8
+ADL_CONNECTION_TYPE_ACTIVE_DONGLE_DP_VGA = Constant(8).set_string('DisplayPort --> VGA (active)')
 # / Indicates the Passive dongle DP.HDMI connection type is valid.
-ADL_CONNECTION_TYPE_PASSIVE_DONGLE_DP_HDMI = 9
+ADL_CONNECTION_TYPE_PASSIVE_DONGLE_DP_HDMI = Constant(9).set_string('DisplayPort --> HDMI (passive)')
 # / Indicates the Active dongle DP.VGA connection type is valid.
-ADL_CONNECTION_TYPE_PASSIVE_DONGLE_DP_DVI = 10
+ADL_CONNECTION_TYPE_PASSIVE_DONGLE_DP_DVI = Constant(10).set_string('DisplayPort --> DVI-D (passive)')
 # / Indicates the MST type is valid.
-ADL_CONNECTION_TYPE_MST = 11
+ADL_CONNECTION_TYPE_MST = Constant(11).set_string('Display Branch')
 # / Indicates the active dongle, all types.
-ADL_CONNECTION_TYPE_ACTIVE_DONGLE = 12
+ADL_CONNECTION_TYPE_ACTIVE_DONGLE = Constant(12).set_string('Active Dongle')
 # / Indicates the Virtual Connection Type.
-ADL_CONNECTION_TYPE_VIRTUAL = 13
+ADL_CONNECTION_TYPE_VIRTUAL = Constant(13).set_string('Virtual')
 
 
 # / Macros for generating bitmask from index.
@@ -2416,15 +2452,15 @@ ADL_LANECOUNT_DEF = ADL_LANECOUNT_FOUR
 # etc.
 # @{
 # / Indicates if link rate is unknown
-ADL_LINK_BITRATE_UNKNOWN = 0
+ADL_LINK_BITRATE_UNKNOWN = Constant(0).set_string('Unknown')
 # / Indicates if link rate is 1.62Ghz
-ADL_LINK_BITRATE_1_62_GHZ = 0x06
+ADL_LINK_BITRATE_1_62_GHZ = Constant(0x06).set_string('1.62GHz')
 # / Indicates if link rate is 2.7Ghz
-ADL_LINK_BITRATE_2_7_GHZ = 0x0A
+ADL_LINK_BITRATE_2_7_GHZ = Constant(0x0A).set_string('2.7GHz')
 # / Indicates if link rate is 3.24Ghz
-ADL_LINK_BTIRATE_3_24_GHZ = 0x0C
+ADL_LINK_BTIRATE_3_24_GHZ = Constant(0x0C).set_string('3.24GHz')
 # / Indicates if link rate is 5.4Ghz
-ADL_LINK_BITRATE_5_4_GHZ = 0x14
+ADL_LINK_BITRATE_5_4_GHZ = Constant(0x14).set_string('5.4GHz')
 # / Indicates default value of link rate
 ADL_LINK_BITRATE_DEF = ADL_LINK_BITRATE_2_7_GHZ
 # @}
@@ -2432,26 +2468,26 @@ ADL_LINK_BITRATE_DEF = ADL_LINK_BITRATE_2_7_GHZ
 # / These defines are the color depth constants which will be used in DP &
 # etc.
 # @{
-ADL_CONNPROP_S3D_ALTERNATE_TO_FRAME_PACK = 0x00000001
+ADL_CONNPROP_S3D_ALTERNATE_TO_FRAME_PACK = Constant(0x00000001).set_string('Alternate Frame Pack')
 # @}
 # / \defgroup define_colordepth_constants
 # / These defines are the color depth constants which will be used in DP &
 # etc.
 # @{
 # / Indicates if color depth is unknown
-ADL_COLORDEPTH_UNKNOWN = 0
+ADL_COLORDEPTH_UNKNOWN = Constant(0).set_string('Unknown')
 # / Indicates if color depth is 666
-ADL_COLORDEPTH_666 = 1
+ADL_COLORDEPTH_666 = Constant(1).set_string('6bit')
 # / Indicates if color depth is 888
-ADL_COLORDEPTH_888 = 2
+ADL_COLORDEPTH_888 = Constant(2).set_string('8bit')
 # / Indicates if color depth is 101010
-ADL_COLORDEPTH_101010 = 3
+ADL_COLORDEPTH_101010 = Constant(3).set_string('10bit')
 # / Indicates if color depth is 121212
-ADL_COLORDEPTH_121212 = 4
+ADL_COLORDEPTH_121212 = Constant(4).set_string('12bit')
 # / Indicates if color depth is 141414
-ADL_COLORDEPTH_141414 = 5
+ADL_COLORDEPTH_141414 = Constant(5).set_string('14bit')
 # / Indicates if color depth is 161616
-ADL_COLORDEPTH_161616 = 6
+ADL_COLORDEPTH_161616 = Constant(6).set_string('16bit')
 # / Indicates default value of color depth
 ADL_COLOR_DEPTH_DEF = ADL_COLORDEPTH_888
 # @}
@@ -2459,27 +2495,27 @@ ADL_COLOR_DEPTH_DEF = ADL_COLORDEPTH_888
 # / These defines are the status of emulation
 # @{
 # / Indicates if real device is connected.
-ADL_EMUL_STATUS_REAL_DEVICE_CONNECTED = 0x1
+ADL_EMUL_STATUS_REAL_DEVICE_CONNECTED = Constant(0x1).set_string('Real Device Connected')
 # / Indicates if emulated device is presented.
-ADL_EMUL_STATUS_EMULATED_DEVICE_PRESENT = 0x2
+ADL_EMUL_STATUS_EMULATED_DEVICE_PRESENT = Constant(0x2).set_string('Emulated Device Present')
 # / Indicates if emulated device is used.
-ADL_EMUL_STATUS_EMULATED_DEVICE_USED = 0x4
+ADL_EMUL_STATUS_EMULATED_DEVICE_USED = Constant(0x4).set_string('Emulated Device Used')
 # / In case when last active real/emulated device used
 # (when persistence is enabled but no emulation enforced then persistence will use last connected/emulated device).
 # 
-ADL_EMUL_STATUS_LAST_ACTIVE_DEVICE_USED = 0x8
+ADL_EMUL_STATUS_LAST_ACTIVE_DEVICE_USED = Constant(0x8).set_string('Last Active Device Used')
 # @}
 # / \defgroup define_emulation_mode
 # / These defines are the modes of emulation
 # @{
 # / Indicates if no emulation is used
-ADL_EMUL_MODE_OFF = 0
+ADL_EMUL_MODE_OFF = Constant(0).set_string('Off')
 # / Indicates if emulation is used when display connected
-ADL_EMUL_MODE_ON_CONNECTED = 1
+ADL_EMUL_MODE_ON_CONNECTED = Constant(1).set_string('Display Connected')
 # / Indicates if emulation is used when display dis connected
-ADL_EMUL_MODE_ON_DISCONNECTED = 2
+ADL_EMUL_MODE_ON_DISCONNECTED = Constant(2).set_string('Display Disconnected')
 # / Indicates if emulation is used always
-ADL_EMUL_MODE_ALWAYS = 3
+ADL_EMUL_MODE_ALWAYS = Constant(3).set_string('Always')
 # @}
 # / \defgroup define_emulation_query
 # / These defines are the modes of emulation
@@ -2503,33 +2539,33 @@ ADL_EDID_PERSISTANCE_ENABLED = 1
 # / defines for ADLConnectorInfo.iType
 # @{
 # / Indicates unknown Connector type
-ADL_CONNECTOR_TYPE_UNKNOWN = 0
+ADL_CONNECTOR_TYPE_UNKNOWN = Constant(0).set_string('Unknown')
 # / Indicates VGA Connector type
-ADL_CONNECTOR_TYPE_VGA = 1
+ADL_CONNECTOR_TYPE_VGA = Constant(0).set_string('VGA')
 # / Indicates DVI-D Connector type
-ADL_CONNECTOR_TYPE_DVI_D = 2
+ADL_CONNECTOR_TYPE_DVI_D = Constant(0).set_string('DVI-D')
 # / Indicates DVI-I Connector type
-ADL_CONNECTOR_TYPE_DVI_I = 3
+ADL_CONNECTOR_TYPE_DVI_I = Constant(0).set_string('DVI-I')
 # / Indicates Active Dongle-NA Connector type
-ADL_CONNECTOR_TYPE_ATICVDONGLE_NA = 4
+ADL_CONNECTOR_TYPE_ATICVDONGLE_NA = Constant(0).set_string('Active Dongle-NA')
 # / Indicates Active Dongle-JP Connector type
-ADL_CONNECTOR_TYPE_ATICVDONGLE_JP = 5
+ADL_CONNECTOR_TYPE_ATICVDONGLE_JP = Constant(0).set_string('Active Dongle-JP')
 # / Indicates Active Dongle-NONI2C Connector type
-ADL_CONNECTOR_TYPE_ATICVDONGLE_NONI2C = 6
+ADL_CONNECTOR_TYPE_ATICVDONGLE_NONI2C = Constant(0).set_string('Active Dongle-NONI2C')
 # / Indicates Active Dongle-NONI2C-D Connector type
-ADL_CONNECTOR_TYPE_ATICVDONGLE_NONI2C_D = 7
+ADL_CONNECTOR_TYPE_ATICVDONGLE_NONI2C_D = Constant(0).set_string('Active Dongle-NONI2C-D')
 # / Indicates HDMI-Type A Connector type
-ADL_CONNECTOR_TYPE_HDMI_TYPE_A = 8
+ADL_CONNECTOR_TYPE_HDMI_TYPE_A = Constant(0).set_string('HDMI-Type A')
 # / Indicates HDMI-Type B Connector type
-ADL_CONNECTOR_TYPE_HDMI_TYPE_B = 9
+ADL_CONNECTOR_TYPE_HDMI_TYPE_B = Constant(0).set_string(' HDMI-Type B')
 # / Indicates Display port Connector type
-ADL_CONNECTOR_TYPE_DISPLAYPORT = 10
+ADL_CONNECTOR_TYPE_DISPLAYPORT = Constant(0).set_string('DisplayPort')
 # / Indicates EDP Connector type
-ADL_CONNECTOR_TYPE_EDP = 11
+ADL_CONNECTOR_TYPE_EDP = Constant(0).set_string('EDP')
 # / Indicates MiniDP Connector type
-ADL_CONNECTOR_TYPE_MINI_DISPLAYPORT = 12
+ADL_CONNECTOR_TYPE_MINI_DISPLAYPORT = Constant(0).set_string('DisplayPort (Mini)')
 # / Indicates Virtual Connector type
-ADL_CONNECTOR_TYPE_VIRTUAL = 13
+ADL_CONNECTOR_TYPE_VIRTUAL = Constant(0).set_string('Virtual')
 # @}
 # / \defgroup define_freesync_usecase
 # / These defines are to specify use cases in which FreeSync should be

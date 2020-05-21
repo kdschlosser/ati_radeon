@@ -163,16 +163,20 @@ _ADL2_Display_PowerXpressActiveGPU_Set = ADL2_DISPLAY_POWERXPRESSACTIVEGPU_SET
 # Function to set the active GPU in PowerXpress.
 _ADL_Display_PowerXpressActiveGPU_Set = ADL_DISPLAY_POWERXPRESSACTIVEGPU_SET
 
-# Function to retrieve the auto switch configuration setting for PowerXpress. This is not supported when DPPE state switching is configured.
+# Function to retrieve the auto switch configuration setting for PowerXpress.
+# This is not supported when DPPE state switching is configured.
 _ADL2_Display_PowerXpress_AutoSwitchConfig_Get = ADL2_DISPLAY_POWERXPRESS_AUTOSWITCHCONFIG_GET
 
-# Function to retrieve the auto switch configuration setting for PowerXpress. This is not supported when DPPE state switching is configured.
+# Function to retrieve the auto switch configuration setting for PowerXpress.
+# This is not supported when DPPE state switching is configured.
 _ADL_Display_PowerXpress_AutoSwitchConfig_Get = ADL_DISPLAY_POWERXPRESS_AUTOSWITCHCONFIG_GET
 
-# Function to set the auto switch configuration setting for PowerXpress. This is not supported when DPPE state switching is configured.
+# Function to set the auto switch configuration setting for PowerXpress.
+# This is not supported when DPPE state switching is configured.
 _ADL2_Display_PowerXpress_AutoSwitchConfig_Set = ADL2_DISPLAY_POWERXPRESS_AUTOSWITCHCONFIG_SET
 
-# Function to set the auto switch configuration setting for PowerXpress. This is not supported when DPPE state switching is configured.
+# Function to set the auto switch configuration setting for PowerXpress.
+# This is not supported when DPPE state switching is configured.
 _ADL_Display_PowerXpress_AutoSwitchConfig_Set = ADL_DISPLAY_POWERXPRESS_AUTOSWITCHCONFIG_SET
 
 # This function gets the PowerXpress configuration Caps.
@@ -223,6 +227,18 @@ def Init(hDLL):
     global _ADL2_PowerXpress_AncillaryDevices_Get
     global _ADL_PowerXpress_AncillaryDevices_Get
     global _ADL2_SwitchableGraphics_Applications_Get
+
+    # ADL local interface. Function to get Hybrid Discrete graphics support.
+    # int 	ADL2_Win_IsHybridAI(ADL_CONTEXT_HANDLE context)
+
+    # This function gets PX configuration.
+    # int 	ADL2_PowerXpress_Configuration_Get(
+    #   ADL_CONTEXT_HANDLE context,
+    #   ADLPxType *lpPxType,
+    #   ADLBdf *lpIGPUBdf,
+    #   int *lpNumberOfDGPUs,
+    #   ADLBdf **lppDGPUBDFs
+    # )
 
     _ADL2_Display_PowerXpressVersion_Get = ADL2_DISPLAY_POWERXPRESSVERSION_GET(
           GetProcAddress(hDLL, "ADL2_Display_PowerXpressVersion_Get")

@@ -455,16 +455,16 @@ AMDVENDORID = 1002
 ADL_WARNING_NO_DATA = -100
 
 
-class ValueWrapper(int):
+class IntValueWrapper(int):
 
     def __init__(self, value=None):
         if value is None:
-            super(ValueWrapper, self).__init__(self)
+            super(IntValueWrapper, self).__init__(self)
         else:
             try:
-                super(ValueWrapper, self).__init__(value)
+                super(IntValueWrapper, self).__init__(value)
             except TypeError:
-                super(ValueWrapper, self).__init__()
+                super(IntValueWrapper, self).__init__()
 
         self._obj = None
 
@@ -480,21 +480,63 @@ class ValueWrapper(int):
         return self._obj.max_value
 
 
-class FanSpeed(ValueWrapper):
+
+class FloatValueWrapper(float):
+
+    def __init__(self, value=None):
+        if value is None:
+            super(FloatValueWrapper, self).__init__(self)
+        else:
+            try:
+                super(FloatValueWrapper, self).__init__(value)
+            except TypeError:
+                super(FloatValueWrapper, self).__init__()
+
+        self._obj = None
+
+    def _set_object(self, obj):
+        self._obj = obj
+
+    @property
+    def min(self):
+        return self._obj.min_value
+
+    @property
+    def max(self):
+        return self._obj.max_value
+
+
+
+class FanSpeed(IntValueWrapper):
 
     @property
     def unit_of_measure(self):
         return self._obj.unit
 
 
-class PowerThreshold(ValueWrapper):
+class PowerThreshold(IntValueWrapper):
 
     @property
     def step(self):
         return self._obj.step
 
 
-class ODValue(ValueWrapper):
+class ODValue(IntValueWrapper):
+
+    @property
+    def step(self):
+        return self._obj.step
+
+    @property
+    def actual(self):
+        return self._obj.actual
+
+    @property
+    def default(self):
+        return self._obj.default
+
+
+class FloatODValue(FloatValueWrapper):
 
     @property
     def step(self):
@@ -538,61 +580,69 @@ class PerformanceLevel(object):
 
     @property
     def _performance_level(self):
-        overdriveParameters = self._parent._overdrive_parameters
-        num_performance_levels = (
-            overdriveParameters.iNumberOfPerformanceLevels.value
-        )
         iAdapterIndex = INT(self._adapter_index)
+        overdriveParameters = self._parent._overdrive_parameters
 
-        size = (
-            ctypes.sizeof(ADLODPerformanceLevels) +
-            ctypes.sizeof(ADLODPerformanceLevel) *
-            (num_performance_levels - 1)
-        )
-        performanceLevelsBuffer = (VOID * size)()
-        ctypes.memset(performanceLevelsBuffer, 0, size)
-        performanceLevels = ctypes.cast(
-            performanceLevelsBuffer,
-            ctypes.POINTER(ADLODPerformanceLevels)
-        )
-        performanceLevels.contents.iSize = size
+        class ADLODPerformanceLevels(ctypes.Structure):
+            _fields_ = [
+                ('iSize', INT),
+                ('iReserved', INT),
+                ('aLevels', ADLODPerformanceLevel * overdriveParameters.iNumberOfPerformanceLevels),
+            ]
+
+        _ADL2_Overdrive5_ODPerformanceLevels_Get.argtypes = [
+            ADL_CONTEXT_HANDLE,
+            INT,
+            INT,
+            POINTER(ADLODPerformanceLevels)
+        ]
+
+        size = ctypes.sizeof(ADLODPerformanceLevels)
+        performanceLevels = ADLODPerformanceLevels()
+        performanceLevels.iSize = size
+
+        with ADL2_Main_Control_Create as context:
+            res = _ADL2_Overdrive5_ODPerformanceLevels_Get(
+                    context,
+                    iAdapterIndex,
+                    0,
+                    ctypes.byref(performanceLevels)
+            )
+
+            if res == ADL_OK:
+                return performanceLevels.aLevels[self.id]
+
+    @property
+    def _default_performance_level(self):
+        iAdapterIndex = INT(self._adapter_index)
+        overdriveParameters = self._parent._overdrive_parameters
+
+        class ADLODPerformanceLevels(ctypes.Structure):
+            _fields_ = [
+                ('iSize', INT),
+                ('iReserved', INT),
+                ('aLevels', ADLODPerformanceLevel * overdriveParameters.iNumberOfPerformanceLevels),
+            ]
+
+        _ADL2_Overdrive5_ODPerformanceLevels_Get.argtypes = [
+            ADL_CONTEXT_HANDLE,
+            INT,
+            INT,
+            POINTER(ADLODPerformanceLevels)
+        ]
+
+        size = ctypes.sizeof(ADLODPerformanceLevels)
+        performanceLevels = ADLODPerformanceLevels()
+        performanceLevels.iSize = size
 
         with ADL2_Main_Control_Create as context:
             if _ADL2_Overdrive5_ODPerformanceLevels_Get(
                     context,
                     iAdapterIndex,
-                    0,
-                    performanceLevels
+                    1,
+                    ctypes.byref(performanceLevels)
             ) == ADL_OK:
-                return performanceLevels.contents.aLevels[self.id]
-
-    @property
-    def _default_performance_level(self):
-        overdriveParameters = self._parent._overdrive_parameters
-        num_performance_levels = overdriveParameters.iNumberOfPerformanceLevels.value
-        iAdapterIndex = INT(self._adapter_index)
-
-        size = (
-            ctypes.sizeof(ADLODPerformanceLevels) +
-            ctypes.sizeof(ADLODPerformanceLevel) *
-            (num_performance_levels - 1)
-        )
-        performanceLevelsBuffer = (VOID * size)()
-        ctypes.memset(performanceLevelsBuffer, 0, size)
-        performanceLevels = ctypes.cast(
-            performanceLevelsBuffer,
-            ctypes.POINTER(ADLODPerformanceLevels)
-        )
-        performanceLevels.contents.iSize = size
-
-        with ADL2_Main_Control_Create as context:
-            if _ADL2_Overdrive5_ODPerformanceLevels_Get(
-                context,
-                iAdapterIndex,
-                1,
-                performanceLevels
-            ) == ADL_OK:
-                return performanceLevels.contents.aLevels[self.id]
+                return performanceLevels.aLevels[self.id]
 
     @property
     def engine_clock(self):
@@ -601,12 +651,12 @@ class PerformanceLevel(object):
         performanceLevel = self._performance_level
         currentActivity = self._current_activity
 
-        min_engine_clock = overdriveParameters.sEngineClock.iMin.value / 100
-        max_engine_clock = overdriveParameters.sEngineClock.iMax.value / 100
-        step_engine_clock = overdriveParameters.sEngineClock.iStep.value / 100
-        default_engine_clock = defaultPerformanceLevel.iEngineClock.value / 100
-        current_engine_clock = performanceLevel.iEngineClock.value / 100
-        actual_engine_clock = currentActivity.iEngineClock.value / 100
+        min_engine_clock = overdriveParameters.sEngineClock.iMin // 100
+        max_engine_clock = overdriveParameters.sEngineClock.iMax // 100
+        step_engine_clock = overdriveParameters.sEngineClock.iStep // 100
+        default_engine_clock = defaultPerformanceLevel.iEngineClock // 100
+        current_engine_clock = performanceLevel.iEngineClock // 100
+        actual_engine_clock = currentActivity.iEngineClock // 100
 
         class EngineClock(object):
             min_value = min_engine_clock
@@ -664,16 +714,16 @@ class PerformanceLevel(object):
     @property
     def memory_clock(self):
         overdriveParameters = self._parent._overdrive_parameters
-        defaultPerformanceLevel = self._default_performance_level
         performanceLevel = self._performance_level
+        defaultPerformanceLevel = self._default_performance_level
         currentActivity = self._current_activity
 
-        min_memory_clock = overdriveParameters.sMemoryClock.iMin.value / 100
-        max_memory_clock = overdriveParameters.sMemoryClock.iMax.value / 100
-        step_memory_clock = overdriveParameters.sMemoryClock.iStep.value
-        default_memory_clock = defaultPerformanceLevel.iMemoryClock.value / 100
-        current_memory_clock = performanceLevel.iMemoryClock.value / 100
-        actual_memory_clock = currentActivity.iMemoryClock.value / 100
+        min_memory_clock = overdriveParameters.sMemoryClock.iMin // 100
+        max_memory_clock = overdriveParameters.sMemoryClock.iMax // 100
+        step_memory_clock = overdriveParameters.sMemoryClock.iStep
+        current_memory_clock = performanceLevel.iMemoryClock // 100
+        default_memory_clock = defaultPerformanceLevel.iMemoryClock // 100
+        actual_memory_clock = currentActivity.iMemoryClock // 100
 
         class MemoryClock(object):
             min_value = min_memory_clock
@@ -736,12 +786,12 @@ class PerformanceLevel(object):
         performanceLevel = self._performance_level
         currentActivity = self._current_activity
 
-        min_core_voltage = overdriveParameters.sVddc.iMin.value
-        max_core_voltage = overdriveParameters.sVddc.iMax.value
-        step_core_voltage = overdriveParameters.sVddc.iStep.value
-        default_core_voltage = defaultPerformanceLevel.iVddc.value
-        current_core_voltage = performanceLevel.iVddc.value
-        actual_core_voltage = currentActivity.iVddc.value
+        min_core_voltage = overdriveParameters.sVddc.iMin / 1000.00
+        max_core_voltage = overdriveParameters.sVddc.iMax / 1000.00
+        step_core_voltage = overdriveParameters.sVddc.iStep / 1000.00
+        default_core_voltage = defaultPerformanceLevel.iVddc / 1000.00
+        current_core_voltage = performanceLevel.iVddc / 1000.00
+        actual_core_voltage = currentActivity.iVddc / 1000.00
 
         class CoreVoltage(object):
             min_value = min_core_voltage
@@ -750,7 +800,7 @@ class PerformanceLevel(object):
             default = default_core_voltage
             actual = actual_core_voltage
 
-        core_voltage = ODValue(current_core_voltage)
+        core_voltage = FloatODValue(current_core_voltage)
         core_voltage._set_object(CoreVoltage)
         return core_voltage
 
@@ -802,8 +852,8 @@ class PerformanceLevel(object):
         overdriveParameters = self._parent._overdrive_parameters
         currentActivity = self._current_activity
 
-        if overdriveParameters.iActivityReportingSupported.value:
-            return currentActivity.iActivityPercent.value
+        if overdriveParameters.iActivityReportingSupported:
+            return currentActivity.iActivityPercent
 
 
 class PerformanceLevels(object):
@@ -815,14 +865,11 @@ class PerformanceLevels(object):
     def __iter__(self):
         overdriveParameters = self._parent._overdrive_parameters
         num_performance_levels = (
-            overdriveParameters.iNumberOfPerformanceLevels.value
+            overdriveParameters.iNumberOfPerformanceLevels
         )
-        res = []
 
         for i in range(num_performance_levels):
-            res += [PerformanceLevel(self._parent, i)]
-
-        return res
+            yield PerformanceLevel(self._parent, i)
 
     def __getitem__(self, item):
         performance_levels = list(self)
@@ -838,7 +885,7 @@ class FanSpeeds(object):
     @property
     def _fan_speed_infos(self):
         iAdapterIndex = INT(self._adapter_index)
-        thermalControllerInfos = self._parent.thermal_controller_infos
+        thermalControllerInfos = self._parent._thermal_controller_infos
         res = []
 
         with ADL2_Main_Control_Create as context:
@@ -864,7 +911,7 @@ class FanSpeeds(object):
 
                 fanSpeedValue = ADLFanSpeedValue()
                 if (
-                    fanSpeedInfo.iFlags.value & ADL_DL_FANCTRL_SUPPORTS_RPM_READ ==
+                    fanSpeedInfo.iFlags & ADL_DL_FANCTRL_SUPPORTS_RPM_READ ==
                     ADL_DL_FANCTRL_SUPPORTS_RPM_READ
                 ):
                     fanSpeedReportingMethod = ADL_DL_FANCTRL_SPEED_TYPE_RPM
@@ -880,14 +927,14 @@ class FanSpeeds(object):
                     ctypes.byref(fanSpeedValue)
                 ) == ADL_OK:
                     if fanSpeedReportingMethod == ADL_DL_FANCTRL_SPEED_TYPE_RPM:
-                        current_fan_speed = fanSpeedValue.iFanSpeed.value
-                        min_fan_speed = fanSpeedInfo.iMinRPM.value
-                        max_fan_speed = fanSpeedInfo.iMaxRPM.value
+                        current_fan_speed = fanSpeedValue.iFanSpeed
+                        min_fan_speed = fanSpeedInfo.iMinRPM
+                        max_fan_speed = fanSpeedInfo.iMaxRPM
                         unit_of_measure = 'rpm'
                     else:
-                        current_fan_speed = fanSpeedValue.iFanSpeed.value
-                        min_fan_speed = fanSpeedInfo.iMinPercent.value
-                        max_fan_speed = fanSpeedInfo.iMaxPercent.value
+                        current_fan_speed = fanSpeedValue.iFanSpeed
+                        min_fan_speed = fanSpeedInfo.iMinPercent
+                        max_fan_speed = fanSpeedInfo.iMaxPercent
                         unit_of_measure = '%'
 
                     class FanSpeedMetrics(object):

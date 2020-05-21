@@ -78,6 +78,69 @@ ADL2_OVERDRIVE8_CURRENT_SETTINGX2_GET = _int(
     POINTER(INT),
     POINTER(POINTER(INT))
 )
+ADL2_AUTOTUNINGRESULT_GET = _int(
+    ADL_CONTEXT_HANDLE,
+    INT,
+    POINTER(BOOL)
+)
+ADL2_OVERDRIVE8_PMLOGSENSORRANGE_CAPS = _int(
+    ADL_CONTEXT_HANDLE,
+    INT,
+    POINTER(INT),
+    POINTER(POINTER(ADLOD8SingleInitSetting))
+)
+ADL2_OVERDRIVE8_PMLOGSENSORTYPE_SUPPORT_GET = _int(
+    ADL_CONTEXT_HANDLE,
+    INT,
+    POINTER(INT),
+    POINTER(POINTER(INT))
+)
+ADL2_OVERDRIVE8_PMLOG_SHAREMEMORY_SUPPORT = _int(
+    ADL_CONTEXT_HANDLE,
+    INT,
+    POINTER(INT),
+    INT,
+)
+ADL2_OVERDRIVE8_PMLOG_SHAREMEMORY_START = _int(
+    ADL_CONTEXT_HANDLE,
+    INT,
+    INT,
+    INT,
+    POINTER(INT),
+    POINTER(ADL_D3DKMT_HANDLE),
+    POINTER(POINTER(VOID)),
+    INT
+)
+ADL2_OVERDRIVE8_PMLOG_SHAREMEMORY_READ = _int(
+    ADL_CONTEXT_HANDLE,
+    INT,
+    INT,
+    POINTER(INT),
+    POINTER(POINTER(VOID)),
+    POINTER(ADLPMLogDataOutput)
+)
+ADL2_OVERDRIVE8_PMLOG_SHAREMEMORY_STOP = _int(
+    ADL_CONTEXT_HANDLE,
+    INT,
+    POINTER(ADL_D3DKMT_HANDLE)
+)
+ADL2_DEVICE_PMLOG_DEVICE_CREATE = _int(
+    ADL_CONTEXT_HANDLE,
+    INT,
+    POINTER(ADL_D3DKMT_HANDLE)
+)
+ADL2_DEVICE_PMLOG_DEVICE_DESTROY = _int(
+    ADL_CONTEXT_HANDLE,
+    ADL_D3DKMT_HANDLE
+)
+ADL2_OVERDRIVE8_CURRENT_SETTINGX3_GET = _int(
+    ADL_CONTEXT_HANDLE,
+    INT,
+    POINTER(INT),
+    POINTER(INT),
+    POINTER(POINTER(INT)),
+    INT
+)
 
 
 # Function to retrieve the Overdrive8 initial settings.
@@ -102,6 +165,38 @@ _ADL2_Overdrive8_Init_SettingX2_Get = ADL2_OVERDRIVE8_INIT_SETTINGX2_GET
 # It supports new features and does not need to change the PAI.
 _ADL2_Overdrive8_Current_SettingX2_Get = ADL2_OVERDRIVE8_CURRENT_SETTINGX2_GET
 
+# Function to retrieve the current auto tuning state.
+_ADL2_AutoTuningResult_Get = ADL2_AUTOTUNINGRESULT_GET
+
+# Function to retrieve the PMLog sensor range value if the driver supports the sensor.
+_ADL2_Overdrive8_PMLogSenorRange_Caps = ADL2_OVERDRIVE8_PMLOGSENSORRANGE_CAPS
+
+# Function to retrieve the PMLog sensor real value reading support flag from the driver.
+_ADL2_Overdrive8_PMLogSenorType_Support_Get = ADL2_OVERDRIVE8_PMLOGSENSORTYPE_SUPPORT_GET
+
+# Function to retrieve the support flag, which indictates if the shared
+# memoory way is avilable or not.
+_ADL2_Overdrive8_PMLog_ShareMemory_Support = ADL2_OVERDRIVE8_PMLOG_SHAREMEMORY_SUPPORT
+
+# Function to start a shared memory session.
+_ADL2_Overdrive8_PMLog_ShareMemory_Start = ADL2_OVERDRIVE8_PMLOG_SHAREMEMORY_START
+
+# Function to start a shared memory session.
+_ADL2_Overdrive8_PMLog_ShareMemory_Read = ADL2_OVERDRIVE8_PMLOG_SHAREMEMORY_READ
+
+# Function to stop a shared memory session.
+_ADL2_Overdrive8_PMLog_ShareMemory_Stop = ADL2_OVERDRIVE8_PMLOG_SHAREMEMORY_STOP
+
+# This function create the device. Adds MGPU support over legacy functions.
+_ADL2_Device_PMLog_Device_Create = ADL2_DEVICE_PMLOG_DEVICE_CREATE
+
+# This function destroy the device. Adds MGPU support over legacy functions.
+_ADL2_Device_PMLog_Device_Destroy = ADL2_DEVICE_PMLOG_DEVICE_DESTROY
+
+# Function to retrieve the Overdrive8 current settings. This is new versin
+# of ADL2_Overdrive8_Current_SettingX3_Get. It supports the availablity of each item.
+_ADL2_Overdrive8_Current_SettingX3_Get = ADL2_OVERDRIVE8_CURRENT_SETTINGX3_GET
+
 
 def Init(hDLL):
     global _ADL2_Overdrive8_Init_Setting_Get
@@ -110,6 +205,16 @@ def Init(hDLL):
     global _ADL2_New_QueryPMLogData_Get
     global _ADL2_Overdrive8_Init_SettingX2_Get
     global _ADL2_Overdrive8_Current_SettingX2_Get
+    global _ADL2_AutoTuningResult_Get
+    global _ADL2_Overdrive8_PMLogSenorRange_Caps
+    global _ADL2_Overdrive8_PMLogSenorType_Support_Get
+    global _ADL2_Overdrive8_PMLog_ShareMemory_Support
+    global _ADL2_Overdrive8_PMLog_ShareMemory_Start
+    global _ADL2_Overdrive8_PMLog_ShareMemory_Read
+    global _ADL2_Overdrive8_PMLog_ShareMemory_Stop
+    global _ADL2_Device_PMLog_Device_Create
+    global _ADL2_Device_PMLog_Device_Destroy
+    global _ADL2_Overdrive8_Current_SettingX3_Get
 
     _ADL2_Overdrive8_Init_Setting_Get = ADL2_OVERDRIVE8_INIT_SETTING_GET(
           GetProcAddress(hDLL, "ADL2_Overdrive8_Init_Setting_Get")
@@ -129,6 +234,36 @@ def Init(hDLL):
     _ADL2_Overdrive8_Current_SettingX2_Get = ADL2_OVERDRIVE8_CURRENT_SETTINGX2_GET(
           GetProcAddress(hDLL, "ADL2_Overdrive8_Current_SettingX2_Get")
     )
+    _ADL2_AutoTuningResult_Get = ADL2_AUTOTUNINGRESULT_GET(
+          GetProcAddress(hDLL, "ADL2_AutoTuningResult_Get")
+    )
+    _ADL2_Overdrive8_PMLogSenorRange_Caps = ADL2_OVERDRIVE8_PMLOGSENSORRANGE_CAPS(
+          GetProcAddress(hDLL, "ADL2_Overdrive8_PMLogSenorRange_Caps")
+    )
+    _ADL2_Overdrive8_PMLogSenorType_Support_Get = ADL2_OVERDRIVE8_PMLOGSENSORTYPE_SUPPORT_GET(
+          GetProcAddress(hDLL, "ADL2_Overdrive8_PMLogSenorType_Support_Get")
+    )
+    _ADL2_Overdrive8_PMLog_ShareMemory_Support = ADL2_OVERDRIVE8_PMLOG_SHAREMEMORY_SUPPORT(
+          GetProcAddress(hDLL, "ADL2_Overdrive8_PMLog_ShareMemory_Support")
+    )
+    _ADL2_Overdrive8_PMLog_ShareMemory_Start = ADL2_OVERDRIVE8_PMLOG_SHAREMEMORY_START(
+          GetProcAddress(hDLL, "ADL2_Overdrive8_PMLog_ShareMemory_Start")
+    )
+    _ADL2_Overdrive8_PMLog_ShareMemory_Read = ADL2_OVERDRIVE8_PMLOG_SHAREMEMORY_READ(
+          GetProcAddress(hDLL, "ADL2_Overdrive8_PMLog_ShareMemory_Read")
+    )
+    _ADL2_Overdrive8_PMLog_ShareMemory_Stop = ADL2_OVERDRIVE8_PMLOG_SHAREMEMORY_STOP(
+          GetProcAddress(hDLL, "ADL2_Overdrive8_PMLog_ShareMemory_Stop")
+    )
+    _ADL2_Device_PMLog_Device_Create = ADL2_DEVICE_PMLOG_DEVICE_CREATE(
+          GetProcAddress(hDLL, "ADL2_Device_PMLog_Device_Create")
+    )
+    _ADL2_Device_PMLog_Device_Destroy = ADL2_DEVICE_PMLOG_DEVICE_DESTROY(
+          GetProcAddress(hDLL, "ADL2_Device_PMLog_Device_Destroy")
+    )
+    _ADL2_Overdrive8_Current_SettingX3_Get = ADL2_OVERDRIVE8_CURRENT_SETTINGX3_GET(
+          GetProcAddress(hDLL, "ADL2_Overdrive8_Current_SettingX3_Get")
+    )
 
 
 __all__ = (
@@ -138,6 +273,16 @@ __all__ = (
     '_ADL2_New_QueryPMLogData_Get',
     '_ADL2_Overdrive8_Init_SettingX2_Get',
     '_ADL2_Overdrive8_Current_SettingX2_Get',
+    '_ADL2_AutoTuningResult_Get',
+    '_ADL2_Overdrive8_PMLogSenorRange_Caps',
+    '_ADL2_Overdrive8_PMLogSenorType_Support_Get',
+    '_ADL2_Overdrive8_PMLog_ShareMemory_Support',
+    '_ADL2_Overdrive8_PMLog_ShareMemory_Start',
+    '_ADL2_Overdrive8_PMLog_ShareMemory_Read',
+    '_ADL2_Overdrive8_PMLog_ShareMemory_Stop',
+    '_ADL2_Device_PMLog_Device_Create',
+    '_ADL2_Device_PMLog_Device_Destroy',
+    '_ADL2_Overdrive8_Current_SettingX3_Get',
     'OverDrive8'
 )
 

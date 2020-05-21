@@ -222,8 +222,9 @@ __all__ = (
 
 # functions are used in adapter_h
 
+
 # noinspection PyUnresolvedReferences
-class ValueWrapper(__builtin__.int):
+class ValueWrapper(int):
 
     def __init__(self, value=None):
         if value is None:
