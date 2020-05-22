@@ -1384,9 +1384,9 @@ class FanSpeeds(object):
 
                 iFlags = termalControllerInfo.iFlags
 
-                if iFlags | ADL_DL_THERMAL_FLAG_FANCONTROL != iFlags:
-                    iThermalControllerIndex += 1
-                    continue
+                # if iFlags | ADL_DL_THERMAL_FLAG_FANCONTROL != iFlags:
+                #     iThermalControllerIndex += 1
+                #     continue
 
                 _ADL2_Overdrive5_FanSpeedInfo_Get(
                     context,
@@ -1592,7 +1592,7 @@ class Temperature(FloatValueWrapper):
         return 'C'
 
 
-class Load(IntValueWrapper):
+class Load(FloatValueWrapper):
 
     @property
     def unit_of_measure(self):
@@ -1600,11 +1600,11 @@ class Load(IntValueWrapper):
 
     @property
     def min(self):
-        return 0
+        return 0.0
 
     @property
     def max(self):
-        return 100
+        return 100.0
 
 
 class OverDrive5(object):
@@ -1647,7 +1647,7 @@ class OverDrive5(object):
     @property
     def load(self):
         lpActivity = self._activity
-        return Load(lpActivity.iActivityPercent / 100.0)
+        return Load(lpActivity.iActivityPercent / 10.0)
 
     @property
     def _thermal_controller_infos(self):
