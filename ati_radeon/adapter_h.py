@@ -2238,7 +2238,15 @@ class Adapter(object):
 
     @property
     def fan_speeds(self):
-        return FanSpeeds(self._adapter_index)
+        from .overdrive5_h import OverDrive5
+        from .overdrive6_h import OverDrive6
+        from .overdriven_h import OverDriveN
+        from .overdrive8_h import OverDrive8
+
+        overdrive = self._overdrive
+
+        if isinstance(overdrive, OverDrive5):
+            return overdrive.fan_speeds
 
     @property
     def core(self):
@@ -2510,6 +2518,16 @@ class Adapter(object):
     extended_desktop = property(fset=extended_desktop)
 
     @property
+    def bus_speed(self):
+        overdrive = self._overdrive
+        return overdrive.bus_speed
+
+    @property
+    def bus_lanes(self):
+        overdrive = self._overdrive
+        return overdrive.bus_lanes
+
+    @property
     def _overdrive(self):
         iSupported = INT()
         iEnabled = INT()
@@ -2725,7 +2743,6 @@ class DisplayConnection(object):
                         connectors
                     )
 
-
     @property
     def memory(self):
         return Memory(self._adapter_index)
@@ -2733,8 +2750,6 @@ class DisplayConnection(object):
     @property
     def crossfire(self):
         return CrossFire(self._adapter_index)
-
-
 
 
     @property
@@ -2947,7 +2962,6 @@ class CrossFire(object):
 
             return lpCrossfireInfo
 
-
     @property
     def adapters(self):
         lpPreferred = INT()
@@ -3138,12 +3152,7 @@ class Memory(object):
         overdrive = self._overdrive
 
         if isinstance(overdrive, OverDrive5):
-            res = []
-
-            for performance_level in overdrive.performance_levels:
-                res += [performance_level.memory_clock]
-
-            return res
+            return overdrive.memory_clocks
 
     @property
     def _overdrive(self):
@@ -3178,6 +3187,7 @@ class Memory(object):
                 elif iVersion.value == 8:
                     from .overdrive8_h import OverDrive8
                     return OverDrive8(self._adapter_index)
+
 
 class Core(object):
 
@@ -3243,12 +3253,7 @@ class Core(object):
         overdrive = self._overdrive
 
         if isinstance(overdrive, OverDrive5):
-            res = []
-
-            for performance_level in overdrive.performance_levels:
-                res += [performance_level.core_voltage]
-
-            return res
+            return overdrive.core_voltages
 
     @property
     def clocks(self):
@@ -3260,12 +3265,7 @@ class Core(object):
         overdrive = self._overdrive
 
         if isinstance(overdrive, OverDrive5):
-            res = []
-
-            for performance_level in overdrive.performance_levels:
-                res += [performance_level.engine_clock]
-
-            return res
+            return overdrive.engine_clocks
 
     @property
     def load(self):
@@ -3277,73 +3277,4 @@ class Core(object):
         overdrive = self._overdrive
 
         if isinstance(overdrive, OverDrive5):
-            for performance_level in overdrive.performance_levels:
-                return performance_level.activity_percent
-
-
-class FanSpeeds(object):
-
-    def __init__(self, adapter_index):
-        self._adapter_index = adapter_index
-
-    @property
-    def _overdrive(self):
-        iSupported = INT()
-        iEnabled = INT()
-        iVersion = INT()
-
-        from .overdrive5_h import _ADL2_Overdrive_Caps
-
-        # Repeat for all available adapters in the system
-        iAdapterIndex = INT(self._adapter_index)
-        with ADL2_Main_Control_Create as context:
-            if _ADL2_Overdrive_Caps(
-                    context,
-                    iAdapterIndex,
-                    ctypes.byref(iSupported),
-                    ctypes.byref(iEnabled),
-                    ctypes.byref(iVersion)
-            ) == ADL_OK:
-                if iVersion.value == 5:
-                    from .overdrive5_h import OverDrive5
-                    return OverDrive5(self._adapter_index)
-
-                elif iVersion.value == 6:
-                    from .overdrive6_h import OverDrive6
-                    return OverDrive6(self._adapter_index)
-
-                elif iVersion.value == 7:
-                    from .overdriven_h import OverDriveN
-                    return OverDriveN(self._adapter_index)
-
-                elif iVersion.value == 8:
-                    from .overdrive8_h import OverDrive8
-                    return OverDrive8(self._adapter_index)
-
-    def __iter__(self):
-        from .overdrive5_h import OverDrive5
-        from .overdrive6_h import OverDrive6
-        from .overdriven_h import OverDriveN
-        from .overdrive8_h import OverDrive8
-
-        overdrive = self._overdrive
-
-        if isinstance(overdrive, OverDrive5):
-            return iter(overdrive.fan_speeds)
-
-    def __getitem__(self, item):
-        fan_speeds = list(self)
-        return fan_speeds[item]
-
-    def __setitem__(self, key, value):
-        from .overdrive5_h import OverDrive5
-        from .overdrive6_h import OverDrive6
-        from .overdriven_h import OverDriveN
-        from .overdrive8_h import OverDrive8
-
-        overdrive = self._overdrive
-
-        if isinstance(overdrive, OverDrive5):
-            overdrive.fan_speeds[key] = value
-
-
+            return overdrive.load

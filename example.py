@@ -28,6 +28,9 @@ for adapter in ati_radeon.adapters:
     print('default_speed', adapter.default_speed)
     print('is_gpu_accessable', adapter.is_gpu_accessable)
     print('is_power_control_supported', adapter.is_power_control_supported)
+    print('bus_speed', adapter.bus_speed)
+    print('bus_lanes', adapter.bus_lanes)
+    print('max_bus_lanes', adapter.bus_lanes.max)
     print()
     print('power_control')
     power_control = adapter.power_control
@@ -46,8 +49,9 @@ for adapter in ati_radeon.adapters:
     print('fan_speeds')
     for fan_speed in adapter.fan_speeds:
         print('    speed', fan_speed, fan_speed.unit_of_measure)
-        print('    min', fan_speed.min)
-        print('    max', fan_speed.max)
+        print('    min', fan_speed.min, fan_speed.unit_of_measure)
+        print('    max', fan_speed.max, fan_speed.unit_of_measure)
+        print('    automatic', fan_speed.automatic)
         print()
 
     print()
@@ -60,49 +64,56 @@ for adapter in ati_radeon.adapters:
     print()
     print('core')
     core = adapter.core
-    print('    clock', core.clock)
-    print('    load', core.load, '%')
+    voltages = core.voltages
+    clocks = core.clocks
+    actual_clock = clocks.actual
+    actual_voltage = voltages.actual
+    load = core.load
+    print('    actual clock', actual_clock, actual_clock.unit_of_measure)
+    print('    actual voltage', actual_voltage, actual_voltage.unit_of_measure)
+    print('    load', load, load.unit_of_measure)
     print()
     print('    clocks')
-    for clock in core.clocks:
-        print('        clock', clock)
-        print('        step', clock.step)
-        print('        actual', clock.actual)
-        print('        default', clock.default)
-        print('        min', clock.min)
-        print('        max', clock.max)
+    for clock in clocks:
+        print('        clock', clock, clock.unit_of_measure)
+        print('        step', clock.step, clock.unit_of_measure)
+        print('        default', clock.default, clock.unit_of_measure)
+        print('        min', clock.min, clock.unit_of_measure)
+        print('        max', clock.max, clock.unit_of_measure)
+        print('        is_active', clock.is_active)
         print()
 
     print()
     print('    voltages')
-    for voltage in core.voltages:
-        print('        voltage', voltage)
-        print('        step', voltage.step)
-        print('        actual', voltage.actual)
-        print('        default', voltage.default)
-        print('        min', voltage.min)
-        print('        max', voltage.max)
+    for voltage in voltages:
+        print('        clock', voltage, voltage.unit_of_measure)
+        print('        step', voltage.step, voltage.unit_of_measure)
+        print('        default', voltage.default, voltage.unit_of_measure)
+        print('        min', voltage.min, voltage.unit_of_measure)
+        print('        max', voltage.max, voltage.unit_of_measure)
+        print('        is_active', voltage.is_active)
         print()
 
     print()
     print('memory')
     memory = adapter.memory
+    clocks = memory.clocks
+    actual_clock = clocks.actual
     print('    size', memory.size)
     print('    type', memory.type)
     print('    bandwidth', memory.bandwidth)
-    print('    observed_clock', memory.observed_clock)
+    print('    actual_clock', actual_clock, actual_clock.unit_of_measure)
 
     print()
     print('    clocks')
-    for clock in memory.clocks:
-        print('        clock', clock)
-        print('        step', clock.step)
-        print('        actual', clock.actual)
-        print('        default', clock.default)
-        print('        min', clock.min)
-        print('        max', clock.max)
+    for clock in clocks:
+        print('        clock', clock, clock.unit_of_measure)
+        print('        step', clock.step, clock.unit_of_measure)
+        print('        default', clock.default, clock.unit_of_measure)
+        print('        min', clock.min, clock.unit_of_measure)
+        print('        max', clock.max, clock.unit_of_measure)
+        print('        is_active', clock.is_active)
         print()
-
 
     print()
     print('crossfire')
