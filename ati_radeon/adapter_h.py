@@ -1237,33 +1237,6 @@ from .adl_sdk_h import ADL2_Main_Control_Create  # NOQA
 from .display_h import Display, _ADL2_Display_NumberOfDisplays_Get  # NOQA
 from .crossdisplay_h import CrossDisplay  # NOQA
 
-#
-# _ADL2_Adapter_NumberOfAdapters_Get
-#
-# _ADL2_Adapter_MVPU_Set # crossfire
-#
-# _ADL2_Adapter_EmulationMode_Set
-# _ADL2_Adapter_ConnectionData_Set
-# _ADL2_Adapter_ConnectionData_Remove
-# _ADL2_Adapter_EDIDManagement_Caps
-#
-#
-# _ADL2_Workstation_GlobalEDIDPersistence_Get
-# _ADL2_Workstation_GlobalEDIDPersistence_Set
-#
-#
-# _ADL2_FPS_Caps
-# _ADL2_FPS_Settings_Get
-# _ADL2_FPS_Settings_Set
-# _ADL2_FPS_Settings_Reset
-#
-#
-#
-#
-#
-
-# _ADL2_Adapter_Graphic_Core_Info_Get
-
 
 class PortConnector(object):
 
