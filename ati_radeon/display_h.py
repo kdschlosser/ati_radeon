@@ -3244,6 +3244,14 @@ class Display(object):
         self.__size = None
         self.__overscan = None
         self.__underscan = None
+        self.__brightness = None
+        self.__contrast = None
+        self.__saturation = None
+        self.__hue = None
+        self.__color_temperature = None
+        self.__deflicker = None
+        self.__filter_svideo = None
+
 
     @property
     def name(self):
@@ -3260,6 +3268,484 @@ class Display(object):
     @property
     def output_type(self):
         return self._display_output_type
+
+    @property
+    def _color_caps(self):
+        iAdapterIndex = INT(self._adapter_index)
+        iDisplayIndex = INT(self._display_index)
+        lpCaps = INT()
+        lpValids = INT()
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_Display_ColorCaps_Get(
+                context,
+                iAdapterIndex,
+                iDisplayIndex,
+                ctypes.byref(lpCaps),
+                ctypes.byref(lpValids)
+            )
+
+            return lpValids.value
+
+    @property
+    def is_brightness_supported(self):
+        lpValids = self._color_caps
+        return utils.get_bit(lpValids, ADL_DISPLAY_COLOR_BRIGHTNESS)
+
+
+
+    @property
+    def brightness(self):
+        if self.__brightness is None:
+            iAdapterIndex = INT(self._adapter_index)
+            iDisplayIndex = INT(self._display_index)
+            iColorType = INT(ADL_DISPLAY_COLOR_BRIGHTNESS)
+            lpCurrent = INT(0)
+            lpDefault = INT(0)
+            lpMin = INT(0)
+            lpMax = INT(0)
+            lpStep = INT(0)
+
+            def _set_value(value):
+                value -= value % lpStep.value
+
+                if value < lpMin.value or value > lpMax.value:
+                    return
+
+                lpCurrent = INT(value)
+
+                with ADL2_Main_Control_Create as ctext:
+                    _ADL2_Display_Color_Set(
+                        ctext,
+                        iAdapterIndex,
+                        iDisplayIndex,
+                        iColorType,
+                        lpCurrent
+                    )
+
+                    return value
+
+            with ADL2_Main_Control_Create as context:
+                _ADL2_Display_Color_Get(
+                    context,
+                    iAdapterIndex,
+                    iDisplayIndex,
+                    iColorType,
+                    ctypes.byref(lpCurrent),
+                    ctypes.byref(lpDefault),
+                    ctypes.byref(lpMin),
+                    ctypes.byref(lpMax),
+                    ctypes.byref(lpStep)
+                )
+
+                class Value(object):
+                    default_value = lpDefault.value
+                    min_value = lpMin.value
+                    max_value = lpMax.value
+                    step_value = lpStep.value
+                    set_value = _set_value
+
+                brightness = IntValueWrapper(lpCurrent.value)
+                brightness._obj = Value
+
+                self.__brightness = brightness
+
+        return self.__brightness
+
+    @brightness.setter
+    def brightness(self, value):
+        brightness = self.brightness
+        brightness += value - brightness.real
+
+    @property
+    def is_contrast_supported(self):
+        lpValids = self._color_caps
+        return utils.get_bit(lpValids, ADL_DISPLAY_COLOR_CONTRAST)
+
+    @property
+    def contrast(self):
+        if self.__contrast is None:
+            iAdapterIndex = INT(self._adapter_index)
+            iDisplayIndex = INT(self._display_index)
+            iColorType = INT(ADL_DISPLAY_COLOR_CONTRAST)
+            lpCurrent = INT(0)
+            lpDefault = INT(0)
+            lpMin = INT(0)
+            lpMax = INT(0)
+            lpStep = INT(0)
+
+            def _set_value(value):
+                value -= value % lpStep.value
+
+                if value < lpMin.value or value > lpMax.value:
+                    return
+
+                lpCurrent = INT(value)
+
+                with ADL2_Main_Control_Create as ctext:
+                    _ADL2_Display_Color_Set(
+                        ctext,
+                        iAdapterIndex,
+                        iDisplayIndex,
+                        iColorType,
+                        lpCurrent
+                    )
+
+                    return value
+
+            with ADL2_Main_Control_Create as context:
+                _ADL2_Display_Color_Get(
+                    context,
+                    iAdapterIndex,
+                    iDisplayIndex,
+                    iColorType,
+                    ctypes.byref(lpCurrent),
+                    ctypes.byref(lpDefault),
+                    ctypes.byref(lpMin),
+                    ctypes.byref(lpMax),
+                    ctypes.byref(lpStep)
+                )
+
+                class Value(object):
+                    default_value = lpDefault.value
+                    min_value = lpMin.value
+                    max_value = lpMax.value
+                    step_value = lpStep.value
+                    set_value = _set_value
+
+                contrast = IntValueWrapper(lpCurrent.value)
+                contrast._obj = Value
+
+                self.__contrast = contrast
+
+        return self.__contrast
+
+    @contrast.setter
+    def contrast(self, value):
+        contrast = self.contrast
+        contrast += value - contrast.real
+
+    @property
+    def is_saturation_supported(self):
+        lpValids = self._color_caps
+        return utils.get_bit(lpValids, ADL_DISPLAY_COLOR_SATURATION)
+
+    @property
+    def saturation(self):
+        if self.__saturation is None:
+            iAdapterIndex = INT(self._adapter_index)
+            iDisplayIndex = INT(self._display_index)
+            iColorType = INT(ADL_DISPLAY_COLOR_SATURATION)
+            lpCurrent = INT(0)
+            lpDefault = INT(0)
+            lpMin = INT(0)
+            lpMax = INT(0)
+            lpStep = INT(0)
+
+            def _set_value(value):
+                value -= value % lpStep.value
+
+                if value < lpMin.value or value > lpMax.value:
+                    return
+
+                lpCurrent = INT(value)
+
+                with ADL2_Main_Control_Create as ctext:
+                    _ADL2_Display_Color_Set(
+                        ctext,
+                        iAdapterIndex,
+                        iDisplayIndex,
+                        iColorType,
+                        lpCurrent
+                    )
+
+                    return value
+
+            with ADL2_Main_Control_Create as context:
+                _ADL2_Display_Color_Get(
+                    context,
+                    iAdapterIndex,
+                    iDisplayIndex,
+                    iColorType,
+                    ctypes.byref(lpCurrent),
+                    ctypes.byref(lpDefault),
+                    ctypes.byref(lpMin),
+                    ctypes.byref(lpMax),
+                    ctypes.byref(lpStep)
+                )
+
+                class Value(object):
+                    default_value = lpDefault.value
+                    min_value = lpMin.value
+                    max_value = lpMax.value
+                    step_value = lpStep.value
+                    set_value = _set_value
+
+                saturation = IntValueWrapper(lpCurrent.value)
+                saturation._obj = Value
+
+                self.__saturation = saturation
+
+        return self.__saturation
+
+    @saturation.setter
+    def saturation(self, value):
+        saturation = self.saturation
+        saturation += value - saturation.real
+
+    @property
+    def is_hue_supported(self):
+        lpValids = self._color_caps
+        return utils.get_bit(lpValids, ADL_DISPLAY_COLOR_HUE)
+
+    @property
+    def hue(self):
+        if self.__hue is None:
+            iAdapterIndex = INT(self._adapter_index)
+            iDisplayIndex = INT(self._display_index)
+            iColorType = INT(ADL_DISPLAY_COLOR_HUE)
+            lpCurrent = INT(0)
+            lpDefault = INT(0)
+            lpMin = INT(0)
+            lpMax = INT(0)
+            lpStep = INT(0)
+
+            def _set_value(value):
+                value -= value % lpStep.value
+
+                if value < lpMin.value or value > lpMax.value:
+                    return
+
+                lpCurrent = INT(value)
+
+                with ADL2_Main_Control_Create as ctext:
+                    _ADL2_Display_Color_Set(
+                        ctext,
+                        iAdapterIndex,
+                        iDisplayIndex,
+                        iColorType,
+                        lpCurrent
+                    )
+
+                    return value
+
+            with ADL2_Main_Control_Create as context:
+                _ADL2_Display_Color_Get(
+                    context,
+                    iAdapterIndex,
+                    iDisplayIndex,
+                    iColorType,
+                    ctypes.byref(lpCurrent),
+                    ctypes.byref(lpDefault),
+                    ctypes.byref(lpMin),
+                    ctypes.byref(lpMax),
+                    ctypes.byref(lpStep)
+                )
+
+                class Value(object):
+                    default_value = lpDefault.value
+                    min_value = lpMin.value
+                    max_value = lpMax.value
+                    step_value = lpStep.value
+                    set_value = _set_value
+
+                hue = IntValueWrapper(lpCurrent.value)
+                hue._obj = Value
+
+                self.__hue = hue
+
+        return self.__hue
+
+    @hue.setter
+    def hue(self, value):
+        hue = self.contrast
+        hue += value - hue.real
+
+    @property
+    def is_color_temperature_supported(self):
+        lpValids = self._color_caps
+        return utils.get_bit(lpValids, ADL_DISPLAY_COLOR_TEMPERATURE)
+
+    @property
+    def color_temperature(self):
+        if self.__color_temperature is None:
+            iAdapterIndex = INT(self._adapter_index)
+            iDisplayIndex = INT(self._display_index)
+            iColorType = INT(ADL_DISPLAY_COLOR_TEMPERATURE)
+            lpCurrent = INT(0)
+            lpDefault = INT(0)
+            lpMin = INT(0)
+            lpMax = INT(0)
+            lpStep = INT(0)
+
+            def _set_value(value):
+                value -= value % lpStep.value
+
+                if value < lpMin.value or value > lpMax.value:
+                    return
+
+                lpCurrent = INT(value)
+
+                with ADL2_Main_Control_Create as ctext:
+                    _ADL2_Display_Color_Set(
+                        ctext,
+                        iAdapterIndex,
+                        iDisplayIndex,
+                        iColorType,
+                        lpCurrent
+                    )
+
+                    return value
+
+            with ADL2_Main_Control_Create as context:
+                _ADL2_Display_Color_Get(
+                    context,
+                    iAdapterIndex,
+                    iDisplayIndex,
+                    iColorType,
+                    ctypes.byref(lpCurrent),
+                    ctypes.byref(lpDefault),
+                    ctypes.byref(lpMin),
+                    ctypes.byref(lpMax),
+                    ctypes.byref(lpStep)
+                )
+
+                class Value(object):
+                    default_value = lpDefault.value
+                    min_value = lpMin.value
+                    max_value = lpMax.value
+                    step_value = lpStep.value
+                    set_value = _set_value
+
+                color_temperature = IntValueWrapper(lpCurrent.value)
+                color_temperature._obj = Value
+
+                self.__color_temperature = color_temperature
+
+        return self.__color_temperature
+
+    @color_temperature.setter
+    def color_temperature(self, value):
+        color_temperature = self.color_temperature
+        color_temperature += value - color_temperature.real
+
+    @property
+    def color_temperature_source(self):
+        mapping = [
+            ADL_DISPLAY_COLOR_TEMPERATURE_SOURCE_EDID,
+            ADL_DISPLAY_COLOR_TEMPERATURE_SOURCE_USER
+        ]
+        lpTempSource = INT()
+        iAdapterIndex = INT(self._adapter_index)
+        iDisplayIndex = INT(self._display_index)
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_Display_ColorTemperatureSource_Get(
+                context,
+                iAdapterIndex,
+                iDisplayIndex,
+                ctypes.byref(lpTempSource)
+            )
+
+            if lpTempSource.value in mapping:
+                return mapping[mapping.index(lpTempSource.value)]
+
+        return 'Unknown'
+
+    @color_temperature_source.setter
+    def color_temperature_source(self, value):
+        mapping = [
+            ADL_DISPLAY_COLOR_TEMPERATURE_SOURCE_EDID,
+            ADL_DISPLAY_COLOR_TEMPERATURE_SOURCE_USER
+        ]
+
+        for item in mapping:
+            if value in (item, str(item)):
+                break
+
+        else:
+            return
+
+        iTempSource = INT(item)
+        iAdapterIndex = INT(self._adapter_index)
+        iDisplayIndex = INT(self._display_index)
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_Display_ColorTemperatureSource_Set(
+                context,
+                iAdapterIndex,
+                iDisplayIndex,
+                iTempSource
+            )
+
+    @property
+    def color_temperature_source_default(self):
+        mapping = [
+            ADL_DISPLAY_COLOR_TEMPERATURE_SOURCE_EDID,
+            ADL_DISPLAY_COLOR_TEMPERATURE_SOURCE_USER
+        ]
+        lpTempSourceDefault = INT()
+        iAdapterIndex = INT(self._adapter_index)
+        iDisplayIndex = INT(self._display_index)
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_Display_ColorTemperatureSourceDefault_Get(
+                context,
+                iAdapterIndex,
+                iDisplayIndex,
+                ctypes.byref(lpTempSourceDefault)
+            )
+
+            if lpTempSourceDefault.value in mapping:
+                return mapping[mapping.index(lpTempSourceDefault.value)]
+
+        return 'Unknown'
+
+    @property
+    def _gpu_scaling(self):
+        lpSupport = INT()
+        lpCurrent = INT()
+        lpDefault = INT()
+        iAdapterIndex = INT(self._adapter_index)
+        iDisplayIndex = INT(self._display_index)
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_DFP_GPUScalingEnable_Get(
+                context,
+                iAdapterIndex,
+                iDisplayIndex,
+                ctypes.byref(lpSupport),
+                ctypes.byref(lpCurrent),
+                ctypes.byref(lpDefault)
+            )
+
+            return bool(lpSupport.value), bool(lpDefault.value), bool(lpCurrent.value)
+
+    @property
+    def is_gpu_scaling_supported(self):
+        return self._gpu_scaling[0]
+
+    @property
+    def gpu_scaling_default(self):
+        return self._gpu_scaling[1]
+
+    @property
+    def gpu_scaling(self):
+        return self._gpu_scaling[2]
+
+    @gpu_scaling.setter
+    def gpu_scaling(self, value):
+        iCurrent = INT(int(value))
+        iAdapterIndex = INT(self._adapter_index)
+        iDisplayIndex = INT(self._display_index)
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_DFP_GPUScalingEnable_Set(
+                context,
+                iAdapterIndex,
+                iDisplayIndex,
+                iCurrent,
+            )
 
     @property
     def __preserve_aspect_ratio(self):
@@ -3768,6 +4254,228 @@ class Display(object):
                 iAdapterIndex,
                 iDisplayIndex,
                 iOverrideSettings,
+            )
+
+    @property
+    def deflicker(self):
+        if self.__deflicker is None:
+            lpCurrent = INT()
+            lpDefault = INT()
+            lpMin = INT()
+            lpMax = INT()
+            lpStep = INT()
+
+            iAdapterIndex = INT(self._adapter_index)
+            iDisplayIndex = INT(self._display_index)
+
+            def _set_value(value):
+                value -= value % lpStep.value
+
+                if value < lpMin.value or value > lpMax.value:
+                    return
+
+                iCurrent = INT(value)
+                with ADL2_Main_Control_Create as ctext:
+                    _ADL2_Display_Deflicker_Set(
+                        ctext,
+                        iAdapterIndex,
+                        iDisplayIndex,
+                        iCurrent,
+                    )
+
+                    return value
+
+            with ADL2_Main_Control_Create as context:
+                _ADL2_Display_Deflicker_Get(
+                    context,
+                    iAdapterIndex,
+                    iDisplayIndex,
+                    ctypes.byref(lpCurrent),
+                    ctypes.byref(lpDefault),
+                    ctypes.byref(lpMin),
+                    ctypes.byref(lpMax),
+                    ctypes.byref(lpStep)
+                )
+
+                class Value(object):
+                    default_value = lpDefault.value
+                    min_value = lpMin.value
+                    max_value = lpMax.value
+                    step_value = lpStep.value
+                    set_value = _set_value
+
+                deflicker = IntValueWrapper(lpCurrent.value)
+                deflicker._obj = Value
+
+                self.__deflicker = deflicker
+
+        return self.__deflicker
+
+    @deflicker.setter
+    def deflicker(self, value):
+        deflicker = self.deflicker
+        deflicker += value - deflicker.real
+
+    @property
+    def filter_svideo(self):
+        if self.__filter_svideo is None:
+            lpCurrent = INT()
+            lpDefault = INT()
+            lpMin = INT()
+            lpMax = INT()
+            lpStep = INT()
+
+            iAdapterIndex = INT(self._adapter_index)
+            iDisplayIndex = INT(self._display_index)
+
+            def _set_value(value):
+                value -= value % lpStep.value
+
+                if value < lpMin.value or value > lpMax.value:
+                    return
+
+                iCurrent = INT(value)
+                with ADL2_Main_Control_Create as ctext:
+                    _ADL2_Display_FilterSVideo_Set(
+                        ctext,
+                        iAdapterIndex,
+                        iDisplayIndex,
+                        iCurrent,
+                    )
+
+                    return value
+
+            with ADL2_Main_Control_Create as context:
+                _ADL2_Display_FilterSVideo_Get(
+                    context,
+                    iAdapterIndex,
+                    iDisplayIndex,
+                    ctypes.byref(lpCurrent),
+                    ctypes.byref(lpDefault),
+                    ctypes.byref(lpMin),
+                    ctypes.byref(lpMax),
+                    ctypes.byref(lpStep)
+                )
+
+                class Value(object):
+                    default_value = lpDefault.value
+                    min_value = lpMin.value
+                    max_value = lpMax.value
+                    step_value = lpStep.value
+                    set_value = _set_value
+
+                filter_svideo = IntValueWrapper(lpCurrent.value)
+                filter_svideo._obj = Value
+
+                self.__filter_svideo = filter_svideo
+
+        return self.__filter_svideo
+
+    @filter_svideo.setter
+    def filter_svideo(self, value):
+        filter_svideo = self.filter_svideo
+        filter_svideo += value - filter_svideo.real
+
+    @property
+    def freesync(self):
+        return FreeSync(self._adapter_index, self._display_index)
+
+    @property
+    def is_freesync_supported(self):
+        lpFreeSyncCaps = ADLFreeSyncCap()
+        iAdapterIndex = INT(self._adapter_index)
+        iDisplayIndex = INT(self._display_index)
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_Display_FreeSync_Cap(
+                context,
+                iAdapterIndex,
+                iDisplayIndex,
+                ctypes.byref(lpFreeSyncCaps),
+            )
+
+            return lpFreeSyncCaps.iCaps | ADL_FREESYNC_CAP_GPUSUPPORTED == lpFreeSyncCaps.iCaps
+
+    @property
+    def supported_contents(self):
+        mapping = [
+            ADL_DL_DISPLAYCONTENT_TYPE_GRAPHICS,
+            ADL_DL_DISPLAYCONTENT_TYPE_PHOTO,
+            ADL_DL_DISPLAYCONTENT_TYPE_CINEMA,
+            ADL_DL_DISPLAYCONTENT_TYPE_GAME
+        ]
+        pCapContent = INT(0)
+
+        iAdapterIndex = INT(self._adapter_index)
+        iDisplayIndex = INT(self._display_index)
+
+        res = []
+        with ADL2_Main_Control_Create as context:
+            _ADL2_Display_DisplayContent_Cap(
+                context,
+                iAdapterIndex,
+                iDisplayIndex,
+                ctypes.byref(pCapContent)
+            )
+
+            for item in mapping:
+                if pCapContent.value | item ==  pCapContent.value:
+                    res += [item]
+
+        return res
+
+    @property
+    def content(self):
+        mapping = [
+            ADL_DL_DISPLAYCONTENT_TYPE_GRAPHICS,
+            ADL_DL_DISPLAYCONTENT_TYPE_PHOTO,
+            ADL_DL_DISPLAYCONTENT_TYPE_CINEMA,
+            ADL_DL_DISPLAYCONTENT_TYPE_GAME
+        ]
+        piContent = INT(0)
+
+        iAdapterIndex = INT(self._adapter_index)
+        iDisplayIndex = INT(self._display_index)
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_Display_DisplayContent_Get(
+                context,
+                iAdapterIndex,
+                iDisplayIndex,
+                ctypes.byref(piContent)
+            )
+
+            if piContent.value in mapping:
+                return mapping[mapping.index(piContent.value)]
+        return 'Unknown'
+
+    @content.setter
+    def content(self, value):
+        mapping = [
+            ADL_DL_DISPLAYCONTENT_TYPE_GRAPHICS,
+            ADL_DL_DISPLAYCONTENT_TYPE_PHOTO,
+            ADL_DL_DISPLAYCONTENT_TYPE_CINEMA,
+            ADL_DL_DISPLAYCONTENT_TYPE_GAME
+        ]
+
+        for item in mapping:
+            if value in (item, str(item)):
+                break
+
+        else:
+            return
+
+        piContent = INT(item)
+
+        iAdapterIndex = INT(self._adapter_index)
+        iDisplayIndex = INT(self._display_index)
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_Display_DisplayContent_Set(
+                context,
+                iAdapterIndex,
+                iDisplayIndex,
+                piContent
             )
 
     @property
@@ -4470,3 +5178,110 @@ class Size(object):
     def __iter__(self):
         yield self.width
         yield self.height
+
+
+class FreeSync(object):
+
+    def __init__(self, adapter_index, display_index):
+        self._adapter_index = adapter_index
+        self._display_index = display_index
+
+
+    @property
+    def _freesync(self):
+        lpCurrent = INT()
+        lpDefault = INT()
+        lpMinRefreshRateInMicroHz = INT()
+        lpMaxRefreshRateInMicroHz = INT()
+
+        iAdapterIndex = INT(self._adapter_index)
+        iDisplayIndex = INT(self._display_index)
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_Display_FreeSyncState_Get(
+                context,
+                iAdapterIndex,
+                iDisplayIndex,
+                ctypes.byref(lpCurrent),
+                ctypes.byref(lpDefault),
+                ctypes.byref(lpMinRefreshRateInMicroHz),
+                ctypes.byref(lpMaxRefreshRateInMicroHz),
+            )
+
+            return (
+                lpCurrent.value,
+                lpDefault.value,
+                lpMinRefreshRateInMicroHz.value,
+                lpMaxRefreshRateInMicroHz.value
+            )
+
+    @property
+    def min_refresh(self):
+        return self._freesync[2]
+
+    @property
+    def max_refresh(self):
+        return self._freesync[3]
+
+    @property
+    def default_mode(self):
+        mapping = [
+            ADL_FREESYNC_USECASE_STATIC,
+            ADL_FREESYNC_USECASE_VIDEO,
+            ADL_FREESYNC_USECASE_GAMING
+        ]
+
+        lpDefault = self._freesync[1]
+
+        for item in mapping:
+            if utils.get_bit(lpDefault, item):
+                return item
+
+    @property
+    def mode(self):
+        mapping = [
+            ADL_FREESYNC_USECASE_STATIC,
+            ADL_FREESYNC_USECASE_VIDEO,
+            ADL_FREESYNC_USECASE_GAMING
+        ]
+
+        lpCurrent = self._freesync[0]
+
+        for item in mapping:
+            if utils.get_bit(lpCurrent, item):
+                return item
+
+    def set_mode(self, mode, refresh_rate):
+        lpMinRefreshRateInMicroHz, lpMaxRefreshRateInMicroHz = self._freesync[-2:]
+
+        if (
+            refresh_rate < lpMinRefreshRateInMicroHz or
+            refresh_rate > lpMaxRefreshRateInMicroHz
+        ):
+            return
+
+        mapping = [
+            ADL_FREESYNC_USECASE_STATIC,
+            ADL_FREESYNC_USECASE_VIDEO,
+            ADL_FREESYNC_USECASE_GAMING
+        ]
+
+        for item in mapping:
+            if mode in (item, str(item)):
+                break
+        else:
+            return
+
+        iAdapterIndex = INT(self._adapter_index)
+        iDisplayIndex = INT(self._display_index)
+        iSetting = INT(item)
+        iRefreshRateInMicroHz = INT(refresh_rate)
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_Display_FreeSyncState_Set(
+                context,
+                iAdapterIndex,
+                iDisplayIndex,
+                iSetting,
+                iRefreshRateInMicroHz
+            )

@@ -1193,10 +1193,10 @@ ADL_DL_DISPLAYPROPERTY_TYPE_DOWNSCALE = 11
 # that, the display on the panel
 # / can be adjusted to optimize the view of the content being displayed,
 # depending on the type of content.
-ADL_DL_DISPLAYCONTENT_TYPE_GRAPHICS = 1
-ADL_DL_DISPLAYCONTENT_TYPE_PHOTO = 2
-ADL_DL_DISPLAYCONTENT_TYPE_CINEMA = 4
-ADL_DL_DISPLAYCONTENT_TYPE_GAME = 8
+ADL_DL_DISPLAYCONTENT_TYPE_GRAPHICS = Constant(1).set_string('Graphics')
+ADL_DL_DISPLAYCONTENT_TYPE_PHOTO = Constant(2).set_string('Photo')
+ADL_DL_DISPLAYCONTENT_TYPE_CINEMA = Constant(4).set_string('Cinema')
+ADL_DL_DISPLAYCONTENT_TYPE_GAME = Constant(8).set_string('Game')
 
 # values for ADLDisplayProperty.iExpansionMode
 ADL_DL_DISPLAYPROPERTY_EXPANSIONMODE_CENTER = 0
@@ -2607,11 +2607,11 @@ ADL_CONNECTOR_TYPE_VIRTUAL = Constant(13).set_string('Virtual')
 # / should be set to include multiple bits set
 # @{
 # / Indicates FreeSync is enabled for Static Screen case
-ADL_FREESYNC_USECASE_STATIC = 0x1
+ADL_FREESYNC_USECASE_STATIC = Constant(0x1).set_string('Static')
 # / Indicates FreeSync is enabled for Video use case
-ADL_FREESYNC_USECASE_VIDEO = 0x2
+ADL_FREESYNC_USECASE_VIDEO = Constant(0x2).set_string('Video')
 # / Indicates FreeSync is enabled for Gaming use case
-ADL_FREESYNC_USECASE_GAMING = 0x4
+ADL_FREESYNC_USECASE_GAMING = Constant(0x4).set_string('Gaming')
 # @}
 # / \defgroup define_freesync_caps
 # / These defines are used to retrieve FreeSync display capabilities.

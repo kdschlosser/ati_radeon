@@ -187,6 +187,88 @@ for adapter in ati_radeon.adapters:
             print('        formats_override', display.formats_override)
             print('        supported_color_depths', display.supported_color_depths)
             print('        color_depth', display.color_depth)
+            print('        is_gpu_scaling_supported', display.is_gpu_scaling_supported)
+            print('        gpu_scaling_default', display.gpu_scaling_default)
+            print('        gpu_scaling', display.gpu_scaling)
+
+            print()
+            print('        is_freesync_supported', display.is_freesync_supported)
+            freesync = display.freesync
+            print('        freesync')
+            print('            mode', freesync.mode)
+            print('            default_mode', freesync.default_mode)
+            print('            min_refresh', freesync.min_refresh)
+            print('            max_refresh', freesync.max_refresh)
+
+            print()
+            deflicker = display.deflicker
+            print('        deflicker')
+            print('            value', deflicker)
+            print('            default', deflicker.default)
+            print('            min', deflicker.min)
+            print('            max', deflicker.max)
+            print('            step', deflicker.step)
+
+            print()
+            filter_svideo = display.filter_svideo
+            print('        filter_svideo')
+            print('            value', filter_svideo)
+            print('            default', filter_svideo.default)
+            print('            min', filter_svideo.min)
+            print('            max', filter_svideo.max)
+            print('            step', filter_svideo.step)
+
+            print()
+            print('        is_brightness_supported', display.is_brightness_supported)
+            brightness = display.brightness
+            print('        brightness')
+            print('            value', brightness)
+            print('            default', brightness.default)
+            print('            min', brightness.min)
+            print('            max', brightness.max)
+            print('            step', brightness.step)
+
+            print()
+            print('        is_contrast_supported', display.is_contrast_supported)
+            contrast = display.contrast
+            print('        contrast')
+            print('            value', contrast)
+            print('            default', contrast.default)
+            print('            min', contrast.min)
+            print('            max', contrast.max)
+            print('            step', contrast.step)
+
+            print()
+            print('        is_saturation_supported', display.is_saturation_supported)
+            saturation = display.saturation
+            print('        saturation')
+            print('            value', saturation)
+            print('            default', saturation.default)
+            print('            min', saturation.min)
+            print('            max', saturation.max)
+            print('            step', saturation.step)
+
+            print()
+            print('        is_hue_supported', display.is_hue_supported)
+            hue = display.hue
+            print('        hue')
+            print('            value', hue)
+            print('            default', hue.default)
+            print('            min', hue.min)
+            print('            max', hue.max)
+            print('            step', hue.step)
+
+            print()
+            print('        is_color_temperature_supported', display.is_color_temperature_supported)
+            print('        color_temperature_source', display.color_temperature_source)
+            print('        color_temperature_source_default', display.color_temperature_source_default)
+            color_temperature = display.color_temperature
+            print('        color_temperature')
+            print('            value', color_temperature)
+            print('            default', color_temperature.default)
+            print('            min', color_temperature.min)
+            print('            max', color_temperature.max)
+            print('            step', color_temperature.step)
 
             print()
             print('        is_overscan_supported', display.is_overscan_supported)
