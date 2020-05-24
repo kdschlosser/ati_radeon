@@ -336,15 +336,15 @@ ADL_DOT_DIGITAL = Constant(4).set_string('Digital')
 # / \defgroup define_color_type Display Color Type and Source
 # / Define Display Color Type and Source
 # @{
-ADL_DISPLAY_COLOR_BRIGHTNESS = 1 << 0
-ADL_DISPLAY_COLOR_CONTRAST = 1 << 1
-ADL_DISPLAY_COLOR_SATURATION = 1 << 2
-ADL_DISPLAY_COLOR_HUE = 1 << 3
-ADL_DISPLAY_COLOR_TEMPERATURE = 1 << 4
+ADL_DISPLAY_COLOR_BRIGHTNESS = Constant(1 << 0).set_string('Brightness')
+ADL_DISPLAY_COLOR_CONTRAST = Constant(1 << 1).set_string('Contrast')
+ADL_DISPLAY_COLOR_SATURATION = Constant(1 << 2).set_string('Saturation')
+ADL_DISPLAY_COLOR_HUE = Constant(1 << 3).set_string('Hue')
+ADL_DISPLAY_COLOR_TEMPERATURE = Constant(1 << 4).set_string('Color Temperature')
 # / Color Temperature Source is EDID
-ADL_DISPLAY_COLOR_TEMPERATURE_SOURCE_EDID = 1 << 5
+ADL_DISPLAY_COLOR_TEMPERATURE_SOURCE_EDID = Constant(1 << 5).set_string('EDID')
 # / Color Temperature Source is User
-ADL_DISPLAY_COLOR_TEMPERATURE_SOURCE_USER = 1 << 6
+ADL_DISPLAY_COLOR_TEMPERATURE_SOURCE_USER = Constant(1 << 6).set_string('User')
 # @}
 # / \defgroup define_adjustment_capabilities Display Adjustment
 # Capabilities

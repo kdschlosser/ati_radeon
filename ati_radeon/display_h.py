@@ -3646,7 +3646,6 @@ class Display(object):
                 iDisplayIndex,
                 ctypes.byref(lpTempSource)
             )
-
             if lpTempSource.value in mapping:
                 return mapping[mapping.index(lpTempSource.value)]
 
@@ -3695,11 +3694,8 @@ class Display(object):
                 iDisplayIndex,
                 ctypes.byref(lpTempSourceDefault)
             )
-
             if lpTempSourceDefault.value in mapping:
                 return mapping[mapping.index(lpTempSourceDefault.value)]
-
-        return 'Unknown'
 
     @property
     def _gpu_scaling(self):
