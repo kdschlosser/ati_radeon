@@ -4425,6 +4425,131 @@ class Display(object):
         return res
 
     @property
+    def is_virtual_super_resolution_supported(self):
+        lpDisplayProperty = ADLDisplayProperty()
+        iAdapterIndex = INT(self._adapter_index)
+        iDisplayIndex = INT(self._display_index)
+        lpDisplayProperty.iSize = ctypes.sizeof(ADLDisplayProperty)
+        lpDisplayProperty.iPropertyType = ADL_DL_DISPLAYPROPERTY_TYPE_DOWNSCALE
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_Display_Property_Get(
+                context,
+                iAdapterIndex,
+                iDisplayIndex,
+                ctypes.byref(lpDisplayProperty)
+            )
+
+            return lpDisplayProperty.iSupport == 1
+
+    @property
+    def virtual_super_resolution(self):
+        lpDisplayProperty = ADLDisplayProperty()
+        iAdapterIndex = INT(self._adapter_index)
+        iDisplayIndex = INT(self._display_index)
+        lpDisplayProperty.iSize = ctypes.sizeof(ADLDisplayProperty)
+        lpDisplayProperty.iPropertyType = ADL_DL_DISPLAYPROPERTY_TYPE_DOWNSCALE
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_Display_Property_Get(
+                context,
+                iAdapterIndex,
+                iDisplayIndex,
+                ctypes.byref(lpDisplayProperty)
+            )
+
+            return lpDisplayProperty.iCurrent == 1
+
+    @virtual_super_resolution.setter
+    def virtual_super_resolution(self, value):
+        lpDisplayProperty = ADLDisplayProperty()
+        iAdapterIndex = INT(self._adapter_index)
+        iDisplayIndex = INT(self._display_index)
+        lpDisplayProperty.iSize = ctypes.sizeof(ADLDisplayProperty)
+        lpDisplayProperty.iPropertyType = ADL_DL_DISPLAYPROPERTY_TYPE_DOWNSCALE
+        lpDisplayProperty.iCurrent = int(value)
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_Display_Property_Set(
+                context,
+                iAdapterIndex,
+                iDisplayIndex,
+                ctypes.byref(lpDisplayProperty)
+            )
+
+    @property
+    def is_expansion_mode_supported(self):
+        lpDisplayProperty = ADLDisplayProperty()
+        iAdapterIndex = INT(self._adapter_index)
+        iDisplayIndex = INT(self._display_index)
+        lpDisplayProperty.iSize = ctypes.sizeof(ADLDisplayProperty)
+        lpDisplayProperty.iPropertyType = ADL_DL_DISPLAYPROPERTY_TYPE_EXPANSIONMODE
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_Display_Property_Get(
+                context,
+                iAdapterIndex,
+                iDisplayIndex,
+                ctypes.byref(lpDisplayProperty)
+            )
+
+            return lpDisplayProperty.iSupport == 1
+
+    @property
+    def expansion_mode(self):
+        mapping = [
+            ADL_DL_DISPLAYPROPERTY_EXPANSIONMODE_CENTER,
+            ADL_DL_DISPLAYPROPERTY_EXPANSIONMODE_FULLSCREEN,
+            ADL_DL_DISPLAYPROPERTY_EXPANSIONMODE_ASPECTRATIO
+        ]
+
+        lpDisplayProperty = ADLDisplayProperty()
+        iAdapterIndex = INT(self._adapter_index)
+        iDisplayIndex = INT(self._display_index)
+        lpDisplayProperty.iSize = ctypes.sizeof(ADLDisplayProperty)
+        lpDisplayProperty.iPropertyType = ADL_DL_DISPLAYPROPERTY_TYPE_EXPANSIONMODE
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_Display_Property_Get(
+                context,
+                iAdapterIndex,
+                iDisplayIndex,
+                ctypes.byref(lpDisplayProperty)
+            )
+
+            if lpDisplayProperty.iExpansionMode in mapping:
+                return mapping[mapping.index(lpDisplayProperty.iExpansionMode)]
+
+    @expansion_mode.setter
+    def expansion_mode(self, value):
+        mapping = [
+            ADL_DL_DISPLAYPROPERTY_EXPANSIONMODE_CENTER,
+            ADL_DL_DISPLAYPROPERTY_EXPANSIONMODE_FULLSCREEN,
+            ADL_DL_DISPLAYPROPERTY_EXPANSIONMODE_ASPECTRATIO
+        ]
+
+        for item in mapping:
+            if value in (item, str(item)):
+                break
+        else:
+            return
+
+        lpDisplayProperty = ADLDisplayProperty()
+        iAdapterIndex = INT(self._adapter_index)
+        iDisplayIndex = INT(self._display_index)
+        lpDisplayProperty.iSize = ctypes.sizeof(ADLDisplayProperty)
+        lpDisplayProperty.iPropertyType = ADL_DL_DISPLAYPROPERTY_TYPE_EXPANSIONMODE
+        lpDisplayProperty.iExpansionMode = item
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_Display_Property_Set(
+                context,
+                iAdapterIndex,
+                iDisplayIndex,
+                ctypes.byref(lpDisplayProperty)
+            )
+
+    @property
     def content(self):
         mapping = [
             ADL_DL_DISPLAYCONTENT_TYPE_GRAPHICS,

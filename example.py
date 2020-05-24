@@ -190,6 +190,12 @@ for adapter in ati_radeon.adapters:
             print('        is_gpu_scaling_supported', display.is_gpu_scaling_supported)
             print('        gpu_scaling_default', display.gpu_scaling_default)
             print('        gpu_scaling', display.gpu_scaling)
+            print('        supported_contents', display.supported_contents)
+            print('        content', display.content)
+            print('        is_virtual_super_resolution_supported', display.is_virtual_super_resolution_supported)
+            print('        virtual_super_resolution', display.virtual_super_resolution)
+            print('        is_expansion_mode_supported', display.is_expansion_mode_supported)
+            print('        expansion_mode', display.expansion_mode)
 
             print()
             print('        is_freesync_supported', display.is_freesync_supported)
