@@ -726,7 +726,7 @@ class CoreVoltages(object):
     def __setitem__(self, key, value):
         values = list(self)
         val = values[key]
-        val += val.real - value
+        val += value - val.real
 
     @property
     def actual(self):
@@ -944,7 +944,7 @@ class EngineClocks(object):
     def __setitem__(self, key, value):
         values = list(self)
         val = values[key]
-        val += val.real - value
+        val += value - val.real
 
     @property
     def actual(self):
@@ -1162,7 +1162,7 @@ class MemoryClocks(object):
     def __setitem__(self, key, value):
         values = list(self)
         val = values[key]
-        val += val.real - value
+        val += value - val.real
 
     @property
     def actual(self):
@@ -1567,7 +1567,7 @@ class FanSpeeds(object):
     def __setitem__(self, key, value):
         values = list(self)
         val = values[key]
-        val += val.real - value
+        val += value - val.real
 
 
 class PowerThreshold(IntValueWrapper):
@@ -1796,7 +1796,7 @@ class OverDrive5(object):
     @power_control.setter
     def power_control(self, value):
         val = self.power_control
-        val += val.real - value
+        val += value - val.real
 
     @property
     def _overdrive_parameters(self):

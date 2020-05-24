@@ -183,7 +183,6 @@ def InitADL():
     from .overdrive8_h import Init as overdrive8_init
     from .overdriven_h import Init as overdriven_init
     from .powerxpress_h import Init as powerxpress_init
-    from .underscan_h import Init as underscan_init
     from .workstation_h import Init as workstation_init
 
     _adapter_init(hDLL)
@@ -199,7 +198,6 @@ def InitADL():
     overdrive8_init(hDLL)
     overdriven_init(hDLL)
     powerxpress_init(hDLL)
-    underscan_init(hDLL)
     workstation_init(hDLL)
 
     libc.strtok.restype = POINTER(ctypes.c_char)

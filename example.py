@@ -153,12 +153,104 @@ for adapter in ati_radeon.adapters:
 
     print()
     print('connectors')
-    connectors = adapter.connectors
-    for connector in connectors:
+    print()
+
+    for connector in adapter:
+        print('    type', connector.type)
         print('    index', connector.index)
-        print('    active_connector', connector.active_connector)
-        print('    mhl_ports', connector.mhl_ports)
-        print('    child_ports', connector.child_ports)
+
+        print()
+        print('    display')
+        display = connector.display
+        if display is None:
+            print('        None')
+        else:
+            print('        name', display.name)
+            print('        manufacturer', display.manufacturer)
+            print('        type', display.type)
+            print('        output_type', display.output_type)
+            print('        is_preserve_aspect_ratio_supported', display.is_preserve_aspect_ratio_supported)
+            print('        preserve_aspect_ratio_default', display.preserve_aspect_ratio_default)
+            print('        preserve_aspect_ratio', display.preserve_aspect_ratio)
+            print('        is_image_expansion_supported', display.is_image_expansion_supported)
+            print('        image_expansion_default', display.image_expansion_default)
+            print('        image_expansion', display.image_expansion)
+            print('        dither', display.dither)
+            print('        supported_pixel_formats', display.supported_pixel_formats)
+            print('        pixel_format', display.pixel_format)
+            print('        adjustment_coherent_default', display.adjustment_coherent_default)
+            print('        adjustment_coherent', display.adjustment_coherent)
+            print('        reduced_blanking_default', display.reduced_blanking_default)
+            print('        reduced_blanking', display.reduced_blanking)
+            print('        formats_override_supported', display.formats_override_supported)
+            print('        formats_override_supported_ex', display.formats_override_supported_ex)
+            print('        formats_override', display.formats_override)
+            print('        supported_color_depths', display.supported_color_depths)
+            print('        color_depth', display.color_depth)
+
+            print()
+            print('        is_overscan_supported', display.is_overscan_supported)
+            overscan = display.overscan
+            print('        overscan')
+            print('            value', overscan)
+            print('            default', overscan.default)
+            print('            min', overscan.min)
+            print('            max', overscan.max)
+            print('            step', overscan.step)
+
+            print()
+            print('        is_underscan_supported', display.is_underscan_supported)
+            underscan = display.underscan
+            print('        underscan')
+            print('            value', underscan)
+            print('            default', underscan.default)
+            print('            min', underscan.min)
+            print('            max', underscan.max)
+            print('            step', underscan.step)
+
+            print()
+            position = display.position
+            print('        position')
+            print('            is_horizontal_position_supported', position.is_horizontal_position_supported)
+            x = position.x
+            print('            x')
+            print('                value', x)
+            print('                default', x.default)
+            print('                min', x.min)
+            print('                max', x.max)
+            print('                step', x.step)
+
+            print()
+            print('            is_vertical_position_supported', position.is_vertical_position_supported)
+            y = position.y
+            print('            y')
+            print('                value', y)
+            print('                default', y.default)
+            print('                min', y.min)
+            print('                max', y.max)
+            print('                step', y.step)
+
+            print()
+            size = display.size
+            print('        size')
+            print('            is_horizontal_size_supported', size.is_horizontal_size_supported)
+            width = size.width
+            print('            width')
+            print('                value', width)
+            print('                default', width.default)
+            print('                min', width.min)
+            print('                max', width.max)
+            print('                step', width.step)
+
+            print()
+            print('            is_vertical_size_supported', size.is_vertical_size_supported)
+            height = size.height
+            print('            height')
+            print('                value', height)
+            print('                default', height.default)
+            print('                min', height.min)
+            print('                max', height.max)
+            print('                step', height.step)
 
         print()
         print('    supported_connections')

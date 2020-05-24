@@ -1270,6 +1270,7 @@ class PortConnector(object):
     def __init__(
             self,
             type,
+            parent_type,
             adapter_index,
             device_port,
     ):
@@ -1277,6 +1278,7 @@ class PortConnector(object):
         self._adapter_index = adapter_index
         self._device_port = device_port
         self._type = type
+        self._parent_type = parent_type
 
     @property
     def _properties(self):
@@ -1343,20 +1345,54 @@ class PortConnector(object):
 
     @property
     def is_connected(self):
-        iAdapterIndex = INT(self._adapter_index)
-        lpADLConnectionState = ADLConnectionState()
+        mapping = {
+            ADL_DISPLAY_CONTYPE_UNKNOWN: ADL_CONNECTOR_TYPE_UNKNOWN,
+            ADL_DISPLAY_CONTYPE_VGA: ADL_CONNECTOR_TYPE_VGA,
+            ADL_DISPLAY_CONTYPE_DVI_D: ADL_CONNECTOR_TYPE_DVI_D,
+            ADL_DISPLAY_CONTYPE_DVI_I: ADL_CONNECTOR_TYPE_DVI_I,
+            ADL_DISPLAY_CONTYPE_ATICVDONGLE_NTSC: ADL_CONNECTOR_TYPE_ATICVDONGLE_NA,
+            ADL_DISPLAY_CONTYPE_ATICVDONGLE_JPN: ADL_CONNECTOR_TYPE_ATICVDONGLE_JP,
+            ADL_DISPLAY_CONTYPE_ATICVDONGLE_NONI2C_JPN: ADL_CONNECTOR_TYPE_ATICVDONGLE_NONI2C,
+            ADL_DISPLAY_CONTYPE_ATICVDONGLE_NONI2C_NTSC: ADL_CONNECTOR_TYPE_ATICVDONGLE_NONI2C_D,
+            ADL_DISPLAY_CONTYPE_HDMI_TYPE_A: ADL_CONNECTOR_TYPE_HDMI_TYPE_A,
+            ADL_DISPLAY_CONTYPE_HDMI_TYPE_B: ADL_CONNECTOR_TYPE_HDMI_TYPE_B,
+            ADL_DISPLAY_CONTYPE_DISPLAYPORT: ADL_CONNECTOR_TYPE_DISPLAYPORT,
+            ADL_DISPLAY_CONTYPE_EDP: ADL_CONNECTOR_TYPE_EDP,
+            ADL_DISPLAY_CONTYPE_WIRELESSDISPLAY: ADL_CONNECTOR_TYPE_VIRTUAL
+        }
 
-        devicePort = self._device_port
+        from .display_h import _ADL2_Display_DisplayInfo_Get, _ADL2_Display_ConnectedDisplays_Get
+        iAdapterIndex = INT(self._adapter_index)
+        lpConnections = INT()
 
         with ADL2_Main_Control_Create as context:
-            res = _ADL2_Adapter_ConnectionState_Get(
+            _ADL2_Display_ConnectedDisplays_Get(context, iAdapterIndex, ctypes.byref(lpConnections))
+            lpNumDisplays = INT()
+            lppInfo = LPADLDisplayInfo()
+            iForceDetect = INT(1)
+
+            _ADL2_Display_DisplayInfo_Get(
                 context,
                 iAdapterIndex,
-                devicePort,
-                ctypes.byref(lpADLConnectionState)
+                ctypes.byref(lpNumDisplays),
+                ctypes.byref(lppInfo),
+                iForceDetect
             )
-            if res == ADL_OK:
-                print(lpADLConnectionState.iDisplayIndex.value)
+            for i in range(lpNumDisplays.value):
+                bitmask = lppInfo[i].iDisplayInfoValue
+
+                if bitmask | ADL_DISPLAY_DISPLAYINFO_DISPLAYCONNECTED == bitmask:
+                    info = lppInfo[i]
+
+                    if info.iDisplayConnector not in mapping:
+                        continue
+
+                    value = mapping[info.iDisplayConnector]
+
+                    if value == self._parent_type and value == self._type:
+                        return True
+
+            return False
 
     @property
     def bitrate(self):
@@ -1526,7 +1562,6 @@ class PortConnector(object):
         iAdapterIndex = INT(self._adapter_index)
         devicePort = self._device_port
 
-
         with ADL2_Main_Control_Create as context:
             _ADL2_Adapter_EmulationMode_Set(
                     context,
@@ -1550,9 +1585,97 @@ class PortConnector(object):
 
 class AdapterConnector(object):
 
-    def __init__(self, adapter_index, connector_index):
+    def __init__(self, adapter_index, connector_type, connector_index, connector_id):
         self._adapter_index = adapter_index
         self._connector_index = connector_index
+        self._connector_type = connector_type
+        self._connector_id = connector_id
+
+    @property
+    def type(self):
+        return self._connector_type
+
+    @property
+    def label(self):
+        return str(self._connector_type)
+
+    @property
+    def display(self):
+        mapping = {
+            ADL_DISPLAY_CONTYPE_UNKNOWN: ADL_CONNECTOR_TYPE_UNKNOWN,
+            ADL_DISPLAY_CONTYPE_VGA: ADL_CONNECTOR_TYPE_VGA,
+            ADL_DISPLAY_CONTYPE_DVI_D: ADL_CONNECTOR_TYPE_DVI_D,
+            ADL_DISPLAY_CONTYPE_DVI_I: ADL_CONNECTOR_TYPE_DVI_I,
+            ADL_DISPLAY_CONTYPE_ATICVDONGLE_NTSC: ADL_CONNECTOR_TYPE_ATICVDONGLE_NA,
+            ADL_DISPLAY_CONTYPE_ATICVDONGLE_JPN: ADL_CONNECTOR_TYPE_ATICVDONGLE_JP,
+            ADL_DISPLAY_CONTYPE_ATICVDONGLE_NONI2C_JPN: ADL_CONNECTOR_TYPE_ATICVDONGLE_NONI2C,
+            ADL_DISPLAY_CONTYPE_ATICVDONGLE_NONI2C_NTSC: ADL_CONNECTOR_TYPE_ATICVDONGLE_NONI2C_D,
+            ADL_DISPLAY_CONTYPE_HDMI_TYPE_A: ADL_CONNECTOR_TYPE_HDMI_TYPE_A,
+            ADL_DISPLAY_CONTYPE_HDMI_TYPE_B: ADL_CONNECTOR_TYPE_HDMI_TYPE_B,
+            ADL_DISPLAY_CONTYPE_DISPLAYPORT: ADL_CONNECTOR_TYPE_DISPLAYPORT,
+            ADL_DISPLAY_CONTYPE_EDP: ADL_CONNECTOR_TYPE_EDP,
+            ADL_DISPLAY_CONTYPE_WIRELESSDISPLAY: ADL_CONNECTOR_TYPE_VIRTUAL
+        }
+
+        dt_mapping = [
+            ADL_DT_MONITOR,
+            ADL_DT_TELEVISION,
+            ADL_DT_LCD_PANEL,
+            ADL_DT_DIGITAL_FLAT_PANEL,
+            ADL_DT_COMPONENT_VIDEO,
+            ADL_DT_PROJECTOR
+        ]
+
+        ot_mapping = [
+            ADL_DOT_UNKNOWN,
+            ADL_DOT_COMPOSITE,
+            ADL_DOT_SVIDEO,
+            ADL_DOT_ANALOG,
+            ADL_DOT_DIGITAL
+        ]
+
+        from .display_h import _ADL2_Display_DisplayInfo_Get, _ADL2_Display_ConnectedDisplays_Get
+        iAdapterIndex = INT(self._adapter_index)
+        lpConnections = INT()
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_Display_ConnectedDisplays_Get(context, iAdapterIndex, ctypes.byref(lpConnections))
+            lpNumDisplays = INT()
+            lppInfo = LPADLDisplayInfo()
+            iForceDetect = INT(1)
+
+            _ADL2_Display_DisplayInfo_Get(
+                context,
+                iAdapterIndex,
+                ctypes.byref(lpNumDisplays),
+                ctypes.byref(lppInfo),
+                iForceDetect
+            )
+            for i in range(lpNumDisplays.value):
+                bitmask = lppInfo[i].iDisplayInfoValue
+
+                if bitmask | ADL_DISPLAY_DISPLAYINFO_DISPLAYCONNECTED == bitmask:
+                    info = lppInfo[i]
+                    display_id = info.displayID
+
+                    for key, value in mapping.items():
+                        if value != self.type:
+                            continue
+                        if key != info.iDisplayConnector:
+                            continue
+
+                        strDisplayName = utils.get_string(info.strDisplayName)
+                        strDisplayManufacturerName = utils.get_string(info.strDisplayManufacturerName)
+                        iDisplayType = dt_mapping[dt_mapping.index(info.iDisplayType)]
+                        iDisplayOutputType = ot_mapping[ot_mapping.index(info.iDisplayOutputType)]
+                        return Display(
+                            self._adapter_index,
+                            display_id,
+                            strDisplayName,
+                            strDisplayManufacturerName,
+                            iDisplayType,
+                            iDisplayOutputType
+                        )
 
     @property
     def index(self):
@@ -1599,7 +1722,7 @@ class AdapterConnector(object):
                 ]
                 for item in mapping:
                     if (supportedConnections.iSupportedConnections & (1 << item)) == (1 << item):
-                        yield PortConnector(item, self._adapter_index, devicePort)
+                        yield PortConnector(item, self._connector_type, self._adapter_index, devicePort)
 
     @property
     def _connection_data(self):
@@ -2070,41 +2193,6 @@ class Adapter(object):
 
             return adapterInfoArray[self._adapter_index]
 
-    def __iter__(self):
-
-        from .display_h import _ADL2_Display_DisplayInfo_Get, _ADL2_Display_ConnectedDisplays_Get
-
-        lpInfo = self._adapter_info
-        lpAdapterID = INT()
-        iAdapterIndex = INT(lpInfo.iAdapterIndex)
-        lpConnections = INT()
-
-        with ADL2_Main_Control_Create as context:
-            _ADL2_Display_ConnectedDisplays_Get(context, iAdapterIndex, ctypes.byref(lpConnections))
-
-            if _ADL2_Adapter_ID_Get(
-                context,
-                iAdapterIndex,
-                ctypes.byref(lpAdapterID),
-            ) == ADL_OK:
-                if lpAdapterID.value == self._adapter_id:
-                    lpNumDisplays = INT()
-                    lppInfo = LPADLDisplayInfo()
-                    iForceDetect = INT(1)
-
-                    if _ADL2_Display_DisplayInfo_Get(
-                        context,
-                        iAdapterIndex,
-                        ctypes.byref(lpNumDisplays),
-                        ctypes.byref(lppInfo),
-                        iForceDetect
-                    ) == ADL_OK:
-                        for i in range(lpNumDisplays.value):
-                            bitmask = lppInfo[i].iDisplayInfoValue
-
-                            if bitmask | ADL_DISPLAY_DISPLAYINFO_DISPLAYCONNECTED == bitmask:
-                                yield DisplayConnection(self._adapter_index, i)
-
     @property
     def supports_edid_management(self):
         lpSupported = INT()
@@ -2152,25 +2240,48 @@ class Adapter(object):
         if lpInfo is not None:
             return utils.get_string(lpInfo.strAdapterName)
 
-    @property
-    def connectors(self):
-        pAdapterCaps = ADLAdapterCapsX2()
+    def __iter__(self):
+        
+        mapping = [
+            ADL_CONNECTOR_TYPE_UNKNOWN,
+            ADL_CONNECTOR_TYPE_VGA,
+            ADL_CONNECTOR_TYPE_DVI_D,
+            ADL_CONNECTOR_TYPE_DVI_I,
+            ADL_CONNECTOR_TYPE_ATICVDONGLE_NA,
+            ADL_CONNECTOR_TYPE_ATICVDONGLE_JP,
+            ADL_CONNECTOR_TYPE_ATICVDONGLE_NONI2C,
+            ADL_CONNECTOR_TYPE_ATICVDONGLE_NONI2C_D,
+            ADL_CONNECTOR_TYPE_HDMI_TYPE_A,
+            ADL_CONNECTOR_TYPE_HDMI_TYPE_B,
+            ADL_CONNECTOR_TYPE_DISPLAYPORT,
+            ADL_CONNECTOR_TYPE_EDP,
+            ADL_CONNECTOR_TYPE_MINI_DISPLAYPORT,
+            ADL_CONNECTOR_TYPE_VIRTUAL
+        ]
         iAdapterIndex = INT(self._adapter_index)
 
+        lpValidFlags = INT(-1)
+        lpNumberSlots = INT(-1)
+        lppBracketSlot = LPADLBracketSlotInfo()
+        lpNumberConnector = INT(-1)
+        lppConnector = LPADLConnectorInfo()
+
         with ADL2_Main_Control_Create as context:
-            if _ADL2_AdapterX2_Caps(
+            _ADL2_Adapter_BoardLayout_Get(
                 context,
                 iAdapterIndex,
-                ctypes.byref(pAdapterCaps)
-            ) != ADL_OK:
-                return []
+                ctypes.byref(lpValidFlags),
+                ctypes.byref(lpNumberSlots),
+                ctypes.byref(lppBracketSlot),
+                ctypes.byref(lpNumberConnector),
+                ctypes.byref(lppConnector),
+            )
+            for i in range(lpNumberConnector.value):
+                iType = mapping[mapping.index(lppConnector[i].iType)]
+                iConnectorIndex = lppConnector[i].iConnectorIndex
+                iConnectorId = lppConnector[i].iConnectorId
 
-        res = []
-
-        for i in range(pAdapterCaps.iNumConnectors):
-            res += [AdapterConnector(self._adapter_index, i)]
-
-        return res
+                yield AdapterConnector(self._adapter_index, iType, iConnectorIndex, iConnectorId)
 
     @property
     def is_overdrive_enabled(self):

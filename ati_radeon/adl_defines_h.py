@@ -100,6 +100,12 @@ class Constant(int):
         self._string = ''
         self._value = value
 
+    def __repr__(self):
+        if self._string:
+            return repr(self._string)
+
+        return int.__repr__(self)
+
     def set_string(self, value):
         self._string = value
         return self
@@ -123,6 +129,9 @@ class Constant(int):
             return self._string
 
         return super(Constant, self).__str__()
+
+    def __hash__(self):
+        return int.__hash__(self)
 
 
 class ENUM(INT):
@@ -484,25 +493,26 @@ ADL_DISPLAY_CV_DONGLE_1080P50 = 1 << 14
 # / Display force modes flags
 # @{
 # /
-ADL_DISPLAY_FORMAT_FORCE_720P = 0x00000001
-ADL_DISPLAY_FORMAT_FORCE_1080I = 0x00000002
-ADL_DISPLAY_FORMAT_FORCE_1080P = 0x00000004
-ADL_DISPLAY_FORMAT_FORCE_720P50 = 0x00000008
-ADL_DISPLAY_FORMAT_FORCE_1080I25 = 0x00000010
-ADL_DISPLAY_FORMAT_FORCE_576I25 = 0x00000020
-ADL_DISPLAY_FORMAT_FORCE_576P50 = 0x00000040
-ADL_DISPLAY_FORMAT_FORCE_1080P24 = 0x00000080
-ADL_DISPLAY_FORMAT_FORCE_1080P25 = 0x00000100
-ADL_DISPLAY_FORMAT_FORCE_1080P30 = 0x00000200
-ADL_DISPLAY_FORMAT_FORCE_1080P50 = 0x00000400
+
+ADL_DISPLAY_FORMAT_FORCE_720P = Constant(0x00000001).set_string('720p')
+ADL_DISPLAY_FORMAT_FORCE_1080I = Constant(0x00000002).set_string('1080i')
+ADL_DISPLAY_FORMAT_FORCE_1080P = Constant(0x00000004).set_string('1080p')
+ADL_DISPLAY_FORMAT_FORCE_720P50 = Constant(0x00000008).set_string('720p 50Hz')
+ADL_DISPLAY_FORMAT_FORCE_1080I25 = Constant(0x00000010).set_string('1080i 25Hz')
+ADL_DISPLAY_FORMAT_FORCE_576I25 = Constant(0x00000020).set_string('576i 25Hz')
+ADL_DISPLAY_FORMAT_FORCE_576P50 = Constant(0x00000040).set_string('576p 50Hz')
+ADL_DISPLAY_FORMAT_FORCE_1080P24 = Constant(0x00000080).set_string('1080p 24Hz')
+ADL_DISPLAY_FORMAT_FORCE_1080P25 = Constant(0x00000100).set_string('1080p 25Hz')
+ADL_DISPLAY_FORMAT_FORCE_1080P30 = Constant(0x00000200).set_string('1080p 30Hz')
+ADL_DISPLAY_FORMAT_FORCE_1080P50 = Constant(0x00000400).set_string('1080p 50Hz')
 # / < Below are \b EXTENDED display mode flags
-ADL_DISPLAY_FORMAT_CVDONGLEOVERIDE = 0x00000001
-ADL_DISPLAY_FORMAT_CVMODEUNDERSCAN = 0x00000002
-ADL_DISPLAY_FORMAT_FORCECONNECT_SUPPORTED = 0x00000004
-ADL_DISPLAY_FORMAT_RESTRICT_FORMAT_SELECTION = 0x00000008
-ADL_DISPLAY_FORMAT_SETASPECRATIO = 0x00000010
-ADL_DISPLAY_FORMAT_FORCEMODES = 0x00000020
-ADL_DISPLAY_FORMAT_LCDRTCCOEFF = 0x00000040
+ADL_DISPLAY_FORMAT_CVDONGLEOVERIDE = Constant(0x00000001).set_string('CV Dongle Override')
+ADL_DISPLAY_FORMAT_CVMODEUNDERSCAN = Constant(0x00000002).set_string('CV Mode Underscan')
+ADL_DISPLAY_FORMAT_FORCECONNECT_SUPPORTED = Constant(0x00000004).set_string('Force Connect Supported')
+ADL_DISPLAY_FORMAT_RESTRICT_FORMAT_SELECTION = Constant(0x00000008).set_string('Restrict Format Selection')
+ADL_DISPLAY_FORMAT_SETASPECRATIO = Constant(0x00000010).set_string('Set Aspect Ratio')
+ADL_DISPLAY_FORMAT_FORCEMODES = Constant(0x00000020).set_string('Force Modes')
+ADL_DISPLAY_FORMAT_LCDRTCCOEFF = Constant(0x00000040).set_string('LCD RTC Coefficient')
 # @}
 # / Defines used by OD5
 ADL_PM_PARAM_DONT_CHANGE = 0
@@ -848,6 +858,7 @@ ADL_XFIREX_STATE_ERRORGETTINGSTATUS = Constant(1 << 31).set_string('Could not ob
 # / Since a display can support multiple formats, these values can be
 # bit-or'ed to indicate the various formats \n
 # @{
+
 ADL_DISPLAY_PIXELFORMAT_UNKNOWN = Constant(0).set_string('Unknown')
 ADL_DISPLAY_PIXELFORMAT_RGB = Constant(1 << 0).set_string('RGB Full Range')
 # Limited range
@@ -1195,64 +1206,85 @@ ADL_DL_DISPLAYPROPERTY_EXPANSIONMODE_ASPECTRATIO = 2
 # /\defgroup define_dither_states Dithering options
 # @{
 # / Dithering disabled.
-ADL_DL_DISPLAY_DITHER_DISABLED = 0
+
+ADL_DL_DISPLAY_DITHER_DISABLED = Constant(0).set_string('Disabled')
 # / Use default driver settings for dithering. Note that the default
 # setting could be dithering disabled.
-ADL_DL_DISPLAY_DITHER_DRIVER_DEFAULT = 1
+ADL_DL_DISPLAY_DITHER_DRIVER_DEFAULT = Constant(1).set_string('Default')
 # / Temporal dithering to 6 bpc. Note that if the input is 12 bits, the
 # two least significant bits will be truncated.
-ADL_DL_DISPLAY_DITHER_FM6 = 2
+ADL_DL_DISPLAY_DITHER_FM6 = Constant(2).set_string('Temporal dithering to 6 bpc')
 # / Temporal dithering to 8 bpc.
-ADL_DL_DISPLAY_DITHER_FM8 = 3
+ADL_DL_DISPLAY_DITHER_FM8 = Constant(3).set_string('Temporal dithering to 8 bpc')
 # / Temporal dithering to 10 bpc.
-ADL_DL_DISPLAY_DITHER_FM10 = 4
+ADL_DL_DISPLAY_DITHER_FM10 = Constant(4).set_string('Temporal dithering to 10 bpc')
 # / Spatial dithering to 6 bpc. Note that if the input is 12 bits, the two
 # least significant bits will be truncated.
-ADL_DL_DISPLAY_DITHER_DITH6 = 5
+ADL_DL_DISPLAY_DITHER_DITH6 = Constant(5).set_string('Spatial dithering to 6 bpc')
 # / Spatial dithering to 8 bpc.
-ADL_DL_DISPLAY_DITHER_DITH8 = 6
+ADL_DL_DISPLAY_DITHER_DITH8 = Constant(6).set_string('Spatial dithering to 8 bpc')
 # / Spatial dithering to 10 bpc.
-ADL_DL_DISPLAY_DITHER_DITH10 = 7
+ADL_DL_DISPLAY_DITHER_DITH10 = Constant(7).set_string('Spatial dithering to 10 bpc')
 # / Spatial dithering to 6 bpc. Random number generators are reset every
 # frame, so the same input value of a certain pixel will always be
 # dithered to the same output value. Note that if the input is 12 bits,
 # the two least significant bits will be truncated.
-ADL_DL_DISPLAY_DITHER_DITH6_NO_FRAME_RAND = 8
+ADL_DL_DISPLAY_DITHER_DITH6_NO_FRAME_RAND = Constant(8).set_string('Spatial dithering to 6 bpc random')
 # / Spatial dithering to 8 bpc. Random number generators are reset every
 # frame, so the same input value of a certain pixel will always be
 # dithered to the same output value.
-ADL_DL_DISPLAY_DITHER_DITH8_NO_FRAME_RAND = 9
+ADL_DL_DISPLAY_DITHER_DITH8_NO_FRAME_RAND = Constant(9).set_string('Spatial dithering to 8 bpc random')
 # / Spatial dithering to 10 bpc. Random number generators are reset every
 # frame, so the same input value of a certain pixel will always be
 # dithered to the same output value.
-ADL_DL_DISPLAY_DITHER_DITH10_NO_FRAME_RAND = 10
+ADL_DL_DISPLAY_DITHER_DITH10_NO_FRAME_RAND = Constant(10).set_string('Spatial dithering to 10 bpc random')
 # / Truncation to 6 bpc.
-ADL_DL_DISPLAY_DITHER_TRUN6 = 11
+ADL_DL_DISPLAY_DITHER_TRUN6 = Constant(11).set_string('Truncation to 6 bpc')
 # / Truncation to 8 bpc.
-ADL_DL_DISPLAY_DITHER_TRUN8 = 12
+ADL_DL_DISPLAY_DITHER_TRUN8 = Constant(12).set_string('Truncation to 8 bpc')
 # / Truncation to 10 bpc.
-ADL_DL_DISPLAY_DITHER_TRUN10 = 13
+ADL_DL_DISPLAY_DITHER_TRUN10 = Constant(13).set_string('Truncation to 10 bpc')
 # / Truncation to 10 bpc followed by spatial dithering to 8 bpc.
-ADL_DL_DISPLAY_DITHER_TRUN10_DITH8 = 14
+ADL_DL_DISPLAY_DITHER_TRUN10_DITH8 = Constant(14).set_string(
+    'Truncation to 10 bpc followed by spatial dithering to 8 bpc'
+)
 # / Truncation to 10 bpc followed by spatial dithering to 6 bpc.
-ADL_DL_DISPLAY_DITHER_TRUN10_DITH6 = 15
+ADL_DL_DISPLAY_DITHER_TRUN10_DITH6 = Constant(15).set_string(
+    'Truncation to 10 bpc followed by spatial dithering to 6 bpc'
+)
 # / Truncation to 10 bpc followed by temporal dithering to 8 bpc.
-ADL_DL_DISPLAY_DITHER_TRUN10_FM8 = 16
+ADL_DL_DISPLAY_DITHER_TRUN10_FM8 = Constant(16).set_string(
+    'Truncation to 10 bpc followed by temporal dithering to 8 bpc'
+)
 # / Truncation to 10 bpc followed by temporal dithering to 6 bpc.
-ADL_DL_DISPLAY_DITHER_TRUN10_FM6 = 17
+ADL_DL_DISPLAY_DITHER_TRUN10_FM6 = Constant(17).set_string(
+    'Truncation to 10 bpc followed by temporal dithering to 6 bpc'
+)
 # / Truncation to 10 bpc followed by spatial dithering to 8 bpc and
 # temporal dithering to 6 bpc.
-ADL_DL_DISPLAY_DITHER_TRUN10_DITH8_FM6 = 18
+ADL_DL_DISPLAY_DITHER_TRUN10_DITH8_FM6 = Constant(18).set_string(
+    'Truncation to 10 bpc followed by spatial dithering to 8 bpc and temporal dithering to 6 bpc'
+)
 # / Spatial dithering to 10 bpc followed by temporal dithering to 8 bpc.
-ADL_DL_DISPLAY_DITHER_DITH10_FM8 = 19
+ADL_DL_DISPLAY_DITHER_DITH10_FM8 = Constant(19).set_string(
+    'Spatial dithering to 10 bpc followed by temporal dithering to 8 bpc'
+)
 # / Spatial dithering to 10 bpc followed by temporal dithering to 6 bpc.
-ADL_DL_DISPLAY_DITHER_DITH10_FM6 = 20
+ADL_DL_DISPLAY_DITHER_DITH10_FM6 = Constant(20).set_string(
+    'Spatial dithering to 10 bpc followed by temporal dithering to 6 bpc'
+)
 # / Truncation to 8 bpc followed by spatial dithering to 6 bpc.
-ADL_DL_DISPLAY_DITHER_TRUN8_DITH6 = 21
+ADL_DL_DISPLAY_DITHER_TRUN8_DITH6 = Constant(21).set_string(
+    'Truncation to 8 bpc followed by spatial dithering to 6 bpc'
+)
 # / Truncation to 8 bpc followed by temporal dithering to 6 bpc.
-ADL_DL_DISPLAY_DITHER_TRUN8_FM6 = 22
+ADL_DL_DISPLAY_DITHER_TRUN8_FM6 = Constant(22).set_string(
+    'Truncation to 8 bpc followed by temporal dithering to 6 bpc'
+)
 # / Spatial dithering to 8 bpc followed by temporal dithering to 6 bpc.
-ADL_DL_DISPLAY_DITHER_DITH8_FM6 = 23
+ADL_DL_DISPLAY_DITHER_DITH8_FM6 = Constant(23).set_string(
+    'Spatial dithering to 8 bpc followed by temporal dithering to 6 bpc'
+)
 ADL_DL_DISPLAY_DITHER_LAST = ADL_DL_DISPLAY_DITHER_DITH8_FM6
 # @}
 # / Display Get Cached EDID flag
@@ -2541,31 +2573,31 @@ ADL_EDID_PERSISTANCE_ENABLED = 1
 # / Indicates unknown Connector type
 ADL_CONNECTOR_TYPE_UNKNOWN = Constant(0).set_string('Unknown')
 # / Indicates VGA Connector type
-ADL_CONNECTOR_TYPE_VGA = Constant(0).set_string('VGA')
+ADL_CONNECTOR_TYPE_VGA = Constant(1).set_string('VGA')
 # / Indicates DVI-D Connector type
-ADL_CONNECTOR_TYPE_DVI_D = Constant(0).set_string('DVI-D')
+ADL_CONNECTOR_TYPE_DVI_D = Constant(2).set_string('DVI-D')
 # / Indicates DVI-I Connector type
-ADL_CONNECTOR_TYPE_DVI_I = Constant(0).set_string('DVI-I')
+ADL_CONNECTOR_TYPE_DVI_I = Constant(3).set_string('DVI-I')
 # / Indicates Active Dongle-NA Connector type
-ADL_CONNECTOR_TYPE_ATICVDONGLE_NA = Constant(0).set_string('Active Dongle-NA')
+ADL_CONNECTOR_TYPE_ATICVDONGLE_NA = Constant(4).set_string('Active Dongle-NA')
 # / Indicates Active Dongle-JP Connector type
-ADL_CONNECTOR_TYPE_ATICVDONGLE_JP = Constant(0).set_string('Active Dongle-JP')
+ADL_CONNECTOR_TYPE_ATICVDONGLE_JP = Constant(5).set_string('Active Dongle-JP')
 # / Indicates Active Dongle-NONI2C Connector type
-ADL_CONNECTOR_TYPE_ATICVDONGLE_NONI2C = Constant(0).set_string('Active Dongle-NONI2C')
+ADL_CONNECTOR_TYPE_ATICVDONGLE_NONI2C = Constant(6).set_string('Active Dongle-NONI2C')
 # / Indicates Active Dongle-NONI2C-D Connector type
-ADL_CONNECTOR_TYPE_ATICVDONGLE_NONI2C_D = Constant(0).set_string('Active Dongle-NONI2C-D')
+ADL_CONNECTOR_TYPE_ATICVDONGLE_NONI2C_D = Constant(7).set_string('Active Dongle-NONI2C-D')
 # / Indicates HDMI-Type A Connector type
-ADL_CONNECTOR_TYPE_HDMI_TYPE_A = Constant(0).set_string('HDMI-Type A')
+ADL_CONNECTOR_TYPE_HDMI_TYPE_A = Constant(8).set_string('HDMI-Type A')
 # / Indicates HDMI-Type B Connector type
-ADL_CONNECTOR_TYPE_HDMI_TYPE_B = Constant(0).set_string(' HDMI-Type B')
+ADL_CONNECTOR_TYPE_HDMI_TYPE_B = Constant(9).set_string(' HDMI-Type B')
 # / Indicates Display port Connector type
-ADL_CONNECTOR_TYPE_DISPLAYPORT = Constant(0).set_string('DisplayPort')
+ADL_CONNECTOR_TYPE_DISPLAYPORT = Constant(10).set_string('DisplayPort')
 # / Indicates EDP Connector type
-ADL_CONNECTOR_TYPE_EDP = Constant(0).set_string('EDP')
+ADL_CONNECTOR_TYPE_EDP = Constant(11).set_string('EDP')
 # / Indicates MiniDP Connector type
-ADL_CONNECTOR_TYPE_MINI_DISPLAYPORT = Constant(0).set_string('DisplayPort (Mini)')
+ADL_CONNECTOR_TYPE_MINI_DISPLAYPORT = Constant(12).set_string('DisplayPort (Mini)')
 # / Indicates Virtual Connector type
-ADL_CONNECTOR_TYPE_VIRTUAL = Constant(0).set_string('Virtual')
+ADL_CONNECTOR_TYPE_VIRTUAL = Constant(13).set_string('Virtual')
 # @}
 # / \defgroup define_freesync_usecase
 # / These defines are to specify use cases in which FreeSync should be

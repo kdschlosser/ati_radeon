@@ -24,6 +24,7 @@
 
 # ***********************************************************************************
 from .adl_structures_h import *  # NOQA
+from . import utils
 
 # Copyright (c) 2016 Advanced Micro Devices, Inc. All rights reserved.
 # MIT LICENSE:
@@ -1996,6 +1997,57 @@ _ADL_CDS_UnsafeMode_Set = ADL_CDS_UNSAFEMODE_SET
 _ADL2_CDS_UnsafeMode_Set = ADL2_CDS_UNSAFEMODE_SET
 
 
+ADL2_DISPLAY_UNDERSCANSUPPORT_GET = _int(
+    ADL_CONTEXT_HANDLE,
+    INT,
+    INT,
+    POINTER(INT)
+)
+ADL2_DISPLAY_UNDERSCANSTATE_GET = _int(
+    ADL_CONTEXT_HANDLE,
+    INT,
+    INT,
+    POINTER(INT),
+    POINTER(INT)
+)
+ADL2_DISPLAY_UNDERSCANSTATE_SET = _int(
+    ADL_CONTEXT_HANDLE,
+    INT,
+    INT,
+    INT
+)
+ADL2_DISPLAY_UNDERSCAN_SET = _int(
+    ADL_CONTEXT_HANDLE,
+    INT,
+    INT,
+    INT
+)
+ADL_DISPLAY_UNDERSCAN_SET = _int(
+    INT,
+    INT,
+    INT
+)
+ADL2_DISPLAY_UNDERSCAN_GET = _int(
+    ADL_CONTEXT_HANDLE,
+    INT,
+    INT,
+    POINTER(INT),
+    POINTER(INT),
+    POINTER(INT),
+    POINTER(INT),
+    POINTER(INT)
+)
+ADL_DISPLAY_UNDERSCAN_GET = _int(
+    INT,
+    INT,
+    POINTER(INT),
+    POINTER(INT),
+    POINTER(INT),
+    POINTER(INT),
+    POINTER(INT)
+)
+
+
 def Init(hDLL):
     global _ADL2_Display_DisplayInfo_Get
     global _ADL_Display_DisplayInfo_Get
@@ -3051,14 +3103,163 @@ __all__ = (
 
 
 from .adl_sdk_h import ADL2_Main_Control_Create  # NOQA
-from .underscan_h import *  # NOQA
+
+
+class IntValueWrapper(int):
+
+    def __init__(self, value=None):
+        if value is None:
+            super(IntValueWrapper, self).__init__(self)
+        else:
+            try:
+                super(IntValueWrapper, self).__init__(value)
+            except TypeError:
+                super(IntValueWrapper, self).__init__()
+
+        self._obj = None
+
+    def __idiv__(self, other):
+        return self.__ifloordiv__(other)
+
+    def __itruediv__(self, other):
+        return self.__idiv__(other)
+
+    def __ifloordiv__(self, other):
+        if self._obj.set_value is None:
+            return self
+
+        value = self.real // other
+        value = self._obj.set_value(value)
+
+        if value is None:
+            return self
+
+        cls = self.__class__(value)
+        cls._obj = self._obj
+
+        self = cls
+
+        return self
+
+    def __imul__(self, other):
+        if self._obj.set_value is None:
+            return self
+
+        value = self.real * other
+        value = self._obj.set_value(value)
+
+        if value is None:
+            return self
+
+        cls = self.__class__(value)
+        cls._obj = self._obj
+        self = cls
+
+        return self
+
+    def __iadd__(self, other):
+        if self._obj.set_value is None:
+            return self
+
+        value = self.real + other
+
+        value = self._obj.set_value(value)
+
+        if value is None:
+            return self
+
+        cls = self.__class__(value)
+        cls._obj = self._obj
+
+        self = cls
+
+        return self
+
+    def __isub__(self, other):
+        if self._obj.set_value is None:
+            return self
+
+        value = self.real - other
+        value = self._obj.set_value(value)
+
+        if value is None:
+            return self
+
+        cls = self.__class__(value)
+        cls._obj = self._obj
+
+        self = cls
+
+        return self
+
+    @property
+    def max(self):
+        if self._obj.max_value is None:
+            raise NotImplementedError
+
+        return self._obj.max_value
+
+    @property
+    def min(self):
+        if self._obj.min_value is None:
+            raise NotImplementedError
+
+        return self._obj.min_value
+
+    @property
+    def step(self):
+        if self._obj.step_value is None:
+            raise NotImplementedError
+
+        return self._obj.step_value
+
+    @property
+    def default(self):
+        if self._obj.default_value is None:
+            raise NotImplementedError
+
+        return self._obj.default_value
 
 
 class Display(object):
 
-    def __init__(self, adapter_index, display_index):
+    def __init__(
+        self,
+        adapter_index,
+        display_id,
+        display_name,
+        display_manufacturer,
+        display_type,
+        display_output_type
+    ):
+
         self._adapter_index = adapter_index
-        self._display_index = display_index
+        self._display_id = display_id
+        self._display_name = display_name
+        self._display_manufacturer = display_manufacturer
+        self._display_type = display_type
+        self._display_output_type = display_output_type
+        self._display_index = display_id.iDisplayLogicalIndex
+        self.__position = None
+        self.__size = None
+        self.__overscan = None
+        self.__underscan = None
+
+    @property
+    def name(self):
+        return self._display_name
+
+    @property
+    def manufacturer(self):
+        return self._display_manufacturer
+
+    @property
+    def type(self):
+        return self._display_type
+
+    @property
+    def output_type(self):
+        return self._display_output_type
 
     @property
     def __preserve_aspect_ratio(self):
@@ -3069,41 +3270,31 @@ class Display(object):
         iDisplayIndex = INT(self._display_index)
 
         with ADL2_Main_Control_Create as context:
-            if _ADL2_Display_PreservedAspectRatio_Get(
+            _ADL2_Display_PreservedAspectRatio_Get(
                 context,
                 iAdapterIndex,
                 iDisplayIndex,
                 ctypes.byref(lpSupport),
                 ctypes.byref(lpCurrent),
-                ctypes.byref(lpDefault),
-            ) == ADL_OK:
-
-                return lpSupport, lpCurrent, lpDefault
+                ctypes.byref(lpDefault)
+            )
+            return lpSupport.value == 1, lpCurrent.value == 1, lpDefault.value == 1
 
     @property
     def is_preserve_aspect_ratio_supported(self):
-        lpSupport = self.__preserve_aspect_ratio
-
-        if lpSupport is not None:
-            return lpSupport[0].value == 1
+        return self.__preserve_aspect_ratio[0]
 
     @property
     def preserve_aspect_ratio_default(self):
-        lpDefault = self.__preserve_aspect_ratio
-
-        if lpDefault is not None:
-            return lpDefault[2].value
+        return self.__preserve_aspect_ratio[2]
 
     @property
     def preserve_aspect_ratio(self):
-        lpCurrent = self.__preserve_aspect_ratio
-
-        if lpCurrent is not None:
-            return lpCurrent[1].value
+        return self.__preserve_aspect_ratio[1]
 
     @preserve_aspect_ratio.setter
     def preserve_aspect_ratio(self, value):
-        lpCurrent = INT(value)
+        lpCurrent = INT(int(value))
         iAdapterIndex = INT(self._adapter_index)
         iDisplayIndex = INT(self._display_index)
 
@@ -3124,40 +3315,31 @@ class Display(object):
         iDisplayIndex = INT(self._display_index)
 
         with ADL2_Main_Control_Create as context:
-            if _ADL2_Display_ImageExpansion_Get(
+            _ADL2_Display_ImageExpansion_Get(
                 context,
                 iAdapterIndex,
                 iDisplayIndex,
                 ctypes.byref(lpSupport),
                 ctypes.byref(lpCurrent),
                 ctypes.byref(lpDefault),
-            ) == ADL_OK:
-                return lpSupport, lpCurrent, lpDefault
+            )
+            return lpSupport.value == 1, lpCurrent.value == 1, lpDefault.value == 1
 
     @property
     def is_image_expansion_supported(self):
-        lpSupport = self.__image_expansion
-
-        if lpSupport is not None:
-            return lpSupport[0].value == 1
+        return self.__image_expansion[0]
 
     @property
     def image_expansion_default(self):
-        lpDefault = self.__image_expansion
-
-        if lpDefault is not None:
-            return lpDefault[2].value
+        return self.__image_expansion[2]
 
     @property
     def image_expansion(self):
-        lpCurrent = self.__image_expansion
-
-        if lpCurrent is not None:
-            return lpCurrent[1].value
+        return self.__image_expansion[1]
 
     @image_expansion.setter
     def image_expansion(self, value):
-        lpCurrent = INT(value)
+        lpCurrent = INT(int(value))
         iAdapterIndex = INT(self._adapter_index)
         iDisplayIndex = INT(self._display_index)
 
@@ -3171,22 +3353,82 @@ class Display(object):
 
     @property
     def dither(self):
-        iDitherState = INT()
+        mapping = [
+            ADL_DL_DISPLAY_DITHER_DISABLED,
+            ADL_DL_DISPLAY_DITHER_DRIVER_DEFAULT,
+            ADL_DL_DISPLAY_DITHER_FM6,
+            ADL_DL_DISPLAY_DITHER_FM8,
+            ADL_DL_DISPLAY_DITHER_FM10,
+            ADL_DL_DISPLAY_DITHER_DITH6,
+            ADL_DL_DISPLAY_DITHER_DITH8,
+            ADL_DL_DISPLAY_DITHER_DITH10,
+            ADL_DL_DISPLAY_DITHER_DITH6_NO_FRAME_RAND,
+            ADL_DL_DISPLAY_DITHER_DITH8_NO_FRAME_RAND,
+            ADL_DL_DISPLAY_DITHER_DITH10_NO_FRAME_RAND,
+            ADL_DL_DISPLAY_DITHER_TRUN6,
+            ADL_DL_DISPLAY_DITHER_TRUN8,
+            ADL_DL_DISPLAY_DITHER_TRUN10,
+            ADL_DL_DISPLAY_DITHER_TRUN10_DITH8,
+            ADL_DL_DISPLAY_DITHER_TRUN10_DITH6,
+            ADL_DL_DISPLAY_DITHER_TRUN10_FM8,
+            ADL_DL_DISPLAY_DITHER_TRUN10_FM6,
+            ADL_DL_DISPLAY_DITHER_TRUN10_DITH8_FM6,
+            ADL_DL_DISPLAY_DITHER_DITH10_FM8,
+            ADL_DL_DISPLAY_DITHER_DITH10_FM6,
+            ADL_DL_DISPLAY_DITHER_TRUN8_DITH6,
+            ADL_DL_DISPLAY_DITHER_TRUN8_FM6,
+            ADL_DL_DISPLAY_DITHER_DITH8_FM6
+        ]
+        iDitherState = INT(0)
         iAdapterIndex = INT(self._adapter_index)
         iDisplayIndex = INT(self._display_index)
 
         with ADL2_Main_Control_Create as context:
-            if _ADL2_Display_DitherState_Get(
+            _ADL2_Display_DitherState_Get(
                 context,
                 iAdapterIndex,
                 iDisplayIndex,
                 ctypes.byref(iDitherState)
-            ) == ADL_OK:
-                return iDitherState.value
+            )
+
+            return mapping[mapping.index(iDitherState.value)]
 
     @dither.setter
     def dither(self, value):
-        iDitherState = INT(value)
+        mapping = [
+            ADL_DL_DISPLAY_DITHER_DISABLED,
+            ADL_DL_DISPLAY_DITHER_DRIVER_DEFAULT,
+            ADL_DL_DISPLAY_DITHER_FM6,
+            ADL_DL_DISPLAY_DITHER_FM8,
+            ADL_DL_DISPLAY_DITHER_FM10,
+            ADL_DL_DISPLAY_DITHER_DITH6,
+            ADL_DL_DISPLAY_DITHER_DITH8,
+            ADL_DL_DISPLAY_DITHER_DITH10,
+            ADL_DL_DISPLAY_DITHER_DITH6_NO_FRAME_RAND,
+            ADL_DL_DISPLAY_DITHER_DITH8_NO_FRAME_RAND,
+            ADL_DL_DISPLAY_DITHER_DITH10_NO_FRAME_RAND,
+            ADL_DL_DISPLAY_DITHER_TRUN6,
+            ADL_DL_DISPLAY_DITHER_TRUN8,
+            ADL_DL_DISPLAY_DITHER_TRUN10,
+            ADL_DL_DISPLAY_DITHER_TRUN10_DITH8,
+            ADL_DL_DISPLAY_DITHER_TRUN10_DITH6,
+            ADL_DL_DISPLAY_DITHER_TRUN10_FM8,
+            ADL_DL_DISPLAY_DITHER_TRUN10_FM6,
+            ADL_DL_DISPLAY_DITHER_TRUN10_DITH8_FM6,
+            ADL_DL_DISPLAY_DITHER_DITH10_FM8,
+            ADL_DL_DISPLAY_DITHER_DITH10_FM6,
+            ADL_DL_DISPLAY_DITHER_TRUN8_DITH6,
+            ADL_DL_DISPLAY_DITHER_TRUN8_FM6,
+            ADL_DL_DISPLAY_DITHER_DITH8_FM6
+        ]
+
+        for item in mapping:
+            if value in (item, str(item)):
+                break
+        else:
+            return
+
+        iDitherState = INT(item)
         iAdapterIndex = INT(self._adapter_index)
         iDisplayIndex = INT(self._display_index)
 
@@ -3199,19 +3441,33 @@ class Display(object):
             )
 
     @property
-    def suppoorted_pixel_format(self):
-        iDitherState = INT()
+    def supported_pixel_formats(self):
+        mapping = [
+            ADL_DISPLAY_PIXELFORMAT_RGB,
+            ADL_DISPLAY_PIXELFORMAT_YCRCB444,
+            ADL_DISPLAY_PIXELFORMAT_YCRCB422,
+            ADL_DISPLAY_PIXELFORMAT_RGB_LIMITED_RANGE,
+            ADL_DISPLAY_PIXELFORMAT_RGB_FULL_RANGE,
+            ADL_DISPLAY_PIXELFORMAT_YCRCB420
+        ]
+
+        lpPixelFormat = INT(0)
         iAdapterIndex = INT(self._adapter_index)
         iDisplayIndex = INT(self._display_index)
 
         with ADL2_Main_Control_Create as context:
-            if _ADL2_Display_SupportedPixelFormat_Get(
+            _ADL2_Display_SupportedPixelFormat_Get(
                 context,
                 iAdapterIndex,
                 iDisplayIndex,
-                ctypes.byref(iDitherState)
-            ) == ADL_OK:
-                return iDitherState.value
+                ctypes.byref(lpPixelFormat)
+            )
+            res = []
+            for item in mapping:
+                if utils.get_bit(lpPixelFormat.value, item):
+                    res += [item]
+
+            return res
 
     @property
     def pixel_format(self):
@@ -3224,48 +3480,47 @@ class Display(object):
         ADL_DISPLAY_PIXELFORMAT_YCRCB420
         :return:
         """
-        iPixelFormat = INT()
-        iAdapterIndex = INT(self._adapter_index)
-        iDisplayIndex = INT(self._display_index)
-
-        with ADL2_Main_Control_Create as context:
-            if _ADL2_Display_PixelFormat_Get(
-                context,
-                iAdapterIndex,
-                iDisplayIndex,
-                ctypes.byref(iPixelFormat)
-            ) == ADL_OK:
-
-                mapping = [
-                    ADL_DISPLAY_PIXELFORMAT_UNKNOWN,
-                    ADL_DISPLAY_PIXELFORMAT_YCRCB444,
-                    ADL_DISPLAY_PIXELFORMAT_YCRCB422,
-                    ADL_DISPLAY_PIXELFORMAT_RGB_LIMITED_RANGE,
-                    ADL_DISPLAY_PIXELFORMAT_RGB_FULL_RANGE,
-                    ADL_DISPLAY_PIXELFORMAT_YCRCB420
-                ]
-                return mapping[mapping.index(iPixelFormat.value)]
-
-        return ADL_DISPLAY_PIXELFORMAT_UNKNOWN
-
-    @pixel_format.setter
-    def pixel_format(self, value):
-        for item in (
+        mapping = [
             ADL_DISPLAY_PIXELFORMAT_UNKNOWN,
+            ADL_DISPLAY_PIXELFORMAT_RGB,
             ADL_DISPLAY_PIXELFORMAT_YCRCB444,
             ADL_DISPLAY_PIXELFORMAT_YCRCB422,
             ADL_DISPLAY_PIXELFORMAT_RGB_LIMITED_RANGE,
             ADL_DISPLAY_PIXELFORMAT_RGB_FULL_RANGE,
-            ADL_DISPLAY_PIXELFORMAT_YCRCB420,
-        ):
-            if value == str(item):
-                value = item
-            if value == item:
+            ADL_DISPLAY_PIXELFORMAT_YCRCB420
+        ]
+
+        iPixelFormat = INT(0)
+        iAdapterIndex = INT(self._adapter_index)
+        iDisplayIndex = INT(self._display_index)
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_Display_PixelFormat_Get(
+                context,
+                iAdapterIndex,
+                iDisplayIndex,
+                ctypes.byref(iPixelFormat)
+            )
+
+            return mapping[mapping.index(iPixelFormat.value)]
+
+    @pixel_format.setter
+    def pixel_format(self, value):
+        mapping = [
+            ADL_DISPLAY_PIXELFORMAT_RGB,
+            ADL_DISPLAY_PIXELFORMAT_YCRCB444,
+            ADL_DISPLAY_PIXELFORMAT_YCRCB422,
+            ADL_DISPLAY_PIXELFORMAT_RGB_LIMITED_RANGE,
+            ADL_DISPLAY_PIXELFORMAT_RGB_FULL_RANGE,
+            ADL_DISPLAY_PIXELFORMAT_YCRCB420
+        ]
+        for item in mapping:
+            if value in (item, str(item)):
                 break
         else:
             return
 
-        iPixelFormat = INT(value)
+        iPixelFormat = INT(item)
         iAdapterIndex = INT(self._adapter_index)
         iDisplayIndex = INT(self._display_index)
 
@@ -3279,43 +3534,43 @@ class Display(object):
 
     @property
     def adjustment_coherent_default(self):
-        lpAdjustmentCoherentCurrent = INT()
-        lpAdjustmentCoherentDefault = INT()
+        lpAdjustmentCoherentCurrent = INT(0)
+        lpAdjustmentCoherentDefault = INT(0)
 
         iAdapterIndex = INT(self._adapter_index)
         iDisplayIndex = INT(self._display_index)
 
         with ADL2_Main_Control_Create as context:
-            if _ADL2_Display_AdjustmentCoherent_Get(
+            _ADL2_Display_AdjustmentCoherent_Get(
                 context,
                 iAdapterIndex,
                 iDisplayIndex,
                 ctypes.byref(lpAdjustmentCoherentCurrent),
                 ctypes.byref(lpAdjustmentCoherentDefault)
-            ) == ADL_OK:
-                return lpAdjustmentCoherentDefault.value
+            )
+            return bool(lpAdjustmentCoherentDefault.value)
 
     @property
     def adjustment_coherent(self):
-        lpAdjustmentCoherentCurrent = INT()
-        lpAdjustmentCoherentDefault = INT()
+        lpAdjustmentCoherentCurrent = INT(0)
+        lpAdjustmentCoherentDefault = INT(0)
 
         iAdapterIndex = INT(self._adapter_index)
         iDisplayIndex = INT(self._display_index)
 
         with ADL2_Main_Control_Create as context:
-            if _ADL2_Display_AdjustmentCoherent_Get(
+            _ADL2_Display_AdjustmentCoherent_Get(
                 context,
                 iAdapterIndex,
                 iDisplayIndex,
                 ctypes.byref(lpAdjustmentCoherentCurrent),
                 ctypes.byref(lpAdjustmentCoherentDefault)
-            ) == ADL_OK:
-                return lpAdjustmentCoherentCurrent.value
+            )
+            return bool(lpAdjustmentCoherentCurrent.value)
 
     @adjustment_coherent.setter
     def adjustment_coherent(self, value):
-        iAdjustmentCoherent = INT(value)
+        iAdjustmentCoherent = INT(int(value))
         iAdapterIndex = INT(self._adapter_index)
         iDisplayIndex = INT(self._display_index)
 
@@ -3329,39 +3584,39 @@ class Display(object):
 
     @property
     def reduced_blanking_default(self):
-        lpReducedBlankingCurrent = INT()
-        lpReducedBlankingDefault = INT()
+        lpReducedBlankingCurrent = INT(0)
+        lpReducedBlankingDefault = INT(0)
 
         iAdapterIndex = INT(self._adapter_index)
         iDisplayIndex = INT(self._display_index)
 
         with ADL2_Main_Control_Create as context:
-            if _ADL2_Display_ReducedBlanking_Get(
+            _ADL2_Display_ReducedBlanking_Get(
                 context,
                 iAdapterIndex,
                 iDisplayIndex,
                 ctypes.byref(lpReducedBlankingCurrent),
                 ctypes.byref(lpReducedBlankingDefault)
-            ) == ADL_OK:
-                return lpReducedBlankingDefault.value
+            )
+            return lpReducedBlankingDefault.value
 
     @property
     def reduced_blanking(self):
-        lpReducedBlankingCurrent = INT()
-        lpReducedBlankingDefault = INT()
+        lpReducedBlankingCurrent = INT(0)
+        lpReducedBlankingDefault = INT(0)
 
         iAdapterIndex = INT(self._adapter_index)
         iDisplayIndex = INT(self._display_index)
 
         with ADL2_Main_Control_Create as context:
-            if _ADL2_Display_ReducedBlanking_Get(
+            _ADL2_Display_ReducedBlanking_Get(
                 context,
                 iAdapterIndex,
                 iDisplayIndex,
                 ctypes.byref(lpReducedBlankingCurrent),
                 ctypes.byref(lpReducedBlankingDefault)
-            ) == ADL_OK:
-                return lpReducedBlankingCurrent.value
+            )
+            return lpReducedBlankingCurrent.value
 
     @reduced_blanking.setter
     def reduced_blanking(self, value):
@@ -3379,6 +3634,29 @@ class Display(object):
 
     @property
     def __formats_override(self):
+        mapping = [
+            ADL_DISPLAY_FORMAT_FORCE_720P,
+            ADL_DISPLAY_FORMAT_FORCE_1080I,
+            ADL_DISPLAY_FORMAT_FORCE_1080P,
+            ADL_DISPLAY_FORMAT_FORCE_720P50,
+            ADL_DISPLAY_FORMAT_FORCE_1080I25,
+            ADL_DISPLAY_FORMAT_FORCE_576I25,
+            ADL_DISPLAY_FORMAT_FORCE_576P50,
+            ADL_DISPLAY_FORMAT_FORCE_1080P24,
+            ADL_DISPLAY_FORMAT_FORCE_1080P25,
+            ADL_DISPLAY_FORMAT_FORCE_1080P30,
+            ADL_DISPLAY_FORMAT_FORCE_1080P50
+        ]
+
+        mapping_ex = [
+            ADL_DISPLAY_FORMAT_CVDONGLEOVERIDE,
+            ADL_DISPLAY_FORMAT_CVMODEUNDERSCAN,
+            ADL_DISPLAY_FORMAT_FORCECONNECT_SUPPORTED,
+            ADL_DISPLAY_FORMAT_RESTRICT_FORMAT_SELECTION,
+            ADL_DISPLAY_FORMAT_SETASPECRATIO,
+            ADL_DISPLAY_FORMAT_FORCEMODES,
+            ADL_DISPLAY_FORMAT_LCDRTCCOEFF
+        ]
         lpSettingsSupported = INT()
         lpSettingsSupportedEx = INT()
         lpCurSettings = INT()
@@ -3387,44 +3665,100 @@ class Display(object):
         iDisplayIndex = INT(self._display_index)
 
         with ADL2_Main_Control_Create as context:
-            if _ADL2_Display_ReducedBlanking_Get(
+            _ADL2_Display_FormatsOverride_Get(
                 context,
                 iAdapterIndex,
                 iDisplayIndex,
                 ctypes.byref(lpSettingsSupported),
                 ctypes.byref(lpSettingsSupportedEx),
                 ctypes.byref(lpCurSettings)
-            ) == ADL_OK:
-                return (
-                    lpSettingsSupported,
-                    lpSettingsSupportedEx,
-                    lpCurSettings
-                )
+            )
+            res = []
+
+            for item in mapping:
+
+                if utils.get_bit(lpSettingsSupported.value, item):
+                    res += [item]
+
+            res_ex = []
+
+            for item in mapping_ex:
+                if utils.get_bit(lpSettingsSupportedEx.value, item):
+                    res_ex += [item]
+
+            res_cur = []
+
+            for item in mapping:
+                if utils.get_bit(lpCurSettings.value, item):
+                    res_cur += [item]
+
+            for item in mapping_ex:
+                if (
+                    utils.get_bit(lpCurSettings.value, item) and
+                    item not in res_cur
+                ):
+                    res_cur += [item]
+
+            return res, res_ex, res_cur
 
     @property
     def formats_override_supported(self):
-        formats_override = self.__formats_override
-
-        if formats_override is not None:
-            return formats_override[0].value
+        return self.__formats_override[0]
 
     @property
     def formats_override_supported_ex(self):
-        formats_override = self.__formats_override
-
-        if formats_override is not None:
-            return formats_override[1].value
+        return self.__formats_override[1]
 
     @property
     def formats_override(self):
-        formats_override = self.__formats_override
-
-        if formats_override is not None:
-            return formats_override[2].value
+        return self.__formats_override[2]
 
     @formats_override.setter
     def formats_override(self, value):
-        iOverrideSettings = INT(value)
+        mapping = [
+            ADL_DISPLAY_FORMAT_FORCE_720P,
+            ADL_DISPLAY_FORMAT_FORCE_1080I,
+            ADL_DISPLAY_FORMAT_FORCE_1080P,
+            ADL_DISPLAY_FORMAT_FORCE_720P50,
+            ADL_DISPLAY_FORMAT_FORCE_1080I25,
+            ADL_DISPLAY_FORMAT_FORCE_576I25,
+            ADL_DISPLAY_FORMAT_FORCE_576P50,
+            ADL_DISPLAY_FORMAT_FORCE_1080P24,
+            ADL_DISPLAY_FORMAT_FORCE_1080P25,
+            ADL_DISPLAY_FORMAT_FORCE_1080P30,
+            ADL_DISPLAY_FORMAT_FORCE_1080P50
+        ]
+
+        mapping_ex = [
+            ADL_DISPLAY_FORMAT_CVDONGLEOVERIDE,
+            ADL_DISPLAY_FORMAT_CVMODEUNDERSCAN,
+            ADL_DISPLAY_FORMAT_FORCECONNECT_SUPPORTED,
+            ADL_DISPLAY_FORMAT_RESTRICT_FORMAT_SELECTION,
+            ADL_DISPLAY_FORMAT_SETASPECRATIO,
+            ADL_DISPLAY_FORMAT_FORCEMODES,
+            ADL_DISPLAY_FORMAT_LCDRTCCOEFF
+        ]
+
+        if not isinstance(value, (list, tuple)):
+            return
+
+        val = 0
+        value = list(value)
+
+        for v in value[:]:
+            for item in mapping:
+                if v in (item, str(item)):
+                    break
+            else:
+                for item in mapping_ex:
+                    if v in (item, str(item)):
+                        break
+                else:
+                    return
+
+            val |= item
+
+        iOverrideSettings = INT(val)
         iAdapterIndex = INT(self._adapter_index)
         iDisplayIndex = INT(self._display_index)
 
@@ -3437,193 +3771,194 @@ class Display(object):
             )
 
     @property
-    def can_underscan(self):
+    def is_overscan_supported(self):
+        lpInfo = self.__caps
+
+        if lpInfo is not None:
+            return lpInfo | ADL_DISPLAY_ADJUST_OVERSCAN == lpInfo
+
+    @property
+    def overscan(self):
+        if self.__overscan is None:
+            lpCurrent = INT()
+            lpDefault = INT()
+            lpMin = INT()
+            lpMax = INT()
+            lpStep = INT()
+
+            iAdapterIndex = INT(self._adapter_index)
+            iDisplayIndex = INT(self._display_index)
+
+            def _set_value(value):
+                value -= value % lpStep.value
+
+                if value < lpMin.value or value > lpMax.value:
+                    return
+
+                iCurrent = INT(value)
+                with ADL2_Main_Control_Create as ctext:
+                    _ADL2_Display_Overscan_Set(
+                        ctext,
+                        iAdapterIndex,
+                        iDisplayIndex,
+                        iCurrent,
+                    )
+
+                    return value
+
+            with ADL2_Main_Control_Create as context:
+                _ADL2_Display_Overscan_Get(
+                    context,
+                    iAdapterIndex,
+                    iDisplayIndex,
+                    ctypes.byref(lpCurrent),
+                    ctypes.byref(lpDefault),
+                    ctypes.byref(lpMin),
+                    ctypes.byref(lpMax),
+                    ctypes.byref(lpStep)
+                )
+
+                class Value(object):
+                    default_value = lpDefault.value
+                    min_value = lpMin.value
+                    max_value = lpMax.value
+                    step_value = lpStep.value
+                    set_value = _set_value
+
+                overscan = IntValueWrapper(lpCurrent.value)
+                overscan._obj = Value
+
+                self.__overscan = overscan
+
+        return self.__overscan
+
+    @overscan.setter
+    def overscan(self, value):
+        overscan = self.overscan
+        overscan += value - overscan.real
+
+    @property
+    def is_underscan_supported(self):
         lpSupport = INT()
         iAdapterIndex = INT(self._adapter_index)
         iDisplayIndex = INT(self._display_index)
 
         with ADL2_Main_Control_Create as context:
-            if _ADL2_Display_UnderscanSupport_Get(
+            res = _ADL2_Display_UnderscanSupport_Get(
                 context,
                 iAdapterIndex,
                 iDisplayIndex,
                 ctypes.byref(lpSupport),
-            ) == ADL_OK:
-                return lpSupport.value == 1
-
-    @property
-    def overscan(self):
-        lpCurrent = INT()
-        lpDefault = INT()
-        lpMin = INT()
-        lpMax = INT()
-        lpStep = INT()
-
-        iAdapterIndex = INT(self._adapter_index)
-        iDisplayIndex = INT(self._display_index)
-
-        with ADL2_Main_Control_Create as context:
-            if _ADL2_Display_Overscan_Get(
-                context,
-                iAdapterIndex,
-                iDisplayIndex,
-                ctypes.byref(lpCurrent),
-                ctypes.byref(lpDefault),
-                ctypes.byref(lpMin),
-                ctypes.byref(lpMax),
-                ctypes.byref(lpStep)
-            ) == ADL_OK:
-                class Value(object):
-                    default = lpDefault.value
-                    min = lpMin.value
-                    max = lpMax.value
-                    step = lpStep.value
-
-                overscan = ValueWrapper(lpCurrent.value)
-                overscan._set_object(Value)
-
-                return overscan
-
-    @overscan.setter
-    def overscan(self, value):
-        overscan = self.overscan
-        if not overscan.max >= value >= overscan.min:
-            return
-
-        if value % overscan.step:
-            return
-
-        iCurrent = INT(value)
-        iAdapterIndex = INT(self._adapter_index)
-        iDisplayIndex = INT(self._display_index)
-
-        with ADL2_Main_Control_Create as context:
-            _ADL2_Display_Overscan_Set(
-                context,
-                iAdapterIndex,
-                iDisplayIndex,
-                iCurrent,
             )
+            return lpSupport.value == 1
 
     @property
     def underscan(self):
-        lpCurrent = INT()
-        lpDefault = INT()
+        if self.__underscan is None:
+            lpCurrent = INT()
+            lpDefault = INT()
+            lpMin = INT()
+            lpMax = INT()
+            lpStep = INT()
 
-        iAdapterIndex = INT(self._adapter_index)
-        iDisplayIndex = INT(self._display_index)
+            iAdapterIndex = INT(self._adapter_index)
+            iDisplayIndex = INT(self._display_index)
 
-        with ADL2_Main_Control_Create as context:
-            if _ADL2_Display_UnderscanState_Get(
-                context,
-                iAdapterIndex,
-                iDisplayIndex,
-                ctypes.byref(lpCurrent),
-                ctypes.byref(lpDefault)
-            ) == ADL_OK:
-                if not lpCurrent.value:
+            def _set_value(value):
+                value -= value % lpStep.value
+
+                if value > lpMax.value:
                     return
 
-        lpCurrent = INT()
-        lpDefault = INT()
-        lpMin = INT()
-        lpMax = INT()
-        lpStep = INT()
+                if value < lpMin.value:
+                    value = 0
 
-        iAdapterIndex = INT(self._adapter_index)
-        iDisplayIndex = INT(self._display_index)
+                with ADL2_Main_Control_Create as ctext:
+                    if value:
+                        iUnderscanEnabled = INT(1)
+                        iCurrent = INT(value)
 
-        with ADL2_Main_Control_Create as context:
-            if _ADL2_Display_Underscan_Get(
-                context,
-                iAdapterIndex,
-                iDisplayIndex,
-                ctypes.byref(lpCurrent),
-                ctypes.byref(lpDefault),
-                ctypes.byref(lpMin),
-                ctypes.byref(lpMax),
-                ctypes.byref(lpStep)
-            ) == ADL_OK:
+                        _ADL2_Display_Underscan_Set(
+                            ctext,
+                            iAdapterIndex,
+                            iDisplayIndex,
+                            iCurrent,
+                        )
+                    else:
+                        iUnderscanEnabled = INT(0)
+
+                    _ADL2_Display_UnderscanState_Set(
+                        ctext,
+                        iAdapterIndex,
+                        iUnderscanEnabled
+                    )
+
+                    return value
+
+            with ADL2_Main_Control_Create as context:
+                _ADL2_Display_Underscan_Get(
+                    context,
+                    iAdapterIndex,
+                    iDisplayIndex,
+                    ctypes.byref(lpCurrent),
+                    ctypes.byref(lpDefault),
+                    ctypes.byref(lpMin),
+                    ctypes.byref(lpMax),
+                    ctypes.byref(lpStep)
+                )
+
                 class Value(object):
-                    default = lpDefault.value
-                    min = lpMin.value
-                    max = lpMax.value
-                    step = lpStep.value
+                    default_value = lpDefault.value
+                    min_value = lpMin.value
+                    max_value = lpMax.value
+                    step_value = lpStep.value
+                    set_value = _set_value
 
-                underscan = ValueWrapper(lpCurrent.value)
-                underscan._set_object(Value)
+                underscan = IntValueWrapper(lpCurrent.value)
+                underscan._obj = Value
 
-                return underscan
+                self.__underscan = underscan
+
+        return self.__underscan
 
     @underscan.setter
     def underscan(self, value):
         underscan = self.underscan
+        if value == 0:
+            value = underscan.real
 
-        if underscan is None and value is None:
-            return
-
-        if underscan is None and value is not None:
-            iCurrent = INT(1)
-            iAdapterIndex = INT(self._adapter_index)
-            iDisplayIndex = INT(self._display_index)
-
-            with ADL2_Main_Control_Create as context:
-                _ADL2_Display_Underscan_Set(
-                    context,
-                    iAdapterIndex,
-                    iDisplayIndex,
-                    iCurrent,
-                )
-
-            underscan = self.underscan
-
-        elif underscan is not None and value is None:
-            iCurrent = INT(0)
-            iAdapterIndex = INT(self._adapter_index)
-            iDisplayIndex = INT(self._display_index)
-
-            with ADL2_Main_Control_Create as context:
-                _ADL2_Display_Underscan_Set(
-                    context,
-                    iAdapterIndex,
-                    iDisplayIndex,
-                    iCurrent,
-                )
-
-            return
-
-        if not underscan.max >= value >= underscan.min:
-            return
-
-        if value % underscan.step:
-            return
-
-        iCurrent = INT(value)
-        iAdapterIndex = INT(self._adapter_index)
-        iDisplayIndex = INT(self._display_index)
-
-        with ADL2_Main_Control_Create as context:
-            _ADL2_Display_Underscan_Set(
-                context,
-                iAdapterIndex,
-                iDisplayIndex,
-                iCurrent,
-            )
+        underscan += value - underscan.real
 
     @property
-    def suppoorted_color_depth(self):
+    def supported_color_depths(self):
+        mapping = [
+            ADL_COLORDEPTH_666,
+            ADL_COLORDEPTH_888,
+            ADL_COLORDEPTH_101010,
+            ADL_COLORDEPTH_121212,
+            ADL_COLORDEPTH_141414,
+            ADL_COLORDEPTH_161616
+        ]
+
         iColorDepth = INT()
         iAdapterIndex = INT(self._adapter_index)
         iDisplayIndex = INT(self._display_index)
 
         with ADL2_Main_Control_Create as context:
-            if _ADL2_Display_SupportedColorDepth_Get(
+            _ADL2_Display_SupportedColorDepth_Get(
                 context,
                 iAdapterIndex,
                 iDisplayIndex,
-                ctypes.byref(iColorDepth)
-            ) == ADL_OK:
-                return iColorDepth.value
+                iColorDepth
+            )
+
+            res = []
+
+            for item in mapping:
+                if utils.get_bit(iColorDepth.value, item):
+                    res += [item]
+
+            return res
 
     @property
     def color_depth(self):
@@ -3637,50 +3972,48 @@ class Display(object):
         ADL_COLORDEPTH_161616: Indicates if color depth is 16bit
         :return:
         """
-        iColorDepth = INT()
-        iAdapterIndex = INT(self._adapter_index)
-        iDisplayIndex = INT(self._display_index)
-
-        with ADL2_Main_Control_Create as context:
-            if _ADL2_Display_ColorDepth_Get(
-                context,
-                iAdapterIndex,
-                iDisplayIndex,
-                ctypes.byref(iColorDepth)
-            ) == ADL_OK:
-                mapping = [
-                    ADL_COLORDEPTH_UNKNOWN,
-                    ADL_COLORDEPTH_666,
-                    ADL_COLORDEPTH_888,
-                    ADL_COLORDEPTH_101010,
-                    ADL_COLORDEPTH_121212,
-                    ADL_COLORDEPTH_141414,
-                    ADL_COLORDEPTH_161616
-                ]
-
-                return mapping[mapping.index(iColorDepth.value)]
-
-        return ADL_COLORDEPTH_UNKNOWN
-
-    @color_depth.setter
-    def color_depth(self, value):
-
-        for item in (
+        mapping = [
+            ADL_COLORDEPTH_UNKNOWN,
             ADL_COLORDEPTH_666,
             ADL_COLORDEPTH_888,
             ADL_COLORDEPTH_101010,
             ADL_COLORDEPTH_121212,
             ADL_COLORDEPTH_141414,
             ADL_COLORDEPTH_161616
-        ):
-            if value == str(item):
-                value = item
-            if value == item:
+        ]
+
+        iColorDepth = INT()
+        iAdapterIndex = INT(self._adapter_index)
+        iDisplayIndex = INT(self._display_index)
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_Display_ColorDepth_Get(
+                context,
+                iAdapterIndex,
+                iDisplayIndex,
+                ctypes.byref(iColorDepth)
+            )
+
+            return mapping[mapping.index(iColorDepth.value)]
+
+    @color_depth.setter
+    def color_depth(self, value):
+        mapping = [
+            ADL_COLORDEPTH_666,
+            ADL_COLORDEPTH_888,
+            ADL_COLORDEPTH_101010,
+            ADL_COLORDEPTH_121212,
+            ADL_COLORDEPTH_141414,
+            ADL_COLORDEPTH_161616
+        ]
+
+        for item in mapping:
+            if value in (item, str(item)):
                 break
         else:
             return
 
-        iColorDepth = INT(value)
+        iColorDepth = INT(item)
         iAdapterIndex = INT(self._adapter_index)
         iDisplayIndex = INT(self._display_index)
 
@@ -3694,47 +4027,41 @@ class Display(object):
 
     @property
     def position(self):
-        return Position(self._adapter_index, self._display_index)
+        if self.__position is None:
+            self.__position = Position(self._adapter_index, self._display_index)
+
+        return self.__position
 
     @position.setter
     def position(self, value):
-        if isinstance(value, (list, tuple)):
-            iX = INT(value[0])
-            iY = INT(value[1])
+        if not isinstance(value, (list, tuple)):
+            return
 
-            iAdapterIndex = INT(self._adapter_index)
-            iDisplayIndex = INT(self._display_index)
+        x = value[0]
+        y = value[1]
 
-            with ADL2_Main_Control_Create as context:
-                _ADL2_Display_Position_Set(
-                    context,
-                    iAdapterIndex,
-                    iDisplayIndex,
-                    iX,
-                    iY
-                )
+        position = self.position
+        position.x = x
+        position.y = y
 
     @property
     def size(self):
-        return Size(self._adapter_index, self._display_index)
+        if self.__size is None:
+            self.__size = Size(self._adapter_index, self._display_index)
+
+        return self.__size
 
     @size.setter
     def size(self, value):
-        if isinstance(value, (list, tuple)):
-            iWidth = INT(value[0])
-            iHeight = INT(value[1])
+        if not isinstance(value, (list, tuple)):
+            return
 
-            iAdapterIndex = INT(self._adapter_index)
-            iDisplayIndex = INT(self._display_index)
+        width = value[0]
+        height = value[1]
 
-            with ADL2_Main_Control_Create as context:
-                _ADL2_Display_Size_Set(
-                    context,
-                    iAdapterIndex,
-                    iDisplayIndex,
-                    iWidth,
-                    iHeight
-                )
+        size = self.size
+        size.width = width
+        size.height = height
 
     @property
     def __caps(self):
@@ -3752,41 +4079,6 @@ class Display(object):
                 return lpInfo.value
 
     @property
-    def can_overscan(self):
-        lpInfo = self.__caps
-
-        if lpInfo is not None:
-            return lpInfo & ADL_DISPLAY_ADJUST_OVERSCAN != 0
-
-    @property
-    def can_adjust_vertical_position(self):
-        lpInfo = self.__caps
-
-        if lpInfo is not None:
-            return lpInfo & ADL_DISPLAY_ADJUST_VERT_POS != 0
-
-    @property
-    def can_adjust_horizontal_position(self):
-        lpInfo = self.__caps
-
-        if lpInfo is not None:
-            return lpInfo & ADL_DISPLAY_ADJUST_HOR_POS != 0
-
-    @property
-    def can_adjust_vertical_size(self):
-        lpInfo = self.__caps
-
-        if lpInfo is not None:
-            return lpInfo & ADL_DISPLAY_ADJUST_VERT_SIZE != 0
-
-    @property
-    def can_adjust_horizontal_size(self):
-        lpInfo = self.__caps
-
-        if lpInfo is not None:
-            return lpInfo & ADL_DISPLAY_ADJUST_HOR_SIZE != 0
-
-    @property
     def can_set_custom_modes(self):
         lpInfo = self.__caps
 
@@ -3798,6 +4090,41 @@ class Position(object):
     def __init__(self, adapter_index, display_index):
         self._adapter_index = adapter_index
         self._display_index = display_index
+        self.__x = None
+        self.__y = None
+
+    @property
+    def __caps(self):
+        lpInfo = INT()
+        iAdapterIndex = INT(self._adapter_index)
+        iDisplayIndex = INT(self._display_index)
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_Display_AdjustCaps_Get(
+                    context,
+                    iAdapterIndex,
+                    iDisplayIndex,
+                    ctypes.byref(lpInfo),
+            )
+            return lpInfo.value
+
+    @property
+    def is_vertical_position_supported(self):
+        lpInfo = self.__caps
+
+        return (
+            lpInfo | ADL_DISPLAY_ADJUST_VERT_POS == lpInfo or
+            lpInfo | ADL_DISPLAY_ADJUST_SIZEPOS == lpInfo
+        )
+
+    @property
+    def is_horizontal_position_supported(self):
+        lpInfo = self.__caps
+
+        return (
+            lpInfo | ADL_DISPLAY_ADJUST_HOR_POS == lpInfo or
+            lpInfo | ADL_DISPLAY_ADJUST_SIZEPOS == lpInfo
+        )
 
     @property
     def __position(self):
@@ -3815,7 +4142,7 @@ class Position(object):
         iDisplayIndex = INT(self._display_index)
 
         with ADL2_Main_Control_Create as context:
-            if _ADL2_Display_Position_Get(
+            res = _ADL2_Display_Position_Get(
                 context,
                 iAdapterIndex,
                 iDisplayIndex,
@@ -3829,123 +4156,123 @@ class Position(object):
                 ctypes.byref(lpMaxY),
                 ctypes.byref(lpStepX),
                 ctypes.byref(lpStepY),
-            ) == ADL_OK:
-                return (
-                    lpX,
-                    lpY,
-                    lpXDefault,
-                    lpYDefault,
-                    lpMinX,
-                    lpMinY,
-                    lpMaxX,
-                    lpMaxY,
-                    lpStepX,
-                    lpStepY,
-                )
+            )
+            return (
+                lpX.value,
+                lpY.value,
+                lpXDefault.value,
+                lpYDefault.value,
+                lpMinX.value,
+                lpMinY.value,
+                lpMaxX.value,
+                lpMaxY.value,
+                lpStepX.value,
+                lpStepY.value,
+            )
 
     @property
     def x(self):
-        position = self.__position
+        if self.__x is None:
+            position = self.__position
 
-        if position is not None:
-            return position[0].value
+            lpX = position[0]
+            lpXDefault = position[2]
+            lpMinX = position[4]
+            lpMaxX = position[6]
+            lpStepX = position[8]
+
+            def _set_value(value):
+                value -= value % lpStepX
+
+                if value < lpMinX or value > lpMaxX:
+                    return
+
+                iX = INT(value)
+                iY = INT(self.y)
+
+                iAdapterIndex = INT(self._adapter_index)
+                iDisplayIndex = INT(self._display_index)
+
+                with ADL2_Main_Control_Create as context:
+                    _ADL2_Display_Position_Set(
+                        context,
+                        iAdapterIndex,
+                        iDisplayIndex,
+                        iX,
+                        iY
+                    )
+
+                    return value
+
+            class Value(object):
+                default_value = lpXDefault
+                min_value = lpMinX
+                max_value = lpMaxX
+                step_value = lpStepX
+                set_value = _set_value
+
+            x = IntValueWrapper(lpX)
+            x._obj = Value
+            self.__x = x
+
+        return self.__x
 
     @x.setter
     def x(self, value):
-        iX = INT(value)
-        iY = INT(self.y)
-
-        iAdapterIndex = INT(self._adapter_index)
-        iDisplayIndex = INT(self._display_index)
-
-        with ADL2_Main_Control_Create as context:
-            _ADL2_Display_Position_Set(
-                context,
-                iAdapterIndex,
-                iDisplayIndex,
-                iX,
-                iY
-            )
+        x = self.x
+        x += value - x.real
 
     @property
     def y(self):
-        position = self.__position
+        if self.__y is None:
+            position = self.__position
 
-        if position is not None:
-            return position[1].value
+            lpY = position[1]
+            lpYDefault = position[3]
+            lpMinY = position[5]
+            lpMaxY = position[7]
+            lpStepY = position[9]
+
+            def _set_value(value):
+                value -= value % lpStepY
+
+                if value < lpMinY or value > lpMaxY:
+                    return
+
+                iX = INT(self.x)
+                iY = INT(value)
+
+                iAdapterIndex = INT(self._adapter_index)
+                iDisplayIndex = INT(self._display_index)
+
+                with ADL2_Main_Control_Create as context:
+                    _ADL2_Display_Position_Set(
+                        context,
+                        iAdapterIndex,
+                        iDisplayIndex,
+                        iX,
+                        iY
+                    )
+
+                    return value
+
+            class Value(object):
+                default_value = lpYDefault
+                min_value = lpMinY
+                max_value = lpMaxY
+                step_value = lpStepY
+                set_value = _set_value
+
+            y = IntValueWrapper(lpY)
+            y._obj = Value
+            self.__y = y
+
+        return self.__y
 
     @y.setter
     def y(self, value):
-        iX = INT(self.x)
-        iY = INT(value)
-
-        iAdapterIndex = INT(self._adapter_index)
-        iDisplayIndex = INT(self._display_index)
-
-        with ADL2_Main_Control_Create as context:
-            _ADL2_Display_Position_Set(
-                context,
-                iAdapterIndex,
-                iDisplayIndex,
-                iX,
-                iY
-            )
-
-    @property
-    def default_x(self):
-        position = self.__position
-
-        if position is not None:
-            return position[2].value
-
-    @property
-    def default_y(self):
-        position = self.__position
-
-        if position is not None:
-            return position[3].value
-
-    @property
-    def min_x(self):
-        position = self.__position
-
-        if position is not None:
-            return position[4].value
-
-    @property
-    def min_y(self):
-        position = self.__position
-
-        if position is not None:
-            return position[5].value
-
-    @property
-    def max_x(self):
-        position = self.__position
-
-        if position is not None:
-            return position[6].value
-
-    @property
-    def max_y(self):
-        position = self.__position
-
-        if position is not None:
-            return position[7].value
-
-    @property
-    def step_x(self):
-        position = self.__position
-
-        if position is not None:
-            return position[8].value
-
-    @property
-    def step_y(self):
-        position = self.__position
-
-        if position is not None:
-            return position[9].value
+        y = self.y
+        y += y - y.real
 
     def __iter__(self):
         yield self.x
@@ -3956,6 +4283,41 @@ class Size(object):
     def __init__(self, adapter_index, display_index):
         self._adapter_index = adapter_index
         self._display_index = display_index
+        self.__width = None
+        self.__height = None
+
+    @property
+    def __caps(self):
+        lpInfo = INT()
+        iAdapterIndex = INT(self._adapter_index)
+        iDisplayIndex = INT(self._display_index)
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_Display_AdjustCaps_Get(
+                    context,
+                    iAdapterIndex,
+                    iDisplayIndex,
+                    ctypes.byref(lpInfo),
+            )
+            return lpInfo.value
+
+    @property
+    def is_vertical_size_supported(self):
+        lpInfo = self.__caps
+
+        return (
+            lpInfo | ADL_DISPLAY_ADJUST_VERT_SIZE == lpInfo or
+            lpInfo | ADL_DISPLAY_ADJUST_SIZEPOS == lpInfo
+        )
+
+    @property
+    def is_horizontal_size_supported(self):
+        lpInfo = self.__caps
+
+        return (
+            lpInfo | ADL_DISPLAY_ADJUST_HOR_SIZE == lpInfo or
+            lpInfo | ADL_DISPLAY_ADJUST_SIZEPOS == lpInfo
+        )
 
     @property
     def __size(self):
@@ -3973,7 +4335,7 @@ class Size(object):
         iDisplayIndex = INT(self._display_index)
 
         with ADL2_Main_Control_Create as context:
-            if _ADL2_Display_Size_Get(
+            res = _ADL2_Display_Size_Get(
                 context,
                 iAdapterIndex,
                 iDisplayIndex,
@@ -3987,130 +4349,124 @@ class Size(object):
                 ctypes.byref(lpMaxHeight),
                 ctypes.byref(lpStepWidth),
                 ctypes.byref(lpStepHeight),
-            ) == ADL_OK:
-                return (
-                    lpWidth,
-                    lpHeight,
-                    lpDefaultWidth,
-                    lpDefaultHeight,
-                    lpMinWidth,
-                    lpMinHeight,
-                    lpMaxWidth,
-                    lpMaxHeight,
-                    lpStepWidth,
-                    lpStepHeight,
-                )
+            )
+            return (
+                lpWidth.value,
+                lpHeight.value,
+                lpDefaultWidth.value,
+                lpDefaultHeight.value,
+                lpMinWidth.value,
+                lpMinHeight.value,
+                lpMaxWidth.value,
+                lpMaxHeight.value,
+                lpStepWidth.value,
+                lpStepHeight.value,
+            )
 
     @property
     def width(self):
-        size = self.__size
+        if self.__width is None:
+            size = self.__size
 
-        if size is not None:
-            return size[0].value
+            lpWidth = size[0]
+            lpDefaultWidth = size[2]
+            lpMinWidth = size[4]
+            lpMaxWidth = size[6]
+            lpStepWidth = size[8]
+
+            def _set_value(value):
+                value -= value % lpStepWidth
+
+                if value < lpMinWidth or value > lpMaxWidth:
+                    return
+
+                iWidth = INT(value)
+                iHeight = INT(self.height)
+
+                iAdapterIndex = INT(self._adapter_index)
+                iDisplayIndex = INT(self._display_index)
+
+                with ADL2_Main_Control_Create as context:
+                    _ADL2_Display_Size_Set(
+                        context,
+                        iAdapterIndex,
+                        iDisplayIndex,
+                        iWidth,
+                        iHeight
+                    )
+
+                    return value
+
+            class Value(object):
+                default_value = lpDefaultWidth
+                min_value = lpMinWidth
+                max_value = lpMaxWidth
+                step_value = lpStepWidth
+                set_value = _set_value
+
+            width = IntValueWrapper(lpWidth)
+            width._obj = Value
+            self.__width = width
+
+        return self.__width
 
     @width.setter
     def width(self, value):
-        iWidth = INT(value)
-        iHeight = INT(self.height)
-
-        iAdapterIndex = INT(self._adapter_index)
-        iDisplayIndex = INT(self._display_index)
-
-        with ADL2_Main_Control_Create as context:
-            _ADL2_Display_Size_Set(
-                context,
-                iAdapterIndex,
-                iDisplayIndex,
-                iWidth,
-                iHeight
-            )
+        width = self.width
+        width += value - width.real
 
     @property
     def height(self):
-        size = self.__size
+        if self.__height is None:
+            size = self.__size
 
-        if size is not None:
-            return size[1].value
+            lpHeight = size[1]
+            lpDefaultHeight = size[3]
+            lpMinHeight = size[5]
+            lpMaxHeight = size[7]
+            lpStepHeight = size[9]
+
+            def _set_value(value):
+                value -= value % lpStepHeight
+
+                if value < lpMinHeight or value > lpMaxHeight:
+                    return
+
+                iWidth = INT(self.width)
+                iHeight = INT(value)
+
+                iAdapterIndex = INT(self._adapter_index)
+                iDisplayIndex = INT(self._display_index)
+
+                with ADL2_Main_Control_Create as context:
+                    _ADL2_Display_Size_Set(
+                        context,
+                        iAdapterIndex,
+                        iDisplayIndex,
+                        iWidth,
+                        iHeight
+                    )
+
+                    return value
+
+            class Value(object):
+                default_value = lpDefaultHeight
+                min_value = lpMinHeight
+                max_value = lpMaxHeight
+                step_value = lpStepHeight
+                set_value = _set_value
+
+            height = IntValueWrapper(lpHeight)
+            height._obj = Value
+            self.__height = height
+
+        return self.__height
 
     @height.setter
     def height(self, value):
-        iWidth = INT(self.width)
-        iHeight = INT(value)
-
-        iAdapterIndex = INT(self._adapter_index)
-        iDisplayIndex = INT(self._display_index)
-
-        with ADL2_Main_Control_Create as context:
-            _ADL2_Display_Size_Set(
-                context,
-                iAdapterIndex,
-                iDisplayIndex,
-                iWidth,
-                iHeight
-            )
-
-    @property
-    def default_width(self):
-        size = self.__size
-
-        if size is not None:
-            return size[2].value
-
-    @property
-    def default_height(self):
-        size = self.__size
-
-        if size is not None:
-            return size[3].value
-
-    @property
-    def min_width(self):
-        size = self.__size
-
-        if size is not None:
-            return size[4].value
-
-    @property
-    def min_height(self):
-        size = self.__size
-
-        if size is not None:
-            return size[5].value
-
-    @property
-    def max_width(self):
-        size = self.__size
-
-        if size is not None:
-            return size[6].value
-
-    @property
-    def max_height(self):
-        size = self.__size
-
-        if size is not None:
-            return size[7].value
-
-    @property
-    def step_width(self):
-        size = self.__size
-
-        if size is not None:
-            return size[8].value
-
-    @property
-    def step_height(self):
-        size = self.__size
-
-        if size is not None:
-            return size[9].value
+        height = self.height
+        height += value - height.real
 
     def __iter__(self):
         yield self.width
         yield self.height
-
-    def __list__(self):
-        return [self.width, self.height]
-
-    def __tuple__(self):
-        return self.width, self.height

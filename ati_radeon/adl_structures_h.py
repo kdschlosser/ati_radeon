@@ -599,8 +599,13 @@ class ADLConnectorInfo(ctypes.Structure):
     pass
 
 
+LPADLConnectorInfo = POINTER(ADLConnectorInfo)
+
 class ADLBracketSlotInfo(ctypes.Structure):
     pass
+
+
+LPADLBracketSlotInfo = POINTER(ADLBracketSlotInfo)
 
 
 class ADLMSTRad(ctypes.Structure):
@@ -5810,5 +5815,7 @@ __all__ = (
     'ADL_CHILL_SETTINGS',
     'ADL_ERROR_REASON',
     'LPADLCrossfireComb',
-    'LPADLODPerformanceLevels'
+    'LPADLODPerformanceLevels',
+    'LPADLBracketSlotInfo',
+    'LPADLConnectorInfo'
 )
