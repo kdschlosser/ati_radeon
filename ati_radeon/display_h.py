@@ -3105,6 +3105,7 @@ __all__ = (
 from .adl_sdk_h import ADL2_Main_Control_Create  # NOQA
 
 
+# noinspection PyMethodFirstArgAssignment
 class IntValueWrapper(int):
 
     def __init__(self, value=None):
@@ -3252,7 +3253,6 @@ class Display(object):
         self.__deflicker = None
         self.__filter_svideo = None
 
-
     @property
     def name(self):
         return self._display_name
@@ -3292,8 +3292,6 @@ class Display(object):
         lpValids = self._color_caps
         return utils.get_bit(lpValids, ADL_DISPLAY_COLOR_BRIGHTNESS)
 
-
-
     @property
     def brightness(self):
         if self.__brightness is None:
@@ -3312,7 +3310,7 @@ class Display(object):
                 if value < lpMin.value or value > lpMax.value:
                     return
 
-                lpCurrent = INT(value)
+                lpCurr = INT(value)
 
                 with ADL2_Main_Control_Create as ctext:
                     _ADL2_Display_Color_Set(
@@ -3320,7 +3318,7 @@ class Display(object):
                         iAdapterIndex,
                         iDisplayIndex,
                         iColorType,
-                        lpCurrent
+                        lpCurr
                     )
 
                     return value
@@ -3380,7 +3378,7 @@ class Display(object):
                 if value < lpMin.value or value > lpMax.value:
                     return
 
-                lpCurrent = INT(value)
+                lpCurr = INT(value)
 
                 with ADL2_Main_Control_Create as ctext:
                     _ADL2_Display_Color_Set(
@@ -3388,7 +3386,7 @@ class Display(object):
                         iAdapterIndex,
                         iDisplayIndex,
                         iColorType,
-                        lpCurrent
+                        lpCurr
                     )
 
                     return value
@@ -3448,7 +3446,7 @@ class Display(object):
                 if value < lpMin.value or value > lpMax.value:
                     return
 
-                lpCurrent = INT(value)
+                lpCurr = INT(value)
 
                 with ADL2_Main_Control_Create as ctext:
                     _ADL2_Display_Color_Set(
@@ -3456,7 +3454,7 @@ class Display(object):
                         iAdapterIndex,
                         iDisplayIndex,
                         iColorType,
-                        lpCurrent
+                        lpCurr
                     )
 
                     return value
@@ -3516,7 +3514,7 @@ class Display(object):
                 if value < lpMin.value or value > lpMax.value:
                     return
 
-                lpCurrent = INT(value)
+                lpCurr = INT(value)
 
                 with ADL2_Main_Control_Create as ctext:
                     _ADL2_Display_Color_Set(
@@ -3524,7 +3522,7 @@ class Display(object):
                         iAdapterIndex,
                         iDisplayIndex,
                         iColorType,
-                        lpCurrent
+                        lpCurr
                     )
 
                     return value
@@ -3584,7 +3582,7 @@ class Display(object):
                 if value < lpMin.value or value > lpMax.value:
                     return
 
-                lpCurrent = INT(value)
+                lpCurr = INT(value)
 
                 with ADL2_Main_Control_Create as ctext:
                     _ADL2_Display_Color_Set(
@@ -3592,7 +3590,7 @@ class Display(object):
                         iAdapterIndex,
                         iDisplayIndex,
                         iColorType,
-                        lpCurrent
+                        lpCurr
                     )
 
                     return value
@@ -4415,7 +4413,7 @@ class Display(object):
             )
 
             for item in mapping:
-                if pCapContent.value | item ==  pCapContent.value:
+                if pCapContent.value | item == pCapContent.value:
                     res += [item]
 
         return res
@@ -4673,11 +4671,11 @@ class Display(object):
         iDisplayIndex = INT(self._display_index)
 
         with ADL2_Main_Control_Create as context:
-            res = _ADL2_Display_UnderscanSupport_Get(
+            _ADL2_Display_UnderscanSupport_Get(
                 context,
                 iAdapterIndex,
                 iDisplayIndex,
-                ctypes.byref(lpSupport),
+                ctypes.byref(lpSupport)
             )
             return lpSupport.value == 1
 
@@ -4971,7 +4969,7 @@ class Position(object):
         iDisplayIndex = INT(self._display_index)
 
         with ADL2_Main_Control_Create as context:
-            res = _ADL2_Display_Position_Get(
+            _ADL2_Display_Position_Get(
                 context,
                 iAdapterIndex,
                 iDisplayIndex,
@@ -5101,7 +5099,7 @@ class Position(object):
     @y.setter
     def y(self, value):
         y = self.y
-        y += y - y.real
+        y += value - y.real
 
     def __iter__(self):
         yield self.x
@@ -5164,7 +5162,7 @@ class Size(object):
         iDisplayIndex = INT(self._display_index)
 
         with ADL2_Main_Control_Create as context:
-            res = _ADL2_Display_Size_Get(
+            _ADL2_Display_Size_Get(
                 context,
                 iAdapterIndex,
                 iDisplayIndex,
@@ -5306,7 +5304,6 @@ class FreeSync(object):
     def __init__(self, adapter_index, display_index):
         self._adapter_index = adapter_index
         self._display_index = display_index
-
 
     @property
     def _freesync(self):

@@ -1233,7 +1233,7 @@ __all__ = (
 
 
 from .displaysmanager_h import *  # NOQA
-from .adl_sdk_h import ADL2_Main_Control_Create, AdapterBase  # NOQA
+from .adl_sdk_h import ADL2_Main_Control_Create  # NOQA
 from .display_h import Display, _ADL2_Display_NumberOfDisplays_Get  # NOQA
 from .crossdisplay_h import CrossDisplay  # NOQA
 
@@ -1269,15 +1269,15 @@ class PortConnector(object):
 
     def __init__(
             self,
-            type,
+            type_,
             parent_type,
             adapter_index,
             device_port,
     ):
-        self.name = str(type)
+        self.name = str(type_)
         self._adapter_index = adapter_index
         self._device_port = device_port
-        self._type = type
+        self._type = type_
         self._parent_type = parent_type
 
     @property
@@ -1964,11 +1964,11 @@ class MSTPort(object):
 
 
 class Connector(object):
-    def __init__(self, slot, index, id, type, offset, length):
+    def __init__(self, slot, index, id_, type_, offset, length):
         self.slot = slot
         self.index = index
-        self.id = id
-        self._type = type
+        self.id = id_
+        self._type = type_
         self.offset = offset
         self.length = length
 
@@ -2165,6 +2165,7 @@ class ErrorRecord(object):
         return self.__record.tiestamp.value
 
 
+# noinspection PyUnresolvedReferences
 class Adapter(object):
 
     def __init__(self, adapter_id, adapter_index):
@@ -2777,12 +2778,6 @@ class DisplayConnection(object):
 
         return res
 
-
-
-    # _ADL2_Adapter_PMLog_Support_Get
-    # _ADL2_Adapter_PMLog_Start
-    # _ADL2_Adapter_PMLog_Stop
-
     @property
     def adapter_id(self):
         lpAdapterID = INT()
@@ -2808,8 +2803,6 @@ class DisplayConnection(object):
                 ctypes.byref(lpAdapterID),
             ) == ADL_OK:
                 return lpAdapterID.value
-
-
 
     @property
     def slots(self):
@@ -2861,7 +2854,6 @@ class DisplayConnection(object):
     @property
     def crossfire(self):
         return CrossFire(self._adapter_index)
-
 
     @property
     def is_active(self):
@@ -3064,7 +3056,7 @@ class CrossFire(object):
         lpCrossfireInfo = ADLCrossfireInfo()
 
         with ADL2_Main_Control_Create as context:
-            res = _ADL2_Adapter_Crossfire_Get(
+            _ADL2_Adapter_Crossfire_Get(
                 context,
                 iAdapterIndex,
                 ctypes.byref(lpCrossfireComb),
@@ -3152,6 +3144,7 @@ class CrossFire(object):
                         for j in range(lpCrossfireComb.iNumLinkAdapter.value):
                             adapter_indexes += [lpCrossfireComb.iAdaptLink[j]]
 
+                        # noinspection PyProtectedMember
                         if self._adapter_index in adapter_indexes and value._adapter_index in adapter_indexes:
                             break
                     else:
