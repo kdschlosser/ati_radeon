@@ -24,11 +24,26 @@
 
 # ***********************************************************************************
 
-from .adl_sdk_h import Adapters as _Adapters
+import setuptools  # NOQA
+import pyamd_adl
 
-
-adapters = _Adapters()
-
-
-
-
+setuptools.setup(
+    name=pyamd_adl.__title__,
+    version=pyamd_adl.__version__,
+    description=pyamd_adl.__description__,
+    url=pyamd_adl.__url__,
+    author=pyamd_adl.__author__,
+    author_email=pyamd_adl.__author_email__,
+    license=pyamd_adl.__license__,
+    long_description=pyamd_adl.__description_long__,
+    packages=setuptools.find_packages('pyamd_adl'),
+    install_requires=['six'],
+    classifiers=[
+        "Development Status :: 4 - Beta",
+        "License :: OSI Approved :: MIT License",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 2",
+        "Topic :: Home Automation",
+    ],
+    zip_safe=False
+)

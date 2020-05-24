@@ -1,6 +1,6 @@
-import ati_radeon
+import pyamd_adl
 
-for adapter in ati_radeon.adapters:
+for adapter in pyamd_adl.adapters:
     print('id', adapter.id)
     print('name', adapter.name)
     print('index', adapter.index)
