@@ -24,36 +24,41 @@
 
 # ***********************************************************************************
 
-def get_string(data):
-    try:
-        unicode = unicode
-    except NameError:
-        unicode = bytes
+import sys
 
+PY2 = sys.version_info[0] < 3
+
+
+def get_string(data):
+    i = 0
     res = ''
 
-    if isinstance(data, (str, unicode)):
-        data = list(data)
+    try:
+        data = bytearray(data)
+    except:
+        pass
 
-        while data:
+    while data:
+        try:
             char = data.pop(0)
-            res += chr(char)
-
-    else:
-        i = 0
-        while True:
+        except:
             char = data[i]
+
+        if PY2:
             if isinstance(char, unicode):
-                char = str(char, encoding='utf-8')
+                char = str(char).encode('utf-8')
+        else:
+            if isinstance(char, bytes):
+                char = str(char)
 
-            if char in ('\x00', 0x00):
-                break
+        if char in ('\x00', 0x00):
+            break
 
-            if isinstance(char, int):
-                char = chr(char)
+        if isinstance(char, int):
+            char = chr(char)
 
-            res += char
-            i += 1
+        res += char
+        i += 1
 
     return res
 

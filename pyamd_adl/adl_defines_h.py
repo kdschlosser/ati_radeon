@@ -88,7 +88,7 @@ class EnumItem(long):
         return super(EnumItem, self).__str__()
 
 
-class Constant(int):
+class Constant(long):
 
     def __init__(self, value):
 
@@ -134,12 +134,15 @@ class Constant(int):
         return int.__hash__(self)
 
 
+super_bypass_issue29270 = super
+
+
 class ENUM(INT):
 
     def __init__(self, value=None):
 
         if value is None:
-            INT.__init__(self, 0)
+            super_bypass_issue29270(ENUM, self).__init__(0)
         else:
             for k, v in self.__class__.__dict__.items():
                 if k.startswith('_'):
@@ -149,7 +152,7 @@ class ENUM(INT):
                     value = v
                     break
 
-            INT.__init__(self, value)
+            super_bypass_issue29270(ENUM, self).__init__(value)
 
     @property
     def value(self):

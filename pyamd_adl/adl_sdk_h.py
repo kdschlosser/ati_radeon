@@ -80,12 +80,9 @@ def load_library(lib):
 
 _malloc = None
 _free = None
-
-
 _is_init = False
-
-
 libc = None
+
 
 class Adapters(object):
 
@@ -93,8 +90,9 @@ class Adapters(object):
         global _is_init
 
         if not _is_init:
-            if InitADL() != ADL_OK:
-                raise RuntimeError('Failed to initilize the adl')
+            res = InitADL()
+            if res != ADL_OK:
+                raise RuntimeError('Failed to initilize the adl (' + str(res) + ')')
 
             _is_init = True
 
@@ -146,20 +144,20 @@ def InitADL():
     global libc
     if defined(LINUX):
         from ctypes import RTLD_GLOBAL
-
         ctypes.CDLL("libXext.so.6", mode=RTLD_GLOBAL)
         hDLL = load_library('libatiadlxx.so')
-
         libc = ctypes.CDLL("libc.so.6")
-    else:
-        for lib in ('atiadlxx.dll', 'atiadlxy.dll'):
-            hDLL = load_library(lib)
-            if hDLL is not None:
-                break
-        else:
-            hDLL = NULL
 
+    elif defined(_WIN64):
+        hDLL = load_library('atiadlxx.dll')
         libc = ctypes.cdll.msvcrt
+
+    elif defined(_WIN32):
+        hDLL = load_library('atiadlxy.dll')
+        libc = ctypes.cdll.msvcrt
+
+    else:
+        raise RuntimeError('Unsupported OS')
 
     _malloc = libc.malloc
     _malloc.argtypes = [ctypes.c_size_t]
@@ -260,6 +258,7 @@ try:
 except NameError:
     unicode = bytes
 
+
 class AdapterBase(object):
 
     def __init__(self, adapter_index):
@@ -281,7 +280,7 @@ class AdapterBase(object):
             while True:
                 char = data[i]
                 if isinstance(char, unicode):
-                    char = str(char, encoding='utf-8')
+                    char = str(char).encode('utf-8')
 
                 if char in ('\x00', 0x00):
                     break
