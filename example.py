@@ -59,14 +59,18 @@ for adapter in pyamd_adl.adapters:
     print('bus_lanes:', adapter.bus_lanes)
     print('max_bus_lanes:', adapter.bus_lanes.max)
     print()
+    print('is_power_control_supported:', adapter.is_power_control_supported)
     print('power_control')
     power_control = adapter.power_control
-    print('    value:', power_control)
-    print('    min:', power_control.min)
-    print('    max:', power_control.max)
-    print('    step:', power_control.step)
-    print('    default:', power_control.default)
-    print()
+
+    for pc in power_control:
+        print('    value:', pc)
+        print('    min:', pc.min)
+        print('    max:', pc.max)
+        print('    step:', pc.step)
+        print('    default:', pc.default)
+        print()
+
     print('temperatures')
     temperatures = adapter.temperatures
     for temperature in temperatures:
@@ -125,6 +129,7 @@ for adapter in pyamd_adl.adapters:
     print('memory')
     memory = adapter.memory
     clocks = memory.clocks
+    voltages = memory.voltages
     actual_clock = clocks.actual
     print('    size:', memory.size)
     print('    type:', memory.type)
@@ -140,6 +145,17 @@ for adapter in pyamd_adl.adapters:
         print('        min:', clock.min, clock.unit_of_measure)
         print('        max:', clock.max, clock.unit_of_measure)
         print('        is_active:', clock.is_active)
+        print()
+
+    print()
+    print('    voltages')
+    for voltage in voltages:
+        print('        voltage:', voltage, voltage.unit_of_measure)
+        print('        step:', voltage.step, voltage.unit_of_measure)
+        print('        default:', voltage.default, voltage.unit_of_measure)
+        print('        min:', voltage.min, voltage.unit_of_measure)
+        print('        max:', voltage.max, voltage.unit_of_measure)
+        print('        is_active:', voltage.is_active)
         print()
 
     print()

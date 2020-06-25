@@ -2096,7 +2096,7 @@ class Load(FloatValueWrapper):
 
 
 class OverDriveN(object):
-    _power_threshold = None
+    _power_threshold = []
 
     def __init__(self, adapter_index):
         self._adapter_index = adapter_index
@@ -2224,14 +2224,13 @@ class OverDriveN(object):
 
     @property
     def power_control(self):
-        if OverDriveN._power_threshold is None:
-            OverDriveN._power_threshold = []
-
+        if not OverDriveN._power_threshold:
             def _do():
                 class Values(object):
                     min_value = min_val
                     max_value = max_val
                     step = step_val
+                    default = None
 
                 value = PowerThreshold(current_val)
                 value._obj = Values
@@ -2280,12 +2279,7 @@ class OverDriveN(object):
                 level = 2
                 OverDriveN._power_threshold += [_do()]
 
-        return OverDriveN._power_threshold[:]
-
-    @power_control.setter
-    def power_control(self, value):
-        val = self.power_control
-        val += value - val.real
+        return iter(OverDriveN._power_threshold)
 
     @property
     def engine_clocks(self):

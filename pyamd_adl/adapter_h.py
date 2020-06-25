@@ -2330,8 +2330,7 @@ class Adapter(object):
 
         overdrive = self._overdrive
 
-        if isinstance(overdrive, OverDrive5):
-            return overdrive.fan_speeds
+        return overdrive.fan_speeds
 
     @property
     def core(self):
@@ -2648,39 +2647,21 @@ class Adapter(object):
 
     @property
     def is_power_control_supported(self):
-        from .overdrive5_h import OverDrive5
-        from .overdrive6_h import OverDrive6
-        from .overdriven_h import OverDriveN
-        from .overdrive8_h import OverDrive8
-
         overdrive = self._overdrive
 
-        if isinstance(overdrive, OverDrive5):
-            return overdrive.is_power_control_supported
+        return overdrive.is_power_control_supported
 
     @property
     def power_control(self):
-        from .overdrive5_h import OverDrive5
-        from .overdrive6_h import OverDrive6
-        from .overdriven_h import OverDriveN
-        from .overdrive8_h import OverDrive8
-
         overdrive = self._overdrive
 
-        if isinstance(overdrive, OverDrive5):
-            return overdrive.power_control
+        return overdrive.power_control
 
     @property
     def temperatures(self):
-        from .overdrive5_h import OverDrive5
-        from .overdrive6_h import OverDrive6
-        from .overdriven_h import OverDriveN
-        from .overdrive8_h import OverDrive8
-
         overdrive = self._overdrive
 
-        if isinstance(overdrive, OverDrive5):
-            return overdrive.temperatures
+        return overdrive.temperatures
 
 
 class DisplayConnection(object):
@@ -2819,10 +2800,6 @@ class DisplayConnection(object):
                         slot.iWidth,
                         connectors
                     )
-
-    @property
-    def memory(self):
-        return Memory(self._adapter_index)
 
     @property
     def crossfire(self):
@@ -3220,16 +3197,14 @@ class Memory(object):
                 return lpMemoryClock.value
 
     @property
-    def clocks(self):
-        from .overdrive5_h import OverDrive5
-        from .overdrive6_h import OverDrive6
-        from .overdriven_h import OverDriveN
-        from .overdrive8_h import OverDrive8
-
+    def voltages(self):
         overdrive = self._overdrive
+        return overdrive.memory_voltages
 
-        if isinstance(overdrive, OverDrive5):
-            return overdrive.memory_clocks
+    @property
+    def clocks(self):
+        overdrive = self._overdrive
+        return overdrive.memory_clocks
 
     @property
     def _overdrive(self):
@@ -3322,36 +3297,18 @@ class Core(object):
 
     @property
     def voltages(self):
-        from .overdrive5_h import OverDrive5
-        from .overdrive6_h import OverDrive6
-        from .overdriven_h import OverDriveN
-        from .overdrive8_h import OverDrive8
-
         overdrive = self._overdrive
 
-        if isinstance(overdrive, OverDrive5):
-            return overdrive.core_voltages
+        return overdrive.core_voltages
 
     @property
     def clocks(self):
-        from .overdrive5_h import OverDrive5
-        from .overdrive6_h import OverDrive6
-        from .overdriven_h import OverDriveN
-        from .overdrive8_h import OverDrive8
-
         overdrive = self._overdrive
 
-        if isinstance(overdrive, OverDrive5):
-            return overdrive.engine_clocks
+        return overdrive.engine_clocks
 
     @property
     def load(self):
-        from .overdrive5_h import OverDrive5
-        from .overdrive6_h import OverDrive6
-        from .overdriven_h import OverDriveN
-        from .overdrive8_h import OverDrive8
-
         overdrive = self._overdrive
 
-        if isinstance(overdrive, OverDrive5):
-            return overdrive.load
+        return overdrive.load
