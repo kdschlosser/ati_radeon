@@ -547,7 +547,7 @@ class CoreVoltage(FloatValueWrapper):
         if not lpODCapabilities.iFlags & ADL_ODN_SCLK_VDD == ADL_ODN_SCLK_VDD:
             return
 
-        iNumberOfPerformanceLevels = lpODCapabilities.iNumberOfPerformanceLevels
+        iNumberOfPerformanceLevels = lpODCapabilities.iMaximumNumberOfPerformanceLevels
 
         class _ADLODNPerformanceLevelsX2(ctypes.Structure):
             _fields_ = [
@@ -586,7 +586,7 @@ class CoreVoltage(FloatValueWrapper):
         if not lpODCapabilities.iFlags & ADL_ODN_SCLK_VDD == ADL_ODN_SCLK_VDD:
             return
 
-        iNumberOfPerformanceLevels = lpODCapabilities.iNumberOfPerformanceLevels
+        iNumberOfPerformanceLevels = lpODCapabilities.iMaximumNumberOfPerformanceLevels
 
         class _ADLODNPerformanceLevelsX2(ctypes.Structure):
             _fields_ = [
@@ -690,7 +690,7 @@ class CoreVoltages(object):
         if not lpODCapabilities.iFlags & ADL_ODN_SCLK_VDD == ADL_ODN_SCLK_VDD:
             return
 
-        iNumberOfPerformanceLevels = lpODCapabilities.iNumberOfPerformanceLevels
+        iNumberOfPerformanceLevels = lpODCapabilities.iMaximumNumberOfPerformanceLevels
 
         if iNumberOfPerformanceLevels <= level or 0 > level:
             return
@@ -773,7 +773,7 @@ class CoreVoltages(object):
             lpODCapabilities = self._capabilities
 
             with ADL2_Main_Control_Create as context:
-                iNumberOfPerformanceLevels = lpODCapabilities.iNumberOfPerformanceLevels
+                iNumberOfPerformanceLevels = lpODCapabilities.iMaximumNumberOfPerformanceLevels
 
                 class _ADLODNPerformanceLevelsX2(ctypes.Structure):
                     _fields_ = [
@@ -849,7 +849,7 @@ class CoreClock(IntValueWrapper):
         if not lpODCapabilities.iFlags & ADL_ODN_SCLK_VDD == ADL_ODN_SCLK_VDD:
             return
 
-        iNumberOfPerformanceLevels = lpODCapabilities.iNumberOfPerformanceLevels
+        iNumberOfPerformanceLevels = lpODCapabilities.iMaximumNumberOfPerformanceLevels
 
         class _ADLODNPerformanceLevelsX2(ctypes.Structure):
             _fields_ = [
@@ -888,7 +888,7 @@ class CoreClock(IntValueWrapper):
         if not lpODCapabilities.iFlags & ADL_ODN_SCLK_VDD == ADL_ODN_SCLK_VDD:
             return
 
-        iNumberOfPerformanceLevels = lpODCapabilities.iNumberOfPerformanceLevels
+        iNumberOfPerformanceLevels = lpODCapabilities.iMaximumNumberOfPerformanceLevels
 
         class _ADLODNPerformanceLevelsX2(ctypes.Structure):
             _fields_ = [
@@ -992,7 +992,7 @@ class CoreClocks(object):
         if not lpODCapabilities.iFlags & ADL_ODN_SCLK_DPM == ADL_ODN_SCLK_DPM:
             return
 
-        iNumberOfPerformanceLevels = lpODCapabilities.iNumberOfPerformanceLevels
+        iNumberOfPerformanceLevels = lpODCapabilities.iMaximumNumberOfPerformanceLevels
 
         if iNumberOfPerformanceLevels <= level or 0 > level:
             return
@@ -1074,7 +1074,7 @@ class CoreClocks(object):
             lpODCapabilities = self._capabilities
 
             with ADL2_Main_Control_Create as context:
-                iNumberOfPerformanceLevels = lpODCapabilities.iNumberOfPerformanceLevels
+                iNumberOfPerformanceLevels = lpODCapabilities.iMaximumNumberOfPerformanceLevels
 
                 class _ADLODNPerformanceLevelsX2(ctypes.Structure):
                     _fields_ = [
@@ -1150,7 +1150,7 @@ class MemoryVoltage(FloatValueWrapper):
         if not lpODCapabilities.iFlags & ADL_ODN_SCLK_VDD == ADL_ODN_SCLK_VDD:
             return
 
-        iNumberOfPerformanceLevels = lpODCapabilities.iNumberOfPerformanceLevels
+        iNumberOfPerformanceLevels = lpODCapabilities.iMaximumNumberOfPerformanceLevels
 
         class _ADLODNPerformanceLevelsX2(ctypes.Structure):
             _fields_ = [
@@ -1189,7 +1189,7 @@ class MemoryVoltage(FloatValueWrapper):
         if not lpODCapabilities.iFlags & ADL_ODN_SCLK_VDD == ADL_ODN_SCLK_VDD:
             return
 
-        iNumberOfPerformanceLevels = lpODCapabilities.iNumberOfPerformanceLevels
+        iNumberOfPerformanceLevels = lpODCapabilities.iMaximumNumberOfPerformanceLevels
 
         class _ADLODNPerformanceLevelsX2(ctypes.Structure):
             _fields_ = [
@@ -1294,7 +1294,7 @@ class MemoryVoltages(object):
         if not lpODCapabilities.iFlags & ADL_ODN_MCLK_VDD == ADL_ODN_MCLK_VDD:
             return
 
-        iNumberOfPerformanceLevels = lpODCapabilities.iNumberOfPerformanceLevels
+        iNumberOfPerformanceLevels = lpODCapabilities.iMaximumNumberOfPerformanceLevels
 
         if iNumberOfPerformanceLevels <= level or 0 > level:
             return
@@ -1377,7 +1377,7 @@ class MemoryVoltages(object):
             lpODCapabilities = self._capabilities
 
             with ADL2_Main_Control_Create as context:
-                iNumberOfPerformanceLevels = lpODCapabilities.iNumberOfPerformanceLevels
+                iNumberOfPerformanceLevels = lpODCapabilities.iMaximumNumberOfPerformanceLevels
 
                 class _ADLODNPerformanceLevelsX2(ctypes.Structure):
                     _fields_ = [
@@ -1453,7 +1453,7 @@ class MemoryClock(IntValueWrapper):
         if not lpODCapabilities.iFlags & ADL_ODN_SCLK_VDD == ADL_ODN_SCLK_VDD:
             return
 
-        iNumberOfPerformanceLevels = lpODCapabilities.iNumberOfPerformanceLevels
+        iNumberOfPerformanceLevels = lpODCapabilities.iMaximumNumberOfPerformanceLevels
 
         class _ADLODNPerformanceLevelsX2(ctypes.Structure):
             _fields_ = [
@@ -1492,7 +1492,7 @@ class MemoryClock(IntValueWrapper):
         if not lpODCapabilities.iFlags & ADL_ODN_SCLK_VDD == ADL_ODN_SCLK_VDD:
             return
 
-        iNumberOfPerformanceLevels = lpODCapabilities.iNumberOfPerformanceLevels
+        iNumberOfPerformanceLevels = lpODCapabilities.iMaximumNumberOfPerformanceLevels
 
         class _ADLODNPerformanceLevelsX2(ctypes.Structure):
             _fields_ = [
@@ -1601,7 +1601,7 @@ class MemoryClocks(object):
         if not lpODCapabilities.iFlags & ADL_ODN_MCLK_DPM == ADL_ODN_MCLK_DPM:
             return
 
-        iNumberOfPerformanceLevels = lpODCapabilities.iNumberOfPerformanceLevels
+        iNumberOfPerformanceLevels = lpODCapabilities.iMaximumNumberOfPerformanceLevels
 
         if iNumberOfPerformanceLevels <= level or 0 > level:
             return
@@ -1683,7 +1683,7 @@ class MemoryClocks(object):
             lpODCapabilities = self._capabilities
 
             with ADL2_Main_Control_Create as context:
-                iNumberOfPerformanceLevels = lpODCapabilities.iNumberOfPerformanceLevels
+                iNumberOfPerformanceLevels = lpODCapabilities.iMaximumNumberOfPerformanceLevels
 
                 class _ADLODNPerformanceLevelsX2(ctypes.Structure):
                     _fields_ = [
