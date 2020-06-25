@@ -396,808 +396,1913 @@ __all__ = (
 from .adl_sdk_h import ADL2_Main_Control_Create  # NOQA
 
 
-class OverDriveN(object):
+class IntValueWrapper(int):
+
+    def __init__(self, value=None):
+        if value is None:
+            super(IntValueWrapper, self).__init__(self)
+        else:
+            try:
+                super(IntValueWrapper, self).__init__(value)
+            except TypeError:
+                super(IntValueWrapper, self).__init__()
+
+        self._obj = None
+        self._adapter_index = None
+        self._level = None
+        self._parent = None
+        self._set = None
+        self._get_automatic = None
+        self._set_automatic = None
+
+    def __set_value(self, value):
+        if self._set is None and None in (self._parent, self._level):
+            return self
+
+        if self._set is None:
+            # noinspection PyProtectedMember
+            value = self._parent._set_value(self._level, value)
+        else:
+            value = self._set(value)
+
+        if value is None:
+            return self
+
+        cls = self.__class__(value)
+        cls._adapter_index = self._adapter_index
+        cls._level = self._level
+        cls._obj = self._obj
+        cls._parent = self._parent
+        cls._set = self._set
+
+        # noinspection PyMethodFirstArgAssignment
+        self = cls
+
+        return self
+
+    def __idiv__(self, other):
+        return self.__ifloordiv__(other)
+
+    def __itruediv__(self, other):
+        return self.__idiv__(other)
+
+    def __ifloordiv__(self, other):
+        value = self.real // other
+        return self.__set_value(value)
+
+    def __imul__(self, other):
+        value = self.real * other
+        return self.__set_value(value)
+
+    def __iadd__(self, other):
+        value = self.real + other
+        return self.__set_value(value)
+
+    def __isub__(self, other):
+        value = self.real - other
+        return self.__set_value(value)
+
+    @property
+    def max(self):
+        return self._obj.max_value
+
+
+class FloatValueWrapper(float):
+
+    def __init__(self, value=None):
+        if value is None:
+            super(FloatValueWrapper, self).__init__(self)
+        else:
+            try:
+                super(FloatValueWrapper, self).__init__(value)
+            except TypeError:
+                super(FloatValueWrapper, self).__init__()
+
+        self._obj = None
+        self._adapter_index = None
+        self._level = None
+        self._parent = None
+        self._set = None
+
+    def __set_value(self, value):
+        if self._set is None and None in (self._parent, self._level):
+            return self
+
+        if self._set is None:
+            # noinspection PyProtectedMember
+            value = self._parent._set_value(self._level, value)
+        else:
+            value = self._set(value)
+
+        if value is None:
+            return self
+
+        cls = self.__class__(value)
+        cls._adapter_index = self._adapter_index
+        cls._level = self._level
+        cls._obj = self._obj
+        cls._parent = self._parent
+        cls._set = self._set
+
+        # noinspection PyMethodFirstArgAssignment
+        self = cls
+
+        return self
+
+    def __idiv__(self, other):
+        value = self.real / other
+        return self.__set_value(value)
+
+    def __itruediv__(self, other):
+        return self.__idiv__(other)
+
+    def __ifloordiv__(self, other):
+        return self
+
+    def __imul__(self, other):
+        value = self.real * other
+        return self.__set_value(value)
+
+    def __iadd__(self, other):
+        value = self.real + other
+        return self.__set_value(value)
+
+    def __isub__(self, other):
+        value = self.real - other
+        return self.__set_value(value)
+
+    @property
+    def max(self):
+        return self._obj.max_value
+
+
+class CoreVoltage(FloatValueWrapper):
+
+    @property
+    def is_active(self):
+        iAdapterIndex = INT(self._adapter_index)
+        # noinspection PyProtectedMember
+        lpODCapabilities = self._parent._capabilities
+
+        if not lpODCapabilities.iFlags & ADL_ODN_SCLK_VDD == ADL_ODN_SCLK_VDD:
+            return
+
+        iNumberOfPerformanceLevels = lpODCapabilities.iNumberOfPerformanceLevels
+
+        class _ADLODNPerformanceLevelsX2(ctypes.Structure):
+            _fields_ = [
+                ('iSize', INT),
+                ('iMode', INT),
+                ('iNumberOfPerformanceLevels', INT),
+                ('aLevels', ADLODNPerformanceLevelX2 * iNumberOfPerformanceLevels),
+            ]
+
+        _ADL2_OverdriveN_SystemClocksX2_Get.argtypes = [
+            ADL_CONTEXT_HANDLE,
+            INT,
+            POINTER(_ADLODNPerformanceLevelsX2)
+        ]
+
+        size = ctypes.sizeof(_ADLODNPerformanceLevelsX2)
+        performanceLevels = _ADLODNPerformanceLevelsX2()
+        performanceLevels.iSize = size
+        performanceLevels.iMode = ADLODNControlType.ODNControlType_Current
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_OverdriveN_SystemClocksX2_Get(
+                context,
+                iAdapterIndex,
+                ctypes.byref(performanceLevels)
+            )
+
+            performanceLevel = performanceLevels.aLevels[self._level]
+            return bool(performanceLevel.iEnabled)
+
+    def activate(self):
+        iAdapterIndex = INT(self._adapter_index)
+        # noinspection PyProtectedMember
+        lpODCapabilities = self._parent._capabilities
+
+        if not lpODCapabilities.iFlags & ADL_ODN_SCLK_VDD == ADL_ODN_SCLK_VDD:
+            return
+
+        iNumberOfPerformanceLevels = lpODCapabilities.iNumberOfPerformanceLevels
+
+        class _ADLODNPerformanceLevelsX2(ctypes.Structure):
+            _fields_ = [
+                ('iSize', INT),
+                ('iMode', INT),
+                ('iNumberOfPerformanceLevels', INT),
+                ('aLevels', ADLODNPerformanceLevelX2 * iNumberOfPerformanceLevels),
+            ]
+
+        _ADL2_OverdriveN_SystemClocksX2_Get.argtypes = [
+            ADL_CONTEXT_HANDLE,
+            INT,
+            POINTER(_ADLODNPerformanceLevelsX2)
+        ]
+        _ADL2_OverdriveN_SystemClocksX2_Set.argtypes = [
+            ADL_CONTEXT_HANDLE,
+            INT,
+            POINTER(_ADLODNPerformanceLevelsX2)
+        ]
+
+        size = ctypes.sizeof(_ADLODNPerformanceLevelsX2)
+        performanceLevels = _ADLODNPerformanceLevelsX2()
+        performanceLevels.iSize = size
+        performanceLevels.iMode = ADLODNControlType.ODNControlType_Current
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_OverdriveN_SystemClocksX2_Get(
+                context,
+                iAdapterIndex,
+                ctypes.byref(performanceLevels)
+            )
+
+            performanceLevel = performanceLevels.aLevels[self._level]
+            performanceLevel.iEnabled = 1
+            performanceLevels.iMode = ADLODNControlType.ODNControlType_Manual
+
+            _ADL2_OverdriveN_SystemClocksX2_Set(
+                context,
+                iAdapterIndex,
+                ctypes.byref(performanceLevels)
+            )
+
+    @property
+    def step(self):
+        return self._obj.step
+
+    @property
+    def default(self):
+        return self._obj.default
+
+    @property
+    def min(self):
+        return self._obj.min_value
+
+    @property
+    def unit_of_measure(self):
+        return 'VDC'
+
+
+class CoreVoltages(object):
+    _core_voltages = None
+
+    def __init__(self, adapter_index):
+        self._adapter_index = adapter_index
+
+    def __getitem__(self, item):
+        return list(self)[item]
+
+    def __setitem__(self, key, value):
+        values = list(self)
+        val = values[key]
+        val += value - val.real
+
+    @property
+    def actual(self):
+        iAdapterIndex = INT(self._adapter_index)
+        lpODPerformanceStatus = ADLODNPerformanceStatus()
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_OverdriveN_PerformanceStatus_Get(
+                context,
+                iAdapterIndex,
+                ctypes.byref(lpODPerformanceStatus)
+            )
+
+        try:
+            return CoreVoltage(lpODPerformanceStatus.iVDDC / 1000.0)
+        except ZeroDivisionError:
+            return CoreVoltage(0.0)
+
+    @property
+    def current(self):
+        for value in self:
+            if value.is_active:
+                return value
+
+    def _set_level(self, level, value):
+        iAdapterIndex = INT(self._adapter_index)
+        lpODCapabilities = self._capabilities
+
+        if not lpODCapabilities.iFlags & ADL_ODN_SCLK_VDD == ADL_ODN_SCLK_VDD:
+            return
+
+        iNumberOfPerformanceLevels = lpODCapabilities.iNumberOfPerformanceLevels
+
+        if iNumberOfPerformanceLevels <= level or 0 > level:
+            return
+
+        min_val = lpODCapabilities.svddcRange.iMin / 1000.0
+        max_val = lpODCapabilities.svddcRange.iMax / 1000.0
+        step_val = lpODCapabilities.svddcRange.iStep / 1000.0
+        value -= value % step_val
+
+        if max_val < value or min_val > value:
+            return
+
+        class _ADLODNPerformanceLevelsX2(ctypes.Structure):
+            _fields_ = [
+                ('iSize', INT),
+                ('iMode', INT),
+                ('iNumberOfPerformanceLevels', INT),
+                ('aLevels', ADLODNPerformanceLevelX2 * iNumberOfPerformanceLevels),
+            ]
+
+        _ADL2_OverdriveN_SystemClocksX2_Get.argtypes = [
+            ADL_CONTEXT_HANDLE,
+            INT,
+            POINTER(_ADLODNPerformanceLevelsX2)
+        ]
+        _ADL2_OverdriveN_SystemClocksX2_Set.argtypes = [
+            ADL_CONTEXT_HANDLE,
+            INT,
+            POINTER(_ADLODNPerformanceLevelsX2)
+        ]
+
+        size = ctypes.sizeof(_ADLODNPerformanceLevelsX2)
+        performanceLevels = _ADLODNPerformanceLevelsX2()
+        performanceLevels.iSize = size
+        performanceLevels.iMode = ADLODNControlType.ODNControlType_Current
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_OverdriveN_SystemClocksX2_Get(
+                context,
+                iAdapterIndex,
+                ctypes.byref(performanceLevels)
+            )
+
+            performanceLevel = performanceLevels.aLevels[level]
+
+            if not performanceLevel.iControl & ADLODNDPMMaskType.ADL_ODN_DPM_VDDC == ADLODNDPMMaskType.ADL_ODN_DPM_VDDC:
+                return
+
+            performanceLevel.iVddc = int(value * 1000)
+            performanceLevels.iMode = ADLODNControlType.ODNControlType_Manual
+
+            _ADL2_OverdriveN_SystemClocksX2_Set(
+                context,
+                iAdapterIndex,
+                ctypes.byref(performanceLevels)
+            )
+
+            return value
+
+    @property
+    def _capabilities(self):
+        iAdapterIndex = INT(self._adapter_index)
+        lpODCapabilities = ADLODNCapabilitiesX2()
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_OverdriveN_CapabilitiesX2_Get(
+                context,
+                iAdapterIndex,
+                ctypes.byref(lpODCapabilities)
+            )
+
+        return lpODCapabilities
+
+    def __iter__(self):
+        if CoreVoltages._core_voltages is None:
+            CoreVoltages._core_voltages = []
+
+            iAdapterIndex = INT(self._adapter_index)
+
+            lpODCapabilities = self._capabilities
+
+            with ADL2_Main_Control_Create as context:
+                iNumberOfPerformanceLevels = lpODCapabilities.iNumberOfPerformanceLevels
+
+                class _ADLODNPerformanceLevelsX2(ctypes.Structure):
+                    _fields_ = [
+                        ('iSize', INT),
+                        ('iMode', INT),
+                        ('iNumberOfPerformanceLevels', INT),
+                        ('aLevels', ADLODNPerformanceLevelX2 * iNumberOfPerformanceLevels),
+                    ]
+
+                _ADL2_OverdriveN_SystemClocksX2_Get.argtypes = [
+                    ADL_CONTEXT_HANDLE,
+                    INT,
+                    POINTER(_ADLODNPerformanceLevelsX2)
+                ]
+
+                size = ctypes.sizeof(_ADLODNPerformanceLevelsX2)
+                performanceLevels = _ADLODNPerformanceLevelsX2()
+                performanceLevels.iSize = size
+                performanceLevels.iMode = ADLODNControlType.ODNControlType_Current
+
+                defaultPerformanceLevels = _ADLODNPerformanceLevelsX2()
+                defaultPerformanceLevels.iSize = size
+                defaultPerformanceLevels.iMode = ADLODNControlType.ODNControlType_Default
+
+                _ADL2_OverdriveN_SystemClocksX2_Get(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(performanceLevels)
+                )
+
+                _ADL2_OverdriveN_SystemClocksX2_Get(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(defaultPerformanceLevels)
+                )
+
+            if lpODCapabilities.iFlags & ADL_ODN_SCLK_VDD == ADL_ODN_SCLK_VDD:
+                for i in range(iNumberOfPerformanceLevels):
+                    performanceLevel = performanceLevels.aLevels[i]
+                    defaultPerformanceLevel = defaultPerformanceLevels.aLevels[i]
+
+                    min_val = lpODCapabilities.svddcRange.iMin / 1000.0
+                    max_val = lpODCapabilities.svddcRange.iMax / 1000.0
+                    step_val = lpODCapabilities.svddcRange.iStep / 1000.0
+                    default_val = defaultPerformanceLevel.iVddc / 1000.0
+                    current_val = performanceLevel.iVddc / 1000.0
+                    editable_val = performanceLevel.iControl & ADL_ODN_DPM_VDDC == ADL_ODN_DPM_VDDC
+
+                    class Values(object):
+                        min_value = min_val
+                        max_value = max_val
+                        step = step_val
+                        default = default_val
+                        editable = editable_val
+
+                    value = CoreVoltage(current_val)
+                    value._obj = Values
+                    value._adapter_index = self._adapter_index
+                    value._level = i
+                    CoreVoltages._core_voltages.append(value)
+
+        return iter(CoreVoltages._core_voltages)
+
+
+class CoreClock(IntValueWrapper):
+
+    @property
+    def is_active(self):
+        iAdapterIndex = INT(self._adapter_index)
+        # noinspection PyProtectedMember
+        lpODCapabilities = self._parent._capabilities
+
+        if not lpODCapabilities.iFlags & ADL_ODN_SCLK_VDD == ADL_ODN_SCLK_VDD:
+            return
+
+        iNumberOfPerformanceLevels = lpODCapabilities.iNumberOfPerformanceLevels
+
+        class _ADLODNPerformanceLevelsX2(ctypes.Structure):
+            _fields_ = [
+                ('iSize', INT),
+                ('iMode', INT),
+                ('iNumberOfPerformanceLevels', INT),
+                ('aLevels', ADLODNPerformanceLevelX2 * iNumberOfPerformanceLevels),
+            ]
+
+        _ADL2_OverdriveN_SystemClocksX2_Get.argtypes = [
+            ADL_CONTEXT_HANDLE,
+            INT,
+            POINTER(_ADLODNPerformanceLevelsX2)
+        ]
+
+        size = ctypes.sizeof(_ADLODNPerformanceLevelsX2)
+        performanceLevels = _ADLODNPerformanceLevelsX2()
+        performanceLevels.iSize = size
+        performanceLevels.iMode = ADLODNControlType.ODNControlType_Current
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_OverdriveN_SystemClocksX2_Get(
+                context,
+                iAdapterIndex,
+                ctypes.byref(performanceLevels)
+            )
+
+            performanceLevel = performanceLevels.aLevels[self._level]
+            return bool(performanceLevel.iEnabled)
+
+    def activate(self):
+        iAdapterIndex = INT(self._adapter_index)
+        # noinspection PyProtectedMember
+        lpODCapabilities = self._parent._capabilities
+
+        if not lpODCapabilities.iFlags & ADL_ODN_SCLK_VDD == ADL_ODN_SCLK_VDD:
+            return
+
+        iNumberOfPerformanceLevels = lpODCapabilities.iNumberOfPerformanceLevels
+
+        class _ADLODNPerformanceLevelsX2(ctypes.Structure):
+            _fields_ = [
+                ('iSize', INT),
+                ('iMode', INT),
+                ('iNumberOfPerformanceLevels', INT),
+                ('aLevels', ADLODNPerformanceLevelX2 * iNumberOfPerformanceLevels),
+            ]
+
+        _ADL2_OverdriveN_SystemClocksX2_Get.argtypes = [
+            ADL_CONTEXT_HANDLE,
+            INT,
+            POINTER(_ADLODNPerformanceLevelsX2)
+        ]
+        _ADL2_OverdriveN_SystemClocksX2_Set.argtypes = [
+            ADL_CONTEXT_HANDLE,
+            INT,
+            POINTER(_ADLODNPerformanceLevelsX2)
+        ]
+
+        size = ctypes.sizeof(_ADLODNPerformanceLevelsX2)
+        performanceLevels = _ADLODNPerformanceLevelsX2()
+        performanceLevels.iSize = size
+        performanceLevels.iMode = ADLODNControlType.ODNControlType_Current
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_OverdriveN_SystemClocksX2_Get(
+                context,
+                iAdapterIndex,
+                ctypes.byref(performanceLevels)
+            )
+
+            performanceLevel = performanceLevels.aLevels[self._level]
+            performanceLevel.iEnabled = 1
+            performanceLevels.iMode = ADLODNControlType.ODNControlType_Manual
+
+            _ADL2_OverdriveN_SystemClocksX2_Set(
+                context,
+                iAdapterIndex,
+                ctypes.byref(performanceLevels)
+            )
+
+    @property
+    def step(self):
+        return self._obj.step
+
+    @property
+    def default(self):
+        return self._obj.default
+
+    @property
+    def min(self):
+        return self._obj.min_value
+
+    @property
+    def unit_of_measure(self):
+        return 'MHz'
+
+
+class CoreClocks(object):
+    _core_clocks = None
+
+    def __init__(self, adapter_index):
+        self._adapter_index = adapter_index
+
+    def __getitem__(self, item):
+        return list(self)[item]
+
+    def __setitem__(self, key, value):
+        values = list(self)
+        val = values[key]
+        val += value - val.real
+
+    @property
+    def actual(self):
+        iAdapterIndex = INT(self._adapter_index)
+        lpODPerformanceStatus = ADLODNPerformanceStatus()
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_OverdriveN_PerformanceStatus_Get(
+                context,
+                iAdapterIndex,
+                ctypes.byref(lpODPerformanceStatus)
+            )
+
+        try:
+            return CoreClock(lpODPerformanceStatus.iCoreClock // 100)
+        except ZeroDivisionError:
+            return CoreClock(0)
+
+    @property
+    def current(self):
+        for value in self:
+            if value.is_active:
+                return value
+
+    def _set_level(self, level, value):
+        iAdapterIndex = INT(self._adapter_index)
+        lpODCapabilities = self._capabilities
+
+        if not lpODCapabilities.iFlags & ADL_ODN_SCLK_DPM == ADL_ODN_SCLK_DPM:
+            return
+
+        iNumberOfPerformanceLevels = lpODCapabilities.iNumberOfPerformanceLevels
+
+        if iNumberOfPerformanceLevels <= level or 0 > level:
+            return
+
+        min_val = lpODCapabilities.sEngineClockRange.iMin // 100
+        max_val = lpODCapabilities.sEngineClockRange.iMax // 100
+        step_val = lpODCapabilities.sEngineClockRange.iStep // 100
+        value -= value % step_val
+
+        if max_val < value or min_val > value:
+            return
+
+        class _ADLODNPerformanceLevelsX2(ctypes.Structure):
+            _fields_ = [
+                ('iSize', INT),
+                ('iMode', INT),
+                ('iNumberOfPerformanceLevels', INT),
+                ('aLevels', ADLODNPerformanceLevelX2 * iNumberOfPerformanceLevels),
+            ]
+
+        _ADL2_OverdriveN_SystemClocksX2_Get.argtypes = [
+            ADL_CONTEXT_HANDLE,
+            INT,
+            POINTER(_ADLODNPerformanceLevelsX2)
+        ]
+        _ADL2_OverdriveN_SystemClocksX2_Set.argtypes = [
+            ADL_CONTEXT_HANDLE,
+            INT,
+            POINTER(_ADLODNPerformanceLevelsX2)
+        ]
+
+        size = ctypes.sizeof(_ADLODNPerformanceLevelsX2)
+        performanceLevels = _ADLODNPerformanceLevelsX2()
+        performanceLevels.iSize = size
+        performanceLevels.iMode = ADLODNControlType.ODNControlType_Current
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_OverdriveN_SystemClocksX2_Get(
+                context,
+                iAdapterIndex,
+                ctypes.byref(performanceLevels)
+            )
+
+            performanceLevel = performanceLevels.aLevels[level]
+
+            if not performanceLevel.iControl & ADL_ODN_DPM_CLOCK == ADL_ODN_DPM_CLOCK:
+                return
+
+            performanceLevel.iClock = value * 100
+            performanceLevels.iMode = ADLODNControlType.ODNControlType_Manual
+
+            _ADL2_OverdriveN_SystemClocksX2_Set(
+                context,
+                iAdapterIndex,
+                ctypes.byref(performanceLevels)
+            )
+
+            return value
+
+    @property
+    def _capabilities(self):
+        iAdapterIndex = INT(self._adapter_index)
+        lpODCapabilities = ADLODNCapabilitiesX2()
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_OverdriveN_CapabilitiesX2_Get(
+                context,
+                iAdapterIndex,
+                ctypes.byref(lpODCapabilities)
+            )
+
+        return lpODCapabilities
+
+    def __iter__(self):
+        if CoreClocks._core_clocks is None:
+            CoreClocks._core_clocks = []
+
+            iAdapterIndex = INT(self._adapter_index)
+            lpODCapabilities = self._capabilities
+
+            with ADL2_Main_Control_Create as context:
+                iNumberOfPerformanceLevels = lpODCapabilities.iNumberOfPerformanceLevels
+
+                class _ADLODNPerformanceLevelsX2(ctypes.Structure):
+                    _fields_ = [
+                        ('iSize', INT),
+                        ('iMode', INT),
+                        ('iNumberOfPerformanceLevels', INT),
+                        ('aLevels', ADLODNPerformanceLevelX2 * iNumberOfPerformanceLevels),
+                    ]
+
+                _ADL2_OverdriveN_SystemClocksX2_Get.argtypes = [
+                    ADL_CONTEXT_HANDLE,
+                    INT,
+                    POINTER(_ADLODNPerformanceLevelsX2)
+                ]
+
+                size = ctypes.sizeof(_ADLODNPerformanceLevelsX2)
+                performanceLevels = _ADLODNPerformanceLevelsX2()
+                performanceLevels.iSize = size
+                performanceLevels.iMode = ADLODNControlType.ODNControlType_Current
+
+                defaultPerformanceLevels = _ADLODNPerformanceLevelsX2()
+                defaultPerformanceLevels.iSize = size
+                defaultPerformanceLevels.iMode = ADLODNControlType.ODNControlType_Default
+
+                _ADL2_OverdriveN_SystemClocksX2_Get(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(performanceLevels)
+                )
+
+                _ADL2_OverdriveN_SystemClocksX2_Get(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(defaultPerformanceLevels)
+                )
+
+            if lpODCapabilities.iFlags & ADL_ODN_SCLK_DPM == ADL_ODN_SCLK_DPM:
+                for i in range(iNumberOfPerformanceLevels):
+                    performanceLevel = performanceLevels.aLevels[i]
+                    defaultPerformanceLevel = defaultPerformanceLevels.aLevels[i]
+
+                    min_val = lpODCapabilities.sEngineClockRange.iMin // 100
+                    max_val = lpODCapabilities.sEngineClockRange.iMax // 100
+                    step_val = lpODCapabilities.sEngineClockRange.iStep // 100
+                    default_val = defaultPerformanceLevel.iClock // 100
+                    current_val = performanceLevel.iClock // 100
+                    editable_val = performanceLevel.iControl & ADL_ODN_DPM_CLOCK == ADL_ODN_DPM_CLOCK
+
+                    class Values(object):
+                        min_value = min_val
+                        max_value = max_val
+                        step = step_val
+                        default = default_val
+                        editable = editable_val
+
+                    value = CoreClock(current_val)
+                    value._obj = Values
+                    value._adapter_index = self._adapter_index
+                    value._level = i
+                    CoreClocks._core_clocks.append(value)
+
+        return iter(CoreClocks._core_clocks)
+
+
+class MemoryVoltage(FloatValueWrapper):
+
+    @property
+    def is_active(self):
+        iAdapterIndex = INT(self._adapter_index)
+        # noinspection PyProtectedMember
+        lpODCapabilities = self._parent._capabilities
+
+        if not lpODCapabilities.iFlags & ADL_ODN_SCLK_VDD == ADL_ODN_SCLK_VDD:
+            return
+
+        iNumberOfPerformanceLevels = lpODCapabilities.iNumberOfPerformanceLevels
+
+        class _ADLODNPerformanceLevelsX2(ctypes.Structure):
+            _fields_ = [
+                ('iSize', INT),
+                ('iMode', INT),
+                ('iNumberOfPerformanceLevels', INT),
+                ('aLevels', ADLODNPerformanceLevelX2 * iNumberOfPerformanceLevels),
+            ]
+
+        _ADL2_OverdriveN_MemoryClocksX2_Get.argtypes = [
+            ADL_CONTEXT_HANDLE,
+            INT,
+            POINTER(_ADLODNPerformanceLevelsX2)
+        ]
+
+        size = ctypes.sizeof(_ADLODNPerformanceLevelsX2)
+        performanceLevels = _ADLODNPerformanceLevelsX2()
+        performanceLevels.iSize = size
+        performanceLevels.iMode = ADLODNControlType.ODNControlType_Current
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_OverdriveN_MemoryClocksX2_Get(
+                context,
+                iAdapterIndex,
+                ctypes.byref(performanceLevels)
+            )
+
+            performanceLevel = performanceLevels.aLevels[self._level]
+            return bool(performanceLevel.iEnabled)
+
+    def activate(self):
+        iAdapterIndex = INT(self._adapter_index)
+        # noinspection PyProtectedMember
+        lpODCapabilities = self._parent._capabilities
+
+        if not lpODCapabilities.iFlags & ADL_ODN_SCLK_VDD == ADL_ODN_SCLK_VDD:
+            return
+
+        iNumberOfPerformanceLevels = lpODCapabilities.iNumberOfPerformanceLevels
+
+        class _ADLODNPerformanceLevelsX2(ctypes.Structure):
+            _fields_ = [
+                ('iSize', INT),
+                ('iMode', INT),
+                ('iNumberOfPerformanceLevels', INT),
+                ('aLevels', ADLODNPerformanceLevelX2 * iNumberOfPerformanceLevels),
+            ]
+
+        _ADL2_OverdriveN_MemoryClocksX2_Get.argtypes = [
+            ADL_CONTEXT_HANDLE,
+            INT,
+            POINTER(_ADLODNPerformanceLevelsX2)
+        ]
+
+        _ADL2_OverdriveN_MemoryClocksX2_Set.argtypes = [
+            ADL_CONTEXT_HANDLE,
+            INT,
+            POINTER(_ADLODNPerformanceLevelsX2)
+        ]
+
+        size = ctypes.sizeof(_ADLODNPerformanceLevelsX2)
+        performanceLevels = _ADLODNPerformanceLevelsX2()
+        performanceLevels.iSize = size
+        performanceLevels.iMode = ADLODNControlType.ODNControlType_Current
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_OverdriveN_MemoryClocksX2_Get(
+                context,
+                iAdapterIndex,
+                ctypes.byref(performanceLevels)
+            )
+
+            performanceLevel = performanceLevels.aLevels[self._level]
+            performanceLevel.iEnabled = 1
+            performanceLevels.iMode = ADLODNControlType.ODNControlType_Manual
+
+            _ADL2_OverdriveN_MemoryClocksX2_Set(
+                context,
+                iAdapterIndex,
+                ctypes.byref(performanceLevels)
+            )
+
+    @property
+    def step(self):
+        return self._obj.step
+
+    @property
+    def default(self):
+        return self._obj.default
+
+    @property
+    def min(self):
+        return self._obj.min_value
+
+    @property
+    def unit_of_measure(self):
+        return 'VDC'
+
+
+class MemoryVoltages(object):
+    _memory_voltages = None
+
+    def __init__(self, adapter_index):
+        self._adapter_index = adapter_index
+
+    def __getitem__(self, item):
+        return list(self)[item]
+
+    def __setitem__(self, key, value):
+        values = list(self)
+        val = values[key]
+        val += value - val.real
+
+    @property
+    def actual(self):
+        iAdapterIndex = INT(self._adapter_index)
+        lpODPerformanceStatus = ADLODNPerformanceStatus()
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_OverdriveN_PerformanceStatus_Get(
+                context,
+                iAdapterIndex,
+                ctypes.byref(lpODPerformanceStatus)
+            )
+
+        try:
+            return MemoryVoltage(lpODPerformanceStatus.iVDDCI / 1000.0)
+        except ZeroDivisionError:
+            return MemoryVoltage(0.0)
+
+    @property
+    def current(self):
+        for value in self:
+            if value.is_active:
+                return value
+
+    def _set_level(self, level, value):
+        iAdapterIndex = INT(self._adapter_index)
+        lpODCapabilities = self._capabilities
+
+        if not lpODCapabilities.iFlags & ADL_ODN_MCLK_VDD == ADL_ODN_MCLK_VDD:
+            return
+
+        iNumberOfPerformanceLevels = lpODCapabilities.iNumberOfPerformanceLevels
+
+        if iNumberOfPerformanceLevels <= level or 0 > level:
+            return
+
+        min_val = lpODCapabilities.svddcRange.iMin / 1000.0
+        max_val = lpODCapabilities.svddcRange.iMax / 1000.0
+        step_val = lpODCapabilities.svddcRange.iStep / 1000.0
+        value -= value % step_val
+
+        if max_val < value or min_val > value:
+            return
+
+        class _ADLODNPerformanceLevelsX2(ctypes.Structure):
+            _fields_ = [
+                ('iSize', INT),
+                ('iMode', INT),
+                ('iNumberOfPerformanceLevels', INT),
+                ('aLevels', ADLODNPerformanceLevelX2 * iNumberOfPerformanceLevels),
+            ]
+
+        _ADL2_OverdriveN_MemoryClocksX2_Get.argtypes = [
+            ADL_CONTEXT_HANDLE,
+            INT,
+            POINTER(_ADLODNPerformanceLevelsX2)
+        ]
+        _ADL2_OverdriveN_MemoryClocksX2_Set.argtypes = [
+            ADL_CONTEXT_HANDLE,
+            INT,
+            POINTER(_ADLODNPerformanceLevelsX2)
+        ]
+
+        size = ctypes.sizeof(_ADLODNPerformanceLevelsX2)
+        performanceLevels = _ADLODNPerformanceLevelsX2()
+        performanceLevels.iSize = size
+        performanceLevels.iMode = ADLODNControlType.ODNControlType_Current
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_OverdriveN_MemoryClocksX2_Get(
+                context,
+                iAdapterIndex,
+                ctypes.byref(performanceLevels)
+            )
+
+            performanceLevel = performanceLevels.aLevels[level]
+
+            if not performanceLevel.iControl & ADLODNDPMMaskType.ADL_ODN_DPM_VDDC == ADLODNDPMMaskType.ADL_ODN_DPM_VDDC:
+                return
+
+            performanceLevel.iVddc = int(value * 1000)
+            performanceLevels.iMode = ADLODNControlType.ODNControlType_Manual
+
+            _ADL2_OverdriveN_MemoryClocksX2_Set(
+                context,
+                iAdapterIndex,
+                ctypes.byref(performanceLevels)
+            )
+
+            return value
+
+    @property
+    def _capabilities(self):
+        iAdapterIndex = INT(self._adapter_index)
+        lpODCapabilities = ADLODNCapabilitiesX2()
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_OverdriveN_CapabilitiesX2_Get(
+                context,
+                iAdapterIndex,
+                ctypes.byref(lpODCapabilities)
+            )
+
+        return lpODCapabilities
+
+    def __iter__(self):
+        if MemoryVoltages._memory_voltages is None:
+            MemoryVoltages._memory_voltages = []
+
+            iAdapterIndex = INT(self._adapter_index)
+
+            lpODCapabilities = self._capabilities
+
+            with ADL2_Main_Control_Create as context:
+                iNumberOfPerformanceLevels = lpODCapabilities.iNumberOfPerformanceLevels
+
+                class _ADLODNPerformanceLevelsX2(ctypes.Structure):
+                    _fields_ = [
+                        ('iSize', INT),
+                        ('iMode', INT),
+                        ('iNumberOfPerformanceLevels', INT),
+                        ('aLevels', ADLODNPerformanceLevelX2 * iNumberOfPerformanceLevels),
+                    ]
+
+                _ADL2_OverdriveN_MemoryClocksX2_Get.argtypes = [
+                    ADL_CONTEXT_HANDLE,
+                    INT,
+                    POINTER(_ADLODNPerformanceLevelsX2)
+                ]
+
+                size = ctypes.sizeof(_ADLODNPerformanceLevelsX2)
+                performanceLevels = _ADLODNPerformanceLevelsX2()
+                performanceLevels.iSize = size
+                performanceLevels.iMode = ADLODNControlType.ODNControlType_Current
+
+                defaultPerformanceLevels = _ADLODNPerformanceLevelsX2()
+                defaultPerformanceLevels.iSize = size
+                defaultPerformanceLevels.iMode = ADLODNControlType.ODNControlType_Default
+
+                _ADL2_OverdriveN_MemoryClocksX2_Get(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(performanceLevels)
+                )
+
+                _ADL2_OverdriveN_MemoryClocksX2_Get(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(defaultPerformanceLevels)
+                )
+
+            if lpODCapabilities.iFlags & ADL_ODN_MCLK_VDD == ADL_ODN_MCLK_VDD:
+                for i in range(iNumberOfPerformanceLevels):
+                    performanceLevel = performanceLevels.aLevels[i]
+                    defaultPerformanceLevel = defaultPerformanceLevels.aLevels[i]
+
+                    min_val = lpODCapabilities.svddcRange.iMin / 1000.0
+                    max_val = lpODCapabilities.svddcRange.iMax / 1000.0
+                    step_val = lpODCapabilities.svddcRange.iStep / 1000.0
+                    default_val = defaultPerformanceLevel.iVddc / 1000.0
+                    current_val = performanceLevel.iVddc / 1000.0
+                    editable_val = performanceLevel.iControl & ADL_ODN_DPM_VDDC == ADL_ODN_DPM_VDDC
+
+                    class Values(object):
+                        min_value = min_val
+                        max_value = max_val
+                        step = step_val
+                        default = default_val
+                        editable = editable_val
+
+                    value = MemoryVoltage(current_val)
+                    value._obj = Values
+                    value._adapter_index = self._adapter_index
+                    value._level = i
+                    MemoryVoltages._memory_voltages.append(value)
+
+        return iter(MemoryVoltages._memory_voltages)
+
+
+class MemoryClock(IntValueWrapper):
+
+    @property
+    def is_active(self):
+        iAdapterIndex = INT(self._adapter_index)
+        # noinspection PyProtectedMember
+        lpODCapabilities = self._parent._capabilities
+
+        if not lpODCapabilities.iFlags & ADL_ODN_SCLK_VDD == ADL_ODN_SCLK_VDD:
+            return
+
+        iNumberOfPerformanceLevels = lpODCapabilities.iNumberOfPerformanceLevels
+
+        class _ADLODNPerformanceLevelsX2(ctypes.Structure):
+            _fields_ = [
+                ('iSize', INT),
+                ('iMode', INT),
+                ('iNumberOfPerformanceLevels', INT),
+                ('aLevels', ADLODNPerformanceLevelX2 * iNumberOfPerformanceLevels),
+            ]
+
+        _ADL2_OverdriveN_MemoryClocksX2_Get.argtypes = [
+            ADL_CONTEXT_HANDLE,
+            INT,
+            POINTER(_ADLODNPerformanceLevelsX2)
+        ]
+
+        size = ctypes.sizeof(_ADLODNPerformanceLevelsX2)
+        performanceLevels = _ADLODNPerformanceLevelsX2()
+        performanceLevels.iSize = size
+        performanceLevels.iMode = ADLODNControlType.ODNControlType_Current
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_OverdriveN_MemoryClocksX2_Get(
+                context,
+                iAdapterIndex,
+                ctypes.byref(performanceLevels)
+            )
+
+            performanceLevel = performanceLevels.aLevels[self._level]
+            return bool(performanceLevel.iEnabled)
+
+    def activate(self):
+        iAdapterIndex = INT(self._adapter_index)
+        # noinspection PyProtectedMember
+        lpODCapabilities = self._parent._capabilities
+
+        if not lpODCapabilities.iFlags & ADL_ODN_SCLK_VDD == ADL_ODN_SCLK_VDD:
+            return
+
+        iNumberOfPerformanceLevels = lpODCapabilities.iNumberOfPerformanceLevels
+
+        class _ADLODNPerformanceLevelsX2(ctypes.Structure):
+            _fields_ = [
+                ('iSize', INT),
+                ('iMode', INT),
+                ('iNumberOfPerformanceLevels', INT),
+                ('aLevels', ADLODNPerformanceLevelX2 * iNumberOfPerformanceLevels),
+            ]
+
+        _ADL2_OverdriveN_MemoryClocksX2_Get.argtypes = [
+            ADL_CONTEXT_HANDLE,
+            INT,
+            POINTER(_ADLODNPerformanceLevelsX2)
+        ]
+
+        _ADL2_OverdriveN_MemoryClocksX2_Set.argtypes = [
+            ADL_CONTEXT_HANDLE,
+            INT,
+            POINTER(_ADLODNPerformanceLevelsX2)
+        ]
+
+        size = ctypes.sizeof(_ADLODNPerformanceLevelsX2)
+        performanceLevels = _ADLODNPerformanceLevelsX2()
+        performanceLevels.iSize = size
+        performanceLevels.iMode = ADLODNControlType.ODNControlType_Current
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_OverdriveN_MemoryClocksX2_Get(
+                context,
+                iAdapterIndex,
+                ctypes.byref(performanceLevels)
+            )
+
+            performanceLevel = performanceLevels.aLevels[self._level]
+            performanceLevel.iEnabled = 1
+            performanceLevels.iMode = ADLODNControlType.ODNControlType_Manual
+
+            _ADL2_OverdriveN_MemoryClocksX2_Set(
+                context,
+                iAdapterIndex,
+                ctypes.byref(performanceLevels)
+            )
+
+    @property
+    def step(self):
+        return self._obj.step
+
+    @property
+    def default(self):
+        return self._obj.default
+
+    @property
+    def min(self):
+        return self._obj.min_value
+
+    @property
+    def editable(self):
+        return self._obj.editable
+
+    @property
+    def unit_of_measure(self):
+        return 'MHz'
+
+
+class MemoryClocks(object):
+    _memory_clocks = None
+
+    def __init__(self, adapter_index):
+        self._adapter_index = adapter_index
+
+    def __getitem__(self, item):
+        return list(self)[item]
+
+    def __setitem__(self, key, value):
+        values = list(self)
+        val = values[key]
+        val += value - val.real
+
+    @property
+    def actual(self):
+        iAdapterIndex = INT(self._adapter_index)
+        lpODPerformanceStatus = ADLODNPerformanceStatus()
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_OverdriveN_PerformanceStatus_Get(
+                context,
+                iAdapterIndex,
+                ctypes.byref(lpODPerformanceStatus)
+            )
+
+        try:
+            return MemoryClock(lpODPerformanceStatus.iMemoryClock // 100)
+        except ZeroDivisionError:
+            return MemoryClock(0)
+
+    @property
+    def current(self):
+        for value in self:
+            if value.is_active:
+                return value
+
+    def _set_level(self, level, value):
+        iAdapterIndex = INT(self._adapter_index)
+        lpODCapabilities = self._capabilities
+
+        if not lpODCapabilities.iFlags & ADL_ODN_MCLK_DPM == ADL_ODN_MCLK_DPM:
+            return
+
+        iNumberOfPerformanceLevels = lpODCapabilities.iNumberOfPerformanceLevels
+
+        if iNumberOfPerformanceLevels <= level or 0 > level:
+            return
+
+        min_val = lpODCapabilities.sMemoryClock.iMin // 100
+        max_val = lpODCapabilities.sMemoryClock.iMax // 100
+        step_val = lpODCapabilities.sMemoryClock.iStep // 100
+        value -= value % step_val
+
+        if max_val < value or min_val > value:
+            return
+
+        class _ADLODNPerformanceLevelsX2(ctypes.Structure):
+            _fields_ = [
+                ('iSize', INT),
+                ('iMode', INT),
+                ('iNumberOfPerformanceLevels', INT),
+                ('aLevels', ADLODNPerformanceLevelX2 * iNumberOfPerformanceLevels),
+            ]
+
+        _ADL2_OverdriveN_MemoryClocksX2_Get.argtypes = [
+            ADL_CONTEXT_HANDLE,
+            INT,
+            POINTER(_ADLODNPerformanceLevelsX2)
+        ]
+        _ADL2_OverdriveN_MemoryClocksX2_Set.argtypes = [
+            ADL_CONTEXT_HANDLE,
+            INT,
+            POINTER(_ADLODNPerformanceLevelsX2)
+        ]
+
+        size = ctypes.sizeof(_ADLODNPerformanceLevelsX2)
+        performanceLevels = _ADLODNPerformanceLevelsX2()
+        performanceLevels.iSize = size
+        performanceLevels.iMode = ADLODNControlType.ODNControlType_Current
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_OverdriveN_MemoryClocksX2_Get(
+                context,
+                iAdapterIndex,
+                ctypes.byref(performanceLevels)
+            )
+
+            performanceLevel = performanceLevels.aLevels[level]
+
+            if not performanceLevel.iControl & ADL_ODN_DPM_CLOCK == ADL_ODN_DPM_CLOCK:
+                return
+
+            performanceLevel.iClock = value * 100
+            performanceLevels.iMode = ADLODNControlType.ODNControlType_Manual
+
+            _ADL2_OverdriveN_MemoryClocksX2_Set(
+                context,
+                iAdapterIndex,
+                ctypes.byref(performanceLevels)
+            )
+
+            return value
+
+    @property
+    def _capabilities(self):
+        iAdapterIndex = INT(self._adapter_index)
+        lpODCapabilities = ADLODNCapabilitiesX2()
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_OverdriveN_CapabilitiesX2_Get(
+                context,
+                iAdapterIndex,
+                ctypes.byref(lpODCapabilities)
+            )
+
+        return lpODCapabilities
+
+    def __iter__(self):
+        if MemoryClocks._memory_clocks is None:
+            MemoryClocks._memory_clocks = []
+
+            iAdapterIndex = INT(self._adapter_index)
+            lpODCapabilities = self._capabilities
+
+            with ADL2_Main_Control_Create as context:
+                iNumberOfPerformanceLevels = lpODCapabilities.iNumberOfPerformanceLevels
+
+                class _ADLODNPerformanceLevelsX2(ctypes.Structure):
+                    _fields_ = [
+                        ('iSize', INT),
+                        ('iMode', INT),
+                        ('iNumberOfPerformanceLevels', INT),
+                        ('aLevels', ADLODNPerformanceLevelX2 * iNumberOfPerformanceLevels),
+                    ]
+
+                _ADL2_OverdriveN_MemoryClocksX2_Get.argtypes = [
+                    ADL_CONTEXT_HANDLE,
+                    INT,
+                    POINTER(_ADLODNPerformanceLevelsX2)
+                ]
+
+                size = ctypes.sizeof(_ADLODNPerformanceLevelsX2)
+                performanceLevels = _ADLODNPerformanceLevelsX2()
+                performanceLevels.iSize = size
+                performanceLevels.iMode = ADLODNControlType.ODNControlType_Current
+
+                defaultPerformanceLevels = _ADLODNPerformanceLevelsX2()
+                defaultPerformanceLevels.iSize = size
+                defaultPerformanceLevels.iMode = ADLODNControlType.ODNControlType_Default
+
+                _ADL2_OverdriveN_MemoryClocksX2_Get(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(performanceLevels)
+                )
+
+                _ADL2_OverdriveN_MemoryClocksX2_Get(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(defaultPerformanceLevels)
+                )
+
+            if lpODCapabilities.iFlags & ADL_ODN_MCLK_DPM == ADL_ODN_MCLK_DPM:
+                for i in range(iNumberOfPerformanceLevels):
+                    performanceLevel = performanceLevels.aLevels[i]
+                    defaultPerformanceLevel = defaultPerformanceLevels.aLevels[i]
+
+                    min_val = lpODCapabilities.sMemoryClock.iMin // 100
+                    max_val = lpODCapabilities.sMemoryClock.iMax // 100
+                    step_val = lpODCapabilities.sMemoryClock.iStep // 100
+                    default_val = defaultPerformanceLevel.iClock // 100
+                    current_val = performanceLevel.iClock // 100
+                    editable_val = performanceLevel.iControl & ADL_ODN_DPM_CLOCK == ADL_ODN_DPM_CLOCK
+
+                    class Values(object):
+                        min_value = min_val
+                        max_value = max_val
+                        step = step_val
+                        default = default_val
+                        editable = editable_val
+
+                    value = MemoryClock(current_val)
+                    value._obj = Values
+                    value._adapter_index = self._adapter_index
+                    value._level = i
+                    MemoryClocks._memory_clocks.append(value)
+
+            return iter(MemoryClocks._memory_clocks)
+
+
+class FanSpeed(IntValueWrapper):
+
+    @property
+    def unit_of_measure(self):
+        return self._obj.unit
+
+    @property
+    def min(self):
+        return self._obj.min_value
+
+    @property
+    def step(self):
+        return self._obj.step_value
+
+    @property
+    def automatic(self):
+        return self._get_automatic()
+
+    @automatic.setter
+    def automatic(self, value):
+        if value is True:
+            value = ODNControlType_Auto
+        elif value is False:
+            value = ODNControlType_Manual
+        else:
+            return
+
+        if value is True:
+            self._set_automatic(self.real, value)
+
+
+class FanSpeeds(object):
+    _fan_speeds = None
 
     def __init__(self, adapter_index):
         self._adapter_index = adapter_index
 
     @property
     def _capabilities(self):
-        """Function to retrieve the OverdriveN capabilities."""
+        iAdapterIndex = INT(self._adapter_index)
         lpODCapabilities = ADLODNCapabilitiesX2()
-        iAdapterIndex = INT(self._adapter_index)
 
         with ADL2_Main_Control_Create as context:
-            if _ADL2_OverdriveN_CapabilitiesX2_Get(
-                    context,
-                    iAdapterIndex,
-                    ctypes.byref(lpODCapabilities)
-            ) == ADL_OK:
-                return lpODCapabilities
-
-    @property
-    def gpu(self):
-        caps = self._capabilities
-        num_levels = caps.iMaximumNumberOfPerformanceLevels.value
-
-        for i in range(num_levels):
-            yield GPUPerformanceLevel(self, i)
-
-    @property
-    def memory(self):
-        caps = self._capabilities
-        num_levels = caps.iMaximumNumberOfPerformanceLevels.value
-
-        for i in range(num_levels):
-            yield MemoryPerformanceLevel(self, i)
-
-    @property
-    def fan_speed(self):
-        return FanSpeed(self)
-
-    @property
-    def temperature_limits(self):
-        return TemperatureLimits(self)
-
-    @property
-    def memory_timings(self):
-        return MemoryTimingLevels(self)
-
-    @property
-    def zero_rpm_fan(self):
-        return ZeroRPMFan(self)
-
-    @property
-    def _performance_stats(self):
-        lpODPerformanceStatus = ADLODNPerformanceStatus()
-        iAdapterIndex = INT(self._adapter_index)
-
-        with ADL2_Main_Control_Create as context:
-            if _ADL2_OverdriveN_PerformanceStatus_Get(
-                    context,
-                    iAdapterIndex,
-                    ctypes.byref(lpODPerformanceStatus)
-            ) == ADL_OK:
-                return lpODPerformanceStatus
-
-    @property
-    def core_clock(self):
-        return self._performance_stats.iCoreClock.value
-
-    @property
-    def bus_lanes(self):
-        return self._performance_stats.iCurrentBusLanes.value
-
-    @property
-    def bus_speed(self):
-        return self._performance_stats.iCurrentBusSpeed.value
-
-    @property
-    def core_performance_level(self):
-        return self._performance_stats.iCurrentCorePerformanceLevel.value
-
-    @property
-    def dcef_performance_level(self):
-        return self._performance_stats.iCurrentDCEFPerformanceLevel.value
-
-    @property
-    def gfx_performance_level(self):
-        return self._performance_stats.iCurrentGFXPerformanceLevel.value
-
-    @property
-    def memory_performance_level(self):
-        return self._performance_stats.iCurrentMemoryPerformanceLevel.value
-
-    @property
-    def dcef_clock(self):
-        return self._performance_stats.iDCEFClock.value
-
-    @property
-    def gfx_clock(self):
-        return self._performance_stats.iGFXClock.value
-
-    @property
-    def gpu_activity(self):
-        return self._performance_stats.iGPUActivityPercent.value
-
-    @property
-    def maximum_bus_lanes(self):
-        return self._performance_stats.iMaximumBusLanes.value
-
-    @property
-    def memory_clock(self):
-        return self._performance_stats.iMemoryClock.value
-
-    @property
-    def uvd_clock(self):
-        return self._performance_stats.iUVDClock.value
-
-    @property
-    def uvd_performance_level(self):
-        return self._performance_stats.iUVDPerformanceLevel.value
-
-    @property
-    def vce_clock(self):
-        return self._performance_stats.iVCEClock.value
-
-    @property
-    def vce_performance_level(self):
-        return self._performance_stats.iVCEPerformanceLevel.value
-
-    @property
-    def vddc(self):
-        return self._performance_stats.iVDDC.value
-
-    @property
-    def vddci(self):
-        return self._performance_stats.iVDDCI.value
-
-    def reset(self):
-        overdriveCapabilities = self._capabilities
-
-        num_levels = overdriveCapabilities.iMaximumNumberOfPerformanceLevels.value
-
-        size = (
-            ctypes.sizeof(ADLODNPerformanceLevelsX2) +
-            ctypes.sizeof(ADLODNPerformanceLevelX2) *
-            (num_levels - 1)
-        )
-
-        performanceLevelsBuffer = (CHAR * size)()
-        ctypes.memset(performanceLevelsBuffer, 0, size)
-
-        odPerformanceLevels = ctypes.cast(
-            performanceLevelsBuffer,
-            POINTER(ADLODNPerformanceLevelsX2)
-        )
-        odPerformanceLevels.iSize = size
-        odPerformanceLevels.iMode = ODNControlType_Default
-        odPerformanceLevels.iNumberOfPerformanceLevels = num_levels
-
-        iAdapterIndex = INT(self._adapter_index)
-
-        with ADL2_Main_Control_Create as context:
-            return _ADL2_OverdriveN_SystemClocksX2_Set(
+            _ADL2_OverdriveN_CapabilitiesX2_Get(
                 context,
                 iAdapterIndex,
-                odPerformanceLevels
-            ) == ADL_OK
+                ctypes.byref(lpODCapabilities)
+            )
+
+        return lpODCapabilities
+
+    def __iter__(self):
+
+        if FanSpeeds._fan_speeds is None:
+            FanSpeeds._fan_speeds = []
+            iAdapterIndex = INT(self._adapter_index)
+
+            def _dummy():
+                def _set_auto(_, __):
+                    pass
+
+                def _set_val(_):
+                    pass
+
+                class FanSpeedMetrics(object):
+                    min_value = 0
+                    max_value = 0
+                    step_value = 0
+                    unit = 'Unsupported'
+
+                value = FanSpeed(0)
+                value._obj = FanSpeedMetrics
+                value._adapter_index = self._adapter_index
+                value._parent = self
+                value._set = _set_val
+                value._get_automatic = _get_automatic
+                value._set_automatic = _set_auto
+
+                return value
+
+            def _do():
+                class FanSpeedMetrics(object):
+                    min_value = min_val
+                    max_value = max_val
+                    step_value = step_val
+                    unit = uom
+
+                value = FanSpeed(current_val)
+                value._obj = FanSpeedMetrics
+                value._adapter_index = self._adapter_index
+                value._parent = self
+                value._set = _set
+                value._get_automatic = _get_automatic
+                value._set_automatic = _set_automatic
+
+                return value
+
+            def _get_automatic():
+                _lpODFanSpeed = ADLODNFanControl()
+                with ADL2_Main_Control_Create as _context:
+                    _ADL2_OverdriveN_FanControl_Get(
+                        _context,
+                        iAdapterIndex,
+                        ctypes.byref(_lpODFanSpeed)
+                    )
+
+                    return _lpODFanSpeed.iMode == ODNControlType_Auto
+
+            lpODCapabilities = self._capabilities
+            lpODFanSpeed = ADLODNFanControl()
+
+            with ADL2_Main_Control_Create as context:
+                _ADL2_OverdriveN_FanControl_Get(
+                        context,
+                        iAdapterIndex,
+                        ctypes.byref(lpODFanSpeed)
+                )
+
+            if lpODCapabilities.iFlags & ADL_ODN_FAN_SPEED_MIN == ADL_ODN_FAN_SPEED_MIN:
+                min_val = lpODCapabilities.fanSpeed.iMin
+                max_val = lpODCapabilities.fanSpeed.iMax
+                step_val = lpODCapabilities.fanSpeed.iStep
+                current_val = lpODFanSpeed.iMinFanLimit
+                uom = 'RPM'
+
+                def _set(value):
+                    value -= value % lpODCapabilities.fanSpeed.iStep
+
+                    if value < lpODCapabilities.fanSpeed.iMin:
+                        return
+                    elif value > lpODCapabilities.fanSpeed.iMax:
+                        return
+
+                    _lpODFanSpeed = ADLODNFanControl()
+                    _lpODFanSpeed.iMinFanLimit = value
+                    _lpODFanSpeed.iMode = ODNControlType_Manual
+
+                    with ADL2_Main_Control_Create as _context:
+                        if ADL_OK == _ADL2_OverdriveN_FanControl_Set(
+                            _context,
+                            iAdapterIndex,
+                            ctypes.byref(_lpODFanSpeed)
+                        ):
+                            return value
+
+                def _set_automatic(value, mode):
+                    _lpODFanSpeed = ADLODNFanControl()
+                    _lpODFanSpeed.iMinFanLimit = value
+                    _lpODFanSpeed.iMode = mode
+
+                    with ADL2_Main_Control_Create as _context:
+                        if ADL_OK == _ADL2_OverdriveN_FanControl_Set(
+                            _context,
+                            iAdapterIndex,
+                            ctypes.byref(_lpODFanSpeed)
+                        ):
+                            return value
+
+                FanSpeeds._fan_speeds += [_do()]
+
+            else:
+                FanSpeeds._fan_speeds += [_dummy()]
+
+            if lpODCapabilities.iFlags & ADL_ODN_FAN_SPEED_TARGET == ADL_ODN_FAN_SPEED_TARGET:
+                min_val = lpODCapabilities.fanSpeed.iMin
+                max_val = lpODCapabilities.fanSpeed.iMax
+                step_val = lpODCapabilities.fanSpeed.iStep
+                current_val = lpODFanSpeed.iTargetFanSpeed
+                uom = 'RPM'
+
+                def _set(value):
+                    value -= value % lpODCapabilities.fanSpeed.iStep
+
+                    if value < lpODCapabilities.fanSpeed.iMin:
+                        return
+                    elif value > lpODCapabilities.fanSpeed.iMax:
+                        return
+
+                    _lpODFanSpeed = ADLODNFanControl()
+                    _lpODFanSpeed.iTargetFanSpeed = value
+                    _lpODFanSpeed.iMode = ODNControlType_Manual
+
+                    with ADL2_Main_Control_Create as _context:
+                        if ADL_OK == _ADL2_OverdriveN_FanControl_Set(
+                            _context,
+                            iAdapterIndex,
+                            ctypes.byref(_lpODFanSpeed)
+                        ):
+                            return value
+
+                def _set_automatic(value, mode):
+                    _lpODFanSpeed = ADLODNFanControl()
+                    _lpODFanSpeed.iTargetFanSpeed = value
+                    _lpODFanSpeed.iMode = mode
+
+                    with ADL2_Main_Control_Create as _context:
+                        if ADL_OK == _ADL2_OverdriveN_FanControl_Set(
+                            _context,
+                            iAdapterIndex,
+                            ctypes.byref(_lpODFanSpeed)
+                        ):
+                            return value
+
+                FanSpeeds._fan_speeds += [_do()]
+
+            else:
+                FanSpeeds._fan_speeds += [_dummy()]
+
+            if lpODCapabilities.iFlags & ADL_ODN_ACOUSTIC_LIMIT_SCLK == ADL_ODN_ACOUSTIC_LIMIT_SCLK:
+                min_val = lpODCapabilities.minimumPerformanceClock.iMin
+                max_val = lpODCapabilities.minimumPerformanceClock.iMax
+                step_val = lpODCapabilities.minimumPerformanceClock.iStep
+                current_val = lpODFanSpeed.iMinPerformanceClock
+                uom = 'mhz'
+
+                def _set(value):
+                    value -= value % lpODCapabilities.minimumPerformanceClock.iStep
+
+                    if value < lpODCapabilities.minimumPerformanceClock.iMin:
+                        return
+                    elif value > lpODCapabilities.minimumPerformanceClock.iMax:
+                        return
+
+                    _lpODFanSpeed = ADLODNFanControl()
+                    _lpODFanSpeed.iMinPerformanceClock = value
+                    _lpODFanSpeed.iMode = ODNControlType_Manual
+
+                    with ADL2_Main_Control_Create as _context:
+                        if ADL_OK == _ADL2_OverdriveN_FanControl_Set(
+                            _context,
+                            iAdapterIndex,
+                            ctypes.byref(_lpODFanSpeed)
+                        ):
+                            return value
+
+                def _set_automatic(value, mode):
+                    _lpODFanSpeed = ADLODNFanControl()
+                    _lpODFanSpeed.iMinFanLimit = value
+                    _lpODFanSpeed.iMode = mode
+
+                    with ADL2_Main_Control_Create as _context:
+                        if ADL_OK == _ADL2_OverdriveN_FanControl_Set(
+                            _context,
+                            iAdapterIndex,
+                            ctypes.byref(_lpODFanSpeed)
+                        ):
+                            return value
+
+                FanSpeeds._fan_speeds += [_do()]
+
+            else:
+                FanSpeeds._fan_speeds += [_dummy()]
+
+            if lpODCapabilities.iFlags & ADL_ODN_TEMPERATURE_FAN_MAX == ADL_ODN_TEMPERATURE_FAN_MAX:
+                min_val = lpODCapabilities.fanTemperature.iMin
+                max_val = lpODCapabilities.fanTemperature.iMax
+                step_val = lpODCapabilities.fanTemperature.iStep
+                current_val = lpODFanSpeed.iTargetTemperature
+                uom = 'degrees'
+
+                def _set(value):
+                    value -= value % lpODCapabilities.fanTemperature.iStep
+
+                    if value < lpODCapabilities.fanTemperature.iMin:
+                        return
+                    elif value > lpODCapabilities.fanTemperature.iMax:
+                        return
+
+                    _lpODFanSpeed = ADLODNFanControl()
+                    _lpODFanSpeed.iTargetTemperature = value
+                    _lpODFanSpeed.iMode = ODNControlType_Manual
+
+                    with ADL2_Main_Control_Create as _context:
+                        if ADL_OK == _ADL2_OverdriveN_FanControl_Set(
+                            _context,
+                            iAdapterIndex,
+                            ctypes.byref(_lpODFanSpeed)
+                        ):
+                            return value
+
+                def _set_automatic(value, mode):
+                    _lpODFanSpeed = ADLODNFanControl()
+                    _lpODFanSpeed.iTargetTemperature = value
+                    _lpODFanSpeed.iMode = mode
+
+                    with ADL2_Main_Control_Create as _context:
+                        if ADL_OK == _ADL2_OverdriveN_FanControl_Set(
+                            _context,
+                            iAdapterIndex,
+                            ctypes.byref(_lpODFanSpeed)
+                        ):
+                            return value
+
+                FanSpeeds._fan_speeds += [_do()]
+
+            else:
+                FanSpeeds._fan_speeds += [_dummy()]
+
+        return iter(FanSpeeds._fan_speeds)
+
+    def __getitem__(self, item):
+        speeds = list(self)
+        return speeds[item]
+
+    def __setitem__(self, key, value):
+        values = list(self)
+        val = values[key]
+        val += value - val.real
 
 
-# noinspection PyUnresolvedReferences
-class ParameterRange(int):
-
-    def __init__(self, value=None):
-        if value is None:
-            super(ParameterRange, self).__init__()
-        else:
-            try:
-                super(ParameterRange, self).__init__(value)
-            except TypeError:
-                super(ParameterRange, self).__init__()
-
-        self.__obj = None
-
-    def _set_object(self, obj):
-        self.__obj = obj
-
-    @property
-    def min(self):
-        return self.__obj.iMin.value
-
-    @property
-    def max(self):
-        return self.__obj.iMax.value
+class PowerThreshold(IntValueWrapper):
 
     @property
     def step(self):
-        return self.__obj.iStep.value
-
-
-# noinspection PyProtectedMember
-class ZeroRPMFan(object):
-    def __init__(self, parent):
-        self._parent = parent
-
-    @property
-    def _get(self):
-        iAdapterIndex = INT(self._parent._adapter_index)
-        support = INT()
-        currentValue = INT()
-        defaultValue = INT()
-
-        with ADL2_Main_Control_Create as context:
-            if _ADL2_OverdriveN_ZeroRPMFan_Get(
-                    context,
-                    iAdapterIndex,
-                    ctypes.byref(support),
-                    ctypes.byref(currentValue),
-                    ctypes.byref(defaultValue)
-            ) == ADL_OK:
-                return support.value, currentValue.value, defaultValue.value
-
-    @property
-    def value(self):
-        return self._get[1]
-
-    @value.setter
-    def value(self, value):
-        value = INT(value)
-        value = INT(value)
-        iAdapterIndex = INT(self._parent._adapter_index)
-
-        with ADL2_Main_Control_Create as context:
-            _ADL2_OverdriveN_ZeroRPMFan_Set(
-                context,
-                iAdapterIndex,
-                value
-            )
-
-    @property
-    def support(self):
-        return self._get[0]
+        return self._obj.step
 
     @property
     def default(self):
-        return self._get[2]
-
-
-# noinspection PyProtectedMember
-class MemoryTimingLevels(object):
-
-    def __init__(self, parent):
-        self._parent = parent
-
-    def __getitem__(self, item):
-        return list(self)[item]
+        return self._obj.default
 
     @property
-    def support(self):
-        return self._get[0]
+    def min(self):
+        return self._obj.min_value
 
-    def __len__(self):
-        return self._get[3]
+
+class Temperature(FloatValueWrapper):
 
     @property
-    def value(self):
-        return self._get[1]
+    def unit_of_measure(self):
+        return 'C'
 
-    @value.setter
-    def value(self, value):
-        value = INT(value)
-        iAdapterIndex = INT(self._parent._adapter_index)
+
+class Load(FloatValueWrapper):
+
+    @property
+    def unit_of_measure(self):
+        return '%'
+
+    @property
+    def min(self):
+        return 0.0
+
+    @property
+    def max(self):
+        return 100.0
+
+
+class OverDriveN(object):
+    _power_threshold = None
+
+    def __init__(self, adapter_index):
+        self._adapter_index = adapter_index
+
+    @property
+    def _capabilities(self):
+        iAdapterIndex = INT(self._adapter_index)
+        lpODCapabilities = ADLODNCapabilitiesX2()
 
         with ADL2_Main_Control_Create as context:
-            _ADL2_OverdriveN_MemoryTimingLevel_Set(
-                    context,
-                    iAdapterIndex,
-                    value
-            )
-
-    @property
-    def default(self):
-        return self._get[2]
-
-    @property
-    def _get(self):
-        iAdapterIndex = INT(self._parent._adapter_index)
-        support = INT()
-        currentValue = INT()
-        defaultValue = INT()
-        numberLevels = INT()
-        levelList = (INT * 1)()
-
-        with ADL2_Main_Control_Create as context:
-            if _ADL2_OverdriveN_MemoryTimingLevel_Get(
+            _ADL2_OverdriveN_CapabilitiesX2_Get(
                 context,
                 iAdapterIndex,
-                ctypes.byref(support),
-                ctypes.byref(currentValue),
-                ctypes.byref(defaultValue),
-                ctypes.byref(numberLevels),
-                ctypes.byref(levelList)
-            ) == ADL_OK:
+                ctypes.byref(lpODCapabilities)
+            )
 
-                levelList = list(levelList[i].value for i in range(numberLevels.value))
-                return (
-                    support.value,
-                    currentValue.value,
-                    defaultValue.value,
-                    numberLevels.value,
-                    levelList
-                )
-
-    def __iter__(self):
-        return iter(self._get[4])
-
-
-# noinspection PyProtectedMember
-class TemperatureLimits(object):
-
-    def __init__(self, parent):
-        self._parent = parent
+        return lpODCapabilities
 
     @property
-    def mode(self):
-        settings = self._power_limit_settings
-        return settings.iMode.value
-
-    @property
-    def _power_limit_settings(self):
-        odNPowerControl = ADLODNPowerLimitSetting()
-        iAdapterIndex = INT(self._parent._adapter_index)
+    def _activity(self):
+        iAdapterIndex = INT(self._adapter_index)
+        odNPerformanceStatus = ADLODNPerformanceStatus()
 
         with ADL2_Main_Control_Create as context:
-            if _ADL2_OverdriveN_PowerLimit_Get(
-                    context,
-                    iAdapterIndex,
-                    ctypes.byref(odNPowerControl)
-            ) == ADL_OK:
-                return odNPowerControl
+            _ADL2_OverdriveN_PerformanceStatus_Get(
+                context,
+                iAdapterIndex,
+                ctypes.byref(odNPerformanceStatus)
+            )
+            return odNPerformanceStatus
 
     @property
-    def max_operating_temperature(self):
-        caps = self._parent._capabilities
-        settings = self._power_limit_settings
+    def bus_speed(self):
+        lpActivity = self._activity
+        return lpActivity.iCurrentBusSpeed // 100
 
-        max_operating_temperature = ParameterRange(settings.iMaxOperatingTemperature.value)
-        max_operating_temperature._set_object(caps.powerTuneTemperature)
-        return max_operating_temperature
+    @property
+    def bus_lanes(self):
+        lpActivity = self._activity
 
-    @max_operating_temperature.setter
-    def max_operating_temperature(self, value):
+        class BusLanes(object):
+            max_value = lpActivity.iMaximumBusLanes
 
-        max_operating_temperature = self.max_operating_temperature
+        bus_lanes = IntValueWrapper(lpActivity.iCurrentBusLanes)
+        bus_lanes._obj = BusLanes
 
-        if not max_operating_temperature.max >= value >= max_operating_temperature.min:
-            return
+        return bus_lanes
 
-        if not value % max_operating_temperature.step:
-            return
+    @property
+    def load(self):
+        lpActivity = self._activity
+        return Load(lpActivity.iGPUActivityPercent / 10.0)
 
-        odNPowerControl = self._power_limit_settings
-        odNPowerControl.iMode = ODNControlType_Manual
-        odNPowerControl.iMaxOperatingTemperature = value
+    @property
+    def temperatures(self):
+        iAdapterIndex = INT(self._adapter_index)
 
-        iAdapterIndex = INT(self._parent._adapter_index)
+        iTemperatureType = INT(1)
+        iTemperature = INT(-1)
 
         with ADL2_Main_Control_Create as context:
+
+            _ADL2_OverdriveN_Temperature_Get(
+                context,
+                iAdapterIndex,
+                iTemperatureType,
+                ctypes.byref(iTemperature)
+            )
+
+        return [Temperature(iTemperature.value / 1000.0)]
+
+    @property
+    def is_power_control_supported(self):
+        lpODCapabilities = self._capabilities
+
+        return lpODCapabilities.iFlags & ADL_ODN_POWER_LIMIT == ADL_ODN_POWER_LIMIT
+
+    def _set_value(self, level, value):
+        if not self.is_power_control_supported:
+            return
+
+        lpODCapabilities = self._capabilities
+
+        iAdapterIndex = INT(self._adapter_index)
+        lpODPowerLimit = ADLODNPowerLimitSetting()
+        lpODPowerLimit.iMode = ODNControlType_Current
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_OverdriveN_PowerLimit_Get(
+                context,
+                iAdapterIndex,
+                ctypes.byref(lpODPowerLimit)
+            )
+
+            if level == 1:
+                min_val = lpODCapabilities.powerTuneTemperature.iMin
+                max_val = lpODCapabilities.powerTuneTemperature.iMax
+                step_val = lpODCapabilities.powerTuneTemperature.iStep
+            elif level == 2:
+                min_val = lpODCapabilities.power.iMin
+                max_val = lpODCapabilities.power.iMax
+                step_val = lpODCapabilities.power.iStep
+            else:
+                return
+
+            value -= value % step_val
+
+            if min_val > value or max_val < value:
+                return
+
+            if level == 1:
+                lpODPowerLimit.iMaxOperatingTemperature = value
+            else:
+                lpODPowerLimit.iTDPLimit = value
+
+            lpODPowerLimit.iMode = ODNControlType_Manual
+
             _ADL2_OverdriveN_PowerLimit_Set(
                 context,
                 iAdapterIndex,
-                ctypes.byref(odNPowerControl)
+                ctypes.byref(lpODPowerLimit)
             )
 
-    @property
-    def tdp_limit(self):
-        caps = self._parent._capabilities
-        settings = self._power_limit_settings
-
-        tdp_limit = ParameterRange(settings.iTDPLimit.value)
-        tdp_limit._set_object(caps.power)
-        return tdp_limit
-
-    @tdp_limit.setter
-    def tdp_limit(self, value):
-        tdp_limit = self.tdp_limit
-
-        if not tdp_limit.max >= value >= tdp_limit.min:
-            return
-
-        if not value % tdp_limit.step:
-            return
-
-        odNPowerControl = self._power_limit_settings
-        odNPowerControl.iMode = ODNControlType_Manual
-        odNPowerControl.iTDPLimit = value
-
-        iAdapterIndex = INT(self._parent._adapter_index)
-
-        with ADL2_Main_Control_Create as context:
-            _ADL2_OverdriveN_PowerLimit_Set(
-                    context,
-                    iAdapterIndex,
-                    ctypes.byref(odNPowerControl)
-            )
-
-
-# noinspection PyProtectedMember
-class FanSpeed(object):
-
-    def __init__(self, parent):
-        self._parent = parent
+            return value
 
     @property
-    def _fan_control(self):
-        odNFanControl = ADLODNFanControl()
-        iAdapterIndex = INT(self._parent._adapter_index)
+    def power_control(self):
+        if OverDriveN._power_threshold is None:
+            OverDriveN._power_threshold = []
 
-        with ADL2_Main_Control_Create as context:
-            if ADL_OK == _ADL2_OverdriveN_FanControl_Get(
-                context,
-                iAdapterIndex,
-                ctypes.byref(odNFanControl)
-            ):
-                return odNFanControl
+            def _do():
+                class Values(object):
+                    min_value = min_val
+                    max_value = max_val
+                    step = step_val
 
-    @property
-    def min_limit(self):
-        caps = self._parent._capabilities
+                value = PowerThreshold(current_val)
+                value._obj = Values
+                value._parent = self
+                value._level = level
+                value._adapter_index = self._adapter_index
+                return value
 
-        if not caps.iFlags.value & ADL_ODN_FAN_SPEED_MIN == ADL_ODN_FAN_SPEED_MIN:
-            return
+            if self.is_power_control_supported:
+                lpODCapabilities = self._capabilities
 
-        fan_control = self._fan_control
-        min_limit = ParameterRange(fan_control.iMinFanLimit.value)
-        min_limit._set_object(caps.fanSpeed)
-        return min_limit
+                iAdapterIndex = INT(self._adapter_index)
+                lpODPowerLimit = ADLODNPowerLimitSetting()
+                lpODPowerLimit.iMode = ODNControlType_Current
 
-    @min_limit.setter
-    def min_limit(self, value):
-        caps = self._parent._capabilities
-        if caps.iFlags.value & ADL_ODN_FAN_SPEED_MIN == ADL_ODN_FAN_SPEED_MIN:
-            min_limit = self.min_limit
+                with ADL2_Main_Control_Create as context:
+                    _ADL2_OverdriveN_PowerLimit_Get(
+                        context,
+                        iAdapterIndex,
+                        ctypes.byref(lpODPowerLimit)
+                    )
 
-            if not min_limit.max >= value >= min_limit.min:
-                return
+                    min_val = lpODCapabilities.powerTuneTemperature.iMin
+                    max_val = lpODCapabilities.powerTuneTemperature.iMax
+                    step_val = lpODCapabilities.powerTuneTemperature.iStep
+                    current_val = lpODPowerLimit.iMaxOperatingTemperature
+                    level = 1
 
-            if value % min_limit.step:
-                return
+                    OverDriveN._power_threshold += [_do()]
 
-            iAdapterIndex = INT(self._parent._adapter_index)
+                    min_val = lpODCapabilities.power.iMin
+                    max_val = lpODCapabilities.power.iMax
+                    step_val = lpODCapabilities.power.iStep
+                    current_val = lpODPowerLimit.iTDPLimit
+                    level = 2
+                    OverDriveN._power_threshold += [_do()]
 
-            odNFanControl = self._fan_control
-            odNFanControl.iMode = ODNControlType_Manual
-            odNFanControl.iMinFanLimit = value
+            else:
+                min_val = 0
+                max_val = 0
+                step_val = 0
+                current_val = 0
+                level = 1
+                OverDriveN._power_threshold += [_do()]
 
-            with ADL2_Main_Control_Create as context:
-                _ADL2_OverdriveN_FanControl_Set(
-                    context,
-                    iAdapterIndex,
-                    ctypes.byref(odNFanControl)
-                )
+                level = 2
+                OverDriveN._power_threshold += [_do()]
 
-    @property
-    def control_mode(self):
-        fan_control = self._fan_control
-        return fan_control.iFanControlMode.value
+        return OverDriveN._power_threshold[:]
 
-    @property
-    def target(self):
-        caps = self._parent._capabilities
-
-        if not caps.iFlags.value & ADL_ODN_FAN_SPEED_TARGET == ADL_ODN_FAN_SPEED_TARGET:
-            return
-
-        fan_control = self._fan_control
-        target = ParameterRange(fan_control.iTargetFanSpeed.value)
-        target._set_object(caps.fanSpeed)
-        return target
-
-    @target.setter
-    def target(self, value):
-        caps = self._parent._capabilities
-        if caps.iFlags.value & ADL_ODN_FAN_SPEED_TARGET == ADL_ODN_FAN_SPEED_TARGET:
-            target = self.target
-
-            if not target.max >= value >= target.min:
-                return
-
-            if value % target.step:
-                return
-
-            iAdapterIndex = INT(self._parent._adapter_index)
-            odNFanControl = self._fan_control
-            odNFanControl.iMode = ODNControlType_Manual
-            odNFanControl.iTargetFanSpeed = value
-
-            with ADL2_Main_Control_Create as context:
-                _ADL2_OverdriveN_FanControl_Set(
-                    context,
-                    iAdapterIndex,
-                    ctypes.byref(odNFanControl)
-                )
+    @power_control.setter
+    def power_control(self, value):
+        val = self.power_control
+        val += value - val.real
 
     @property
-    def min_performance_clock(self):
-        caps = self._parent._capabilities
-
-        if not caps.iFlags.value & ADL_ODN_ACOUSTIC_LIMIT_SCLK == ADL_ODN_ACOUSTIC_LIMIT_SCLK:
-            return
-
-        fan_control = self._fan_control
-
-        min_performance_clock = ParameterRange(fan_control.iMinPerformanceClock.value)
-        min_performance_clock._set_object(caps.minimumPerformanceClock)
-
-        return min_performance_clock
-
-    @min_performance_clock.setter
-    def min_performance_clock(self, value):
-        caps = self._parent._capabilities
-        if caps.iFlags.value & ADL_ODN_ACOUSTIC_LIMIT_SCLK == ADL_ODN_ACOUSTIC_LIMIT_SCLK:
-            min_performance_clock = self.min_performance_clock
-
-            if not min_performance_clock.max >= value >= min_performance_clock.min:
-                return
-
-            if value % min_performance_clock.step:
-                return
-
-            iAdapterIndex = INT(self._parent._adapter_index)
-            odNFanControl = self._fan_control
-            odNFanControl.iMode = ODNControlType_Manual
-            odNFanControl.iMinPerformanceClock = value
-
-            with ADL2_Main_Control_Create as context:
-                _ADL2_OverdriveN_FanControl_Set(
-                    context,
-                    iAdapterIndex,
-                    ctypes.byref(odNFanControl)
-                )
+    def engine_clocks(self):
+        return CoreClocks(self._adapter_index)
 
     @property
-    def target_temperature(self):
-        caps = self._parent._capabilities
-
-        if not caps.iFlags.value & ADL_ODN_TEMPERATURE_FAN_MAX == ADL_ODN_TEMPERATURE_FAN_MAX:
-            return
-
-        fan_control = self._fan_control
-        target_temperature = ParameterRange(fan_control.iTargetTemperature.value)
-        target_temperature._set_object(caps.fanTemperature)
-
-        return target_temperature
-
-    @target_temperature.setter
-    def target_temperature(self, value):
-        caps = self._parent._capabilities
-        if caps.iFlags.value & ADL_ODN_TEMPERATURE_FAN_MAX == ADL_ODN_TEMPERATURE_FAN_MAX:
-            target_temperature = self.target_temperature
-
-            if not target_temperature.max >= value >= target_temperature.min:
-                return
-
-            if value % target_temperature.step:
-                return
-
-            iAdapterIndex = INT(self._parent._adapter_index)
-            odNFanControl = self._fan_control
-            odNFanControl.iMode = ODNControlType_Manual
-            odNFanControl.iTargetTemperature = value
-
-            with ADL2_Main_Control_Create as context:
-                _ADL2_OverdriveN_FanControl_Set(
-                    context,
-                    iAdapterIndex,
-                    ctypes.byref(odNFanControl)
-                )
+    def memory_clocks(self):
+        return MemoryClocks(self._adapter_index)
 
     @property
-    def fan_speed(self):
-        fan_control = self._fan_control
-        return fan_control.iCurrentFanSpeed.value
+    def core_voltages(self):
+        return CoreVoltages(self._adapter_index)
 
     @property
-    def fan_speed_mode(self):
-        fan_control = self._fan_control
-        return fan_control.iCurrentFanSpeedMode.value
-
-
-# noinspection PyProtectedMember
-class GPUPerformanceLevel(object):
-
-    # noinspection PyShadowingBuiltins
-    def __init__(self, parent, id):
-        self._id = id
-        self._parent = parent
+    def memory_voltages(self):
+        return MemoryVoltages(self._adapter_index)
 
     @property
-    def id(self):
-        return self._id
-
-    @property
-    def _level(self):
-        overdriveCapabilities = self._parent._capabilities
-
-        num_levels = overdriveCapabilities.iMaximumNumberOfPerformanceLevels.value
-
-        size = (
-                ctypes.sizeof(ADLODNPerformanceLevelsX2) +
-                ctypes.sizeof(ADLODNPerformanceLevelX2) *
-                (num_levels - 1)
-        )
-
-        performanceLevelsBuffer = (CHAR * size)()
-        ctypes.memset(performanceLevelsBuffer, 0, size)
-        odPerformanceLevels = ctypes.cast(
-            performanceLevelsBuffer,
-            ctypes.POINTER(ADLODNPerformanceLevelsX2)
-        )
-        odPerformanceLevels.iSize = size
-        odPerformanceLevels.iNumberOfPerformanceLevels = num_levels
-
-        iAdapterIndex = INT(self._parent._adapter_index)
-
-        with ADL2_Main_Control_Create as context:
-            if ADL_OK == _ADL2_OverdriveN_SystemClocksX2_Get(
-                context,
-                iAdapterIndex,
-                odPerformanceLevels
-            ):
-                # noinspection PyUnresolvedReferences
-                return odPerformanceLevels.content.aLevels[self._id]
-
-    @property
-    def clock(self):
-        caps = self._parent._capabilities
-        level = self._level
-
-        value = ParameterRange(level.iClock.value)
-        value._set_object(caps.sEngineClockRange)
-        return value
-
-    @clock.setter
-    def clock(self, value):
-        if not self.is_clock_editable:
-            return
-
-        old_value = self.clock
-        if not old_value.max >= value >= old_value.min:
-            return
-
-        if value % old_value.step:
-            return
-
-        # TODO: finish setting
-
-    @property
-    def is_clock_editable(self):
-        level = self._level
-        return level.iControl & ADL_ODN_DPM_CLOCK == ADL_ODN_DPM_CLOCK
-
-    @property
-    def is_vdcc_editable(self):
-        level = self._level
-        return level.iControl & ADL_ODN_DPM_VDDC == ADL_ODN_DPM_VDDC
-
-    @property
-    def vdcc(self):
-        caps = self._parent._capabilities
-        level = self._level
-        value = ParameterRange(level.iVddc.value)
-        value._set_object(caps.svddcRange)
-        return value
-
-    @vdcc.setter
-    def vdcc(self, value):
-        if not self.is_vdcc_editable:
-            return
-
-        old_value = self.vdcc
-        if not old_value.max >= value >= old_value.min:
-            return
-
-        if value % old_value.step:
-            return
-
-        # TODO: finish setting
-
-    @property
-    def dpm_state(self):
-        level = self._level
-        return bool(level.iEnabled.value)
-
-    @dpm_state.setter
-    def dpm_state(self, value):
-        if self.is_dpm_state_editable:
-            # TODO: finish setting
-            pass
-
-    @property
-    def is_dpm_state_editable(self):
-        level = self._level
-        caps = self._parent._capabilities
-
-        return (
-            level.iControl & ADL_ODN_DPM_MASK == ADL_ODN_DPM_MASK and
-            caps.iFlags & ADL_ODN_MCLK_DPM_MASK_ENABLE == ADL_ODN_MCLK_DPM_MASK_ENABLE
-        )
-
-
-# noinspection PyProtectedMember
-class MemoryPerformanceLevel(GPUPerformanceLevel):
-
-    @property
-    def _defaults(self):
-        overdriveCapabilities = self._parent._capabilities
-
-        num_levels = overdriveCapabilities.iMaximumNumberOfPerformanceLevels.value
-
-        size = (
-                ctypes.sizeof(ADLODNPerformanceLevelsX2) +
-                ctypes.sizeof(ADLODNPerformanceLevelX2) *
-                (num_levels - 1)
-        )
-
-        performanceLevelsBuffer_default = (CHAR * size)()
-        ctypes.memset(performanceLevelsBuffer_default, 0, size)
-
-        odPerformanceLevels_default = ctypes.cast(
-            performanceLevelsBuffer_default,
-            POINTER(ADLODNPerformanceLevelsX2)
-        )
-        odPerformanceLevels_default.iSize = size
-        odPerformanceLevels_default.iMode = 1  # DEFAULTS
-        odPerformanceLevels_default.iNumberOfPerformanceLevels = num_levels
-
-        iAdapterIndex = INT(self._parent._adapter_index)
-
-        with ADL2_Main_Control_Create as context:
-            if ADL_OK == _ADL2_OverdriveN_MemoryClocksX2_Get(
-                    context,
-                    iAdapterIndex,
-                    odPerformanceLevels_default
-            ):
-                # noinspection PyUnresolvedReferences
-                return odPerformanceLevels_default.content.aLevels[self._id]
-
-    @property
-    def _level(self):
-        overdriveCapabilities = self._parent._capabilities
-
-        num_levels = overdriveCapabilities.iMaximumNumberOfPerformanceLevels.value
-
-        size = (
-                ctypes.sizeof(ADLODNPerformanceLevelsX2) +
-                ctypes.sizeof(ADLODNPerformanceLevelX2) *
-                (num_levels - 1)
-        )
-
-        performanceLevelsBuffer = (CHAR * size)()
-        ctypes.memset(performanceLevelsBuffer, 0, size)
-        odPerformanceLevels = ctypes.cast(
-            performanceLevelsBuffer,
-            ctypes.POINTER(ADLODNPerformanceLevelsX2)
-        )
-        odPerformanceLevels.iSize = size
-        odPerformanceLevels.iMode = 0
-        odPerformanceLevels.iNumberOfPerformanceLevels = num_levels
-
-        iAdapterIndex = INT(self._parent._adapter_index)
-
-        with ADL2_Main_Control_Create as context:
-            if ADL_OK == _ADL2_OverdriveN_MemoryClocksX2_Get(
-                    context,
-                    iAdapterIndex,
-                    odPerformanceLevels
-            ):
-                # noinspection PyUnresolvedReferences
-                return odPerformanceLevels.content.aLevels[self._id]
-
-    @property
-    def clock(self):
-        caps = self._parent._capabilities
-        level = self._level
-        odPerformanceLevels_default = self._defaults
-
-        if not caps.iFlags.value & ADL_ODN_MCLK_UNDERCLOCK_ENABLE == ADL_ODN_MCLK_UNDERCLOCK_ENABLE:
-            caps.sMemoryClockRange.iMin = odPerformanceLevels_default.iClock
-
-        value = ParameterRange(level.iClock.value)
-        value._set_object(caps.sMemoryClockRange)
-        return value
-
-    @clock.setter
-    def clock(self, value):
-        if not self.is_clock_editable:
-            return
-
-        old_value = self.clock
-        if not old_value.max >= value >= old_value.min:
-            return
-
-        if value % old_value.step:
-            return
-
-        # TODO: finish setting
+    def fan_speeds(self):
+        return FanSpeeds(self._adapter_index)

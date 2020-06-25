@@ -3674,7 +3674,7 @@ ADLODNFanControl._fields_ = [
 # / \nosubgrouping
 # ////////////////////////////////////////////////////////////////////////////////////
 ADLODNPowerLimitSetting._fields_ = [
-    ('iMode', INT),
+    ('iMode', ADLODNControlType),
     ('iTDPLimit', INT),
     ('iMaxOperatingTemperature', INT),
 ]
@@ -3727,7 +3727,7 @@ ADLODNPerformanceLevelX2._fields_ = [
 ADLODNPerformanceLevelsX2._fields_ = [
     ('iSize', INT),
     # Automatic/manual
-    ('iMode', INT),
+    ('iMode', ADLODNControlType),
     # / Must be set to
     # (ctypes.sizeof( \ref ADLODPerformanceLevels ) + (ctypes.sizeof( \ref ADLODPerformanceLevel ) *
     # (ADLODParameters.iNumberOfPerformanceLevels - 1)

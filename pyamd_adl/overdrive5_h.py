@@ -899,7 +899,7 @@ class CoreVoltages(object):
         return iter(CoreVoltages._core_voltages)
 
 
-class EngineClock(IntValueWrapper):
+class CoreClock(IntValueWrapper):
 
     @property
     def is_active(self):
@@ -932,8 +932,8 @@ class EngineClock(IntValueWrapper):
         return 'MHz'
 
 
-class EngineClocks(object):
-    _engine_clocks = None
+class CoreClocks(object):
+    _core_clocks = None
 
     def __init__(self, adapter_index):
         self._adapter_index = adapter_index
@@ -959,9 +959,9 @@ class EngineClocks(object):
                 ctypes.byref(lpActivity)
             )
             try:
-                return EngineClock(lpActivity.iEngineClock // 100)
+                return CoreClock(lpActivity.iEngineClock // 100)
             except ZeroDivisionError:
-                return EngineClock(0)
+                return CoreClock(0)
 
     @property
     def current(self):
@@ -1037,8 +1037,8 @@ class EngineClocks(object):
             return value
 
     def __iter__(self):
-        if EngineClocks._engine_clocks is None:
-            EngineClocks._engine_clocks = []
+        if CoreClocks._core_clocks is None:
+            CoreClocks._core_clocks = []
 
             iAdapterIndex = INT(self._adapter_index)
 
@@ -1108,13 +1108,13 @@ class EngineClocks(object):
                     step = step_val
                     default = default_val
 
-                value = EngineClock(current_val)
+                value = CoreClock(current_val)
                 value._obj = Values
                 value._adapter_index = self._adapter_index
                 value._level = i
-                EngineClocks._engine_clocks.append(value)
+                CoreClocks._core_clocks.append(value)
 
-        return iter(EngineClocks._engine_clocks)
+        return iter(CoreClocks._core_clocks)
 
 
 class MemoryClock(IntValueWrapper):
@@ -1333,6 +1333,34 @@ class MemoryClocks(object):
                 MemoryClocks._memory_clocks.append(value)
 
         return iter(MemoryClocks._memory_clocks)
+
+
+class MemoryVoltage(CoreVoltage):
+    pass
+
+
+class MemoryVoltages(object):
+    _memory_voltages = []
+
+    def __init__(self, adapter_index):
+        self._adapter_index = adapter_index
+
+    def __getitem__(self, item):
+        return list(self)[item]
+
+    def __setitem__(self, key, value):
+        pass
+
+    @property
+    def actual(self):
+        return MemoryVoltage(0)
+
+    @property
+    def current(self):
+        return MemoryVoltage(0)
+
+    def __iter__(self):
+        return iter(MemoryVoltages._memory_voltages)
 
 
 class FanSpeed(IntValueWrapper):
@@ -1814,7 +1842,7 @@ class OverDrive5(object):
 
     @property
     def engine_clocks(self):
-        return EngineClocks(self._adapter_index)
+        return CoreClocks(self._adapter_index)
 
     @property
     def memory_clocks(self):
@@ -1823,6 +1851,10 @@ class OverDrive5(object):
     @property
     def core_voltages(self):
         return CoreVoltages(self._adapter_index)
+
+    @property
+    def memory_voltages(self):
+        return MemoryVoltages(self._adapter_index)
 
     @property
     def fan_speeds(self):
