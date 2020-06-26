@@ -811,7 +811,7 @@ class CoreVoltages(object):
                 )
 
             if lpODCapabilities.iFlags & ADL_ODN_SCLK_VDD == ADL_ODN_SCLK_VDD:
-                for i in range(iNumberOfPerformanceLevels):
+                for i in range(performanceLevels.iNumberOfPerformanceLevels):
                     performanceLevel = performanceLevels.aLevels[i]
                     defaultPerformanceLevel = defaultPerformanceLevels.aLevels[i]
 
@@ -1112,7 +1112,7 @@ class CoreClocks(object):
                 )
 
             if lpODCapabilities.iFlags & ADL_ODN_SCLK_DPM == ADL_ODN_SCLK_DPM:
-                for i in range(iNumberOfPerformanceLevels):
+                for i in range(performanceLevels.iNumberOfPerformanceLevels):
                     performanceLevel = performanceLevels.aLevels[i]
                     defaultPerformanceLevel = defaultPerformanceLevels.aLevels[i]
 
@@ -1415,7 +1415,7 @@ class MemoryVoltages(object):
                 )
 
             if lpODCapabilities.iFlags & ADL_ODN_MCLK_VDD == ADL_ODN_MCLK_VDD:
-                for i in range(iNumberOfPerformanceLevels):
+                for i in range(performanceLevels.iNumberOfPerformanceLevels):
                     performanceLevel = performanceLevels.aLevels[i]
                     defaultPerformanceLevel = defaultPerformanceLevels.aLevels[i]
 
@@ -1721,7 +1721,7 @@ class MemoryClocks(object):
                 )
 
             if lpODCapabilities.iFlags & ADL_ODN_MCLK_DPM == ADL_ODN_MCLK_DPM:
-                for i in range(iNumberOfPerformanceLevels):
+                for i in range(performanceLevels.iNumberOfPerformanceLevels):
                     performanceLevel = performanceLevels.aLevels[i]
                     defaultPerformanceLevel = defaultPerformanceLevels.aLevels[i]
 
