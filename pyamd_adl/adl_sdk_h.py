@@ -236,6 +236,7 @@ class _ADL2_Main_Control_Create(object):
                         ctypes.byref(self._context)
                 ) != ADL_OK:
                     raise RuntimeError('Unable to create ADL control')
+
             return self._context
 
     def __exit__(self, exc_type, exc_val, exc_tb):

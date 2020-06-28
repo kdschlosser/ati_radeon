@@ -26,6 +26,9 @@
 
 from __future__ import print_function
 import pyamd_adl
+import logging
+
+pyamd_adl.logger.setLevel(logging.DEBUG)
 
 for adapter in pyamd_adl.adapters:
     print('id:', adapter.id)

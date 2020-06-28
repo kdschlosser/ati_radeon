@@ -155,13 +155,15 @@ class ENUM(INT):
 
     @property
     def value(self):
-        value = super_bypass_issue29270(ENUM, self).value.__get__()
+        value = super_bypass_issue29270(ENUM, self).value
         for k, v in self.__class__.__dict__.items():
             if k.startswith('_'):
                 continue
 
             if v == value:
                 return v
+
+        return value
 
 
 def defined(macro):
@@ -258,52 +260,116 @@ ADL_DDC_OPTION_SENDTOIMMEDIATEDEVICE = 0x00000020
 ADL_DL_I2C_ACTIONREAD = 0x00000001
 ADL_DL_I2C_ACTIONWRITE = 0x00000002
 ADL_DL_I2C_ACTIONREAD_REPEATEDSTART = 0x00000003
+
+
 # @}
 # @}  //Misc
 # / \defgroup define_adl_results Result Codes
 # / This group of definitions are the various results returned by all ADL
 # functions \n
 # @{
-# / All OK, but need to wait
-ADL_OK_WAIT = 4
-# / All OK, but need restart
-ADL_OK_RESTART = 3
-# / All OK but need mode change
-ADL_OK_MODE_CHANGE = 2
-# / All OK, but with warning
-ADL_OK_WARNING = 1
-# / ADL function completed successfully
-ADL_OK = 0
-# / Generic Error. Most likely one or more of the Escape calls to the
-# driver failednot
-ADL_ERR = -1
-# / ADL not initialized
-ADL_ERR_NOT_INIT = -2
-# / One of the parameter passed is invalid
-ADL_ERR_INVALID_PARAM = -3
-# / One of the parameter size is invalid
-ADL_ERR_INVALID_PARAM_SIZE = -4
-# / Invalid ADL index passed
-ADL_ERR_INVALID_ADL_IDX = -5
-# / Invalid controller index passed
-ADL_ERR_INVALID_CONTROLLER_IDX = -6
-# / Invalid display index passed
-ADL_ERR_INVALID_DIPLAY_IDX = -7
-# / Function not supported by the driver
-ADL_ERR_NOT_SUPPORTED = -8
-# / Null Pointer error
-ADL_ERR_NULL_POINTER = -9
-# / Call can't be made due to disabled adapter
-ADL_ERR_DISABLED_ADAPTER = -10
-# / Invalid Callback
-ADL_ERR_INVALID_CALLBACK = -11
-# / Display Resource conflict
-ADL_ERR_RESOURCE_CONFLICT = -12
-# Failed to update some of the values. Can be returned by set request that
-# include multiple values if not all values were successfully committed.
-ADL_ERR_SET_INCOMPLETE = -20
-# / There's no Linux XDisplay in Linux Console environment
-ADL_ERR_NO_XDISPLAY = -21
+class ADL_STATUS(ENUM):
+    # / All OK, but need to wait
+    ADL_OK_WAIT = EnumItem(4).set_string(
+        'All OK, but need to wait (4)'
+    )
+    # / All OK, but need restart
+    ADL_OK_RESTART = EnumItem(3).set_string(
+        'All OK, but need restart (3)'
+    )
+    # / All OK but need mode change
+    ADL_OK_MODE_CHANGE = EnumItem(2).set_string(
+        'All OK but need mode change (2)'
+    )
+    # / All OK, but with warning
+    ADL_OK_WARNING = EnumItem(1).set_string(
+        'All OK, but with warning (1)'
+    )
+    # / ADL function completed successfully
+    ADL_OK = EnumItem(0).set_string(
+        'ADL function completed successfully (0)'
+    )
+    # / Generic Error. Most likely one or more of the Escape calls to the
+    # driver failednot
+    ADL_ERR = EnumItem(-1).set_string(
+        'Generic Error. Most likely one or more of the'
+        ' Escape calls to the driver failednot (-1)'
+    )
+    # / ADL not initialized
+    ADL_ERR_NOT_INIT = EnumItem(-2).set_string(
+        'ADL not initialized (-2)'
+    )
+    # / One of the parameter passed is invalid
+    ADL_ERR_INVALID_PARAM = EnumItem(-3).set_string(
+        'One of the parameter passed is invalid (-3)'
+    )
+    # / One of the parameter size is invalid
+    ADL_ERR_INVALID_PARAM_SIZE = EnumItem(-4).set_string(
+        'One of the parameter size is invalid (-4)'
+    )
+    # / Invalid ADL index passed
+    ADL_ERR_INVALID_ADL_IDX = EnumItem(-5).set_string(
+        'Invalid ADL index passed (-5)'
+    )
+    # / Invalid controller index passed
+    ADL_ERR_INVALID_CONTROLLER_IDX = EnumItem(-6).set_string(
+        'Invalid controller index passed (-6)'
+    )
+    # / Invalid display index passed
+    ADL_ERR_INVALID_DIPLAY_IDX = EnumItem(-7).set_string(
+        'Invalid display index passed (-7)'
+    )
+    # / Function not supported by the driver
+    ADL_ERR_NOT_SUPPORTED = EnumItem(-8).set_string(
+        'Function not supported by the driver (-8)'
+    )
+    # / Null Pointer error
+    ADL_ERR_NULL_POINTER = EnumItem(-9).set_string(
+        'Null Pointer error (-9)'
+    )
+    # / Call can't be made due to disabled adapter
+    ADL_ERR_DISABLED_ADAPTER = EnumItem(-10).set_string(
+        'Call can\'t be made due to disabled adapter (-10)'
+    )
+    # / Invalid Callback
+    ADL_ERR_INVALID_CALLBACK = EnumItem(-11).set_string(
+        'Invalid Callback(-11)'
+    )
+    # / Display Resource conflict
+    ADL_ERR_RESOURCE_CONFLICT = EnumItem(-12).set_string(
+        'Display Resource conflict (-12)'
+    )
+    # Failed to update some of the values. Can be returned by set request that
+    # include multiple values if not all values were successfully committed.
+    ADL_ERR_SET_INCOMPLETE = EnumItem(-20).set_string(
+        'Failed to update some of the values. Can be returned by set request '
+        'that include multiple values if not all values were successfully committed. (-20)'
+    )
+    # / There's no Linux XDisplay in Linux Console environment
+    ADL_ERR_NO_XDISPLAY = EnumItem(-21).set_string(
+        'There\'s no Linux XDisplay in Linux Console environment (-21)'
+    )
+
+
+ADL_OK_WAIT = ADL_STATUS.ADL_OK_WAIT
+ADL_OK_RESTART = ADL_STATUS.ADL_OK_RESTART
+ADL_OK_MODE_CHANGE = ADL_STATUS.ADL_OK_MODE_CHANGE
+ADL_OK_WARNING = ADL_STATUS.ADL_OK_WARNING
+ADL_OK = ADL_STATUS.ADL_OK
+ADL_ERR = ADL_STATUS.ADL_ERR
+ADL_ERR_NOT_INIT = ADL_STATUS.ADL_ERR_NOT_INIT
+ADL_ERR_INVALID_PARAM = ADL_STATUS.ADL_ERR_INVALID_PARAM
+ADL_ERR_INVALID_PARAM_SIZE = ADL_STATUS.ADL_ERR_INVALID_PARAM_SIZE
+ADL_ERR_INVALID_ADL_IDX = ADL_STATUS.ADL_ERR_INVALID_ADL_IDX
+ADL_ERR_INVALID_CONTROLLER_IDX = ADL_STATUS.ADL_ERR_INVALID_CONTROLLER_IDX
+ADL_ERR_INVALID_DIPLAY_IDX = ADL_STATUS.ADL_ERR_INVALID_DIPLAY_IDX
+ADL_ERR_NOT_SUPPORTED = ADL_STATUS.ADL_ERR_NOT_SUPPORTED
+ADL_ERR_NULL_POINTER = ADL_STATUS.ADL_ERR_NULL_POINTER
+ADL_ERR_DISABLED_ADAPTER = ADL_STATUS.ADL_ERR_DISABLED_ADAPTER
+ADL_ERR_INVALID_CALLBACK = ADL_STATUS.ADL_ERR_INVALID_CALLBACK
+ADL_ERR_RESOURCE_CONFLICT = ADL_STATUS.ADL_ERR_RESOURCE_CONFLICT
+ADL_ERR_SET_INCOMPLETE = ADL_STATUS.ADL_ERR_SET_INCOMPLETE
+ADL_ERR_NO_XDISPLAY = ADL_STATUS.ADL_ERR_NO_XDISPLAY
 # @}
 # / < /A >
 # / \defgroup define_display_type Display Type

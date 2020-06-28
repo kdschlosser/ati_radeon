@@ -59,6 +59,12 @@ This is a port of the AMD ADL. This library provides a way to make overdrive adj
 code. There is no UI available for this library.
 '''
 
+import logging  # NOQA
+
+logging.basicConfig(level=None)
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
+
 from .adl_sdk_h import Adapters as _Adapters
 adapters = _Adapters()
 

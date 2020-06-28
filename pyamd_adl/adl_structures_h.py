@@ -4413,7 +4413,6 @@ class _ADL_CHILL_SETTINGS(ctypes.Structure):
 ADL_CHILL_SETTINGS = _ADL_CHILL_SETTINGS
 
 
-
 class _ADL_ERROR_REASON(ctypes.Structure):
 
     _fields_ = [
@@ -4430,6 +4429,11 @@ def GetProcAddress(pLibrary, name):
     return getattr(pLibrary, name, NULL)
 
 
+import logging  # NOQA
+
+logger = logging.getLogger(__name__.rsplit('.', 1)[0])
+
+
 def _int(*args):
     def wrapper(*func):
         func = func[0]
@@ -4438,11 +4442,31 @@ def _int(*args):
             return NULL
 
         func.argtypes = list(args)
-        func.restype = INT
+        func.restype = ADL_STATUS
 
-        return func
+        class Wrapper(object):
+
+            @property
+            def argtypes(self):
+                return func.argtypes
+
+            @argtypes.setter
+            def argtypes(self, value):
+                func.argtypes = value
+
+            def __call__(self, *params):
+                res = func(*params)
+                res = res.value
+
+                if res < 0:
+                    logger.debug(func.__name__ + ' : ' + str(res))
+
+                return res
+
+        return Wrapper()
 
     return wrapper
+
 
 __all__ = (
     'ADLAVIInfoPacket',

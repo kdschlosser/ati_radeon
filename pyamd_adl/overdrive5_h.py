@@ -1773,6 +1773,7 @@ class OverDrive5(object):
     @property
     def power_control(self):
         if OverDrive5._power_threshold is None:
+            OverDrive5._power_threshold = []
             if self.is_power_control_supported:
                 iAdapterIndex = INT(self._adapter_index)
                 powerControlInfo = ADLPowerControlInfo()
@@ -1817,7 +1818,7 @@ class OverDrive5(object):
             value._level = 0
             value._adapter_index = self._adapter_index
 
-            OverDrive5._power_threshold = value
+            OverDrive5._power_threshold += [value]
 
         return OverDrive5._power_threshold
 
