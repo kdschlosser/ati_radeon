@@ -104,7 +104,7 @@ class Constant(long):
         if self._string:
             return repr(self._string)
 
-        return int.__repr__(self)
+        return super(Constant, self).__repr__()
 
     def set_string(self, value):
         self._string = value
@@ -131,7 +131,7 @@ class Constant(long):
         return super(Constant, self).__str__()
 
     def __hash__(self):
-        return int.__hash__(self)
+        return super(Constant, self).__hash__()
 
 
 super_bypass_issue29270 = super
@@ -140,7 +140,6 @@ super_bypass_issue29270 = super
 class ENUM(INT):
 
     def __init__(self, value=None):
-
         if value is None:
             super_bypass_issue29270(ENUM, self).__init__(0)
         else:
@@ -156,7 +155,7 @@ class ENUM(INT):
 
     @property
     def value(self):
-        value = INT.value.__get__(self)
+        value = super_bypass_issue29270(ENUM, self).value.__get__()
         for k, v in self.__class__.__dict__.items():
             if k.startswith('_'):
                 continue
