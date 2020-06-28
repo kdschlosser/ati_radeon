@@ -24,6 +24,8 @@
 
 # ***********************************************************************************
 from .adl_structures_h import *  # NOQA
+from . import utils
+
 
 # Copyright (c) 2016 Advanced Micro Devices, Inc. All rights reserved.
 # MIT LICENSE:
@@ -646,11 +648,12 @@ class CoreVoltage(FloatValueWrapper):
         return 'VDC'
 
 
+@utils.instance_singleton
 class CoreVoltages(object):
-    _core_voltages = None
 
     def __init__(self, adapter_index):
         self._adapter_index = adapter_index
+        self._core_voltages = None
 
     def __getitem__(self, item):
         return list(self)[item]
@@ -765,8 +768,8 @@ class CoreVoltages(object):
         return lpODCapabilities
 
     def __iter__(self):
-        if CoreVoltages._core_voltages is None:
-            CoreVoltages._core_voltages = []
+        if self._core_voltages is None:
+            self._core_voltages = []
 
             iAdapterIndex = INT(self._adapter_index)
 
@@ -833,9 +836,9 @@ class CoreVoltages(object):
                     value._obj = Values
                     value._adapter_index = self._adapter_index
                     value._level = i
-                    CoreVoltages._core_voltages.append(value)
+                    self._core_voltages.append(value)
 
-        return iter(CoreVoltages._core_voltages)
+        return iter(self._core_voltages)
 
 
 class CoreClock(IntValueWrapper):
@@ -948,11 +951,12 @@ class CoreClock(IntValueWrapper):
         return 'MHz'
 
 
+@utils.instance_singleton
 class CoreClocks(object):
-    _core_clocks = None
 
     def __init__(self, adapter_index):
         self._adapter_index = adapter_index
+        self._core_clocks = None
 
     def __getitem__(self, item):
         return list(self)[item]
@@ -1067,8 +1071,8 @@ class CoreClocks(object):
         return lpODCapabilities
 
     def __iter__(self):
-        if CoreClocks._core_clocks is None:
-            CoreClocks._core_clocks = []
+        if self._core_clocks is None:
+            self._core_clocks = []
 
             iAdapterIndex = INT(self._adapter_index)
             lpODCapabilities = self._capabilities
@@ -1134,9 +1138,9 @@ class CoreClocks(object):
                     value._obj = Values
                     value._adapter_index = self._adapter_index
                     value._level = i
-                    CoreClocks._core_clocks.append(value)
+                    self._core_clocks.append(value)
 
-        return iter(CoreClocks._core_clocks)
+        return iter(self._core_clocks)
 
 
 class MemoryVoltage(FloatValueWrapper):
@@ -1250,11 +1254,12 @@ class MemoryVoltage(FloatValueWrapper):
         return 'VDC'
 
 
+@utils.instance_singleton
 class MemoryVoltages(object):
-    _memory_voltages = None
 
     def __init__(self, adapter_index):
         self._adapter_index = adapter_index
+        self._memory_voltages = None
 
     def __getitem__(self, item):
         return list(self)[item]
@@ -1369,8 +1374,8 @@ class MemoryVoltages(object):
         return lpODCapabilities
 
     def __iter__(self):
-        if MemoryVoltages._memory_voltages is None:
-            MemoryVoltages._memory_voltages = []
+        if self._memory_voltages is None:
+            self._memory_voltages = []
 
             iAdapterIndex = INT(self._adapter_index)
 
@@ -1437,9 +1442,9 @@ class MemoryVoltages(object):
                     value._obj = Values
                     value._adapter_index = self._adapter_index
                     value._level = i
-                    MemoryVoltages._memory_voltages.append(value)
+                    self._memory_voltages.append(value)
 
-        return iter(MemoryVoltages._memory_voltages)
+        return iter(self._memory_voltages)
 
 
 class MemoryClock(IntValueWrapper):
@@ -1557,11 +1562,12 @@ class MemoryClock(IntValueWrapper):
         return 'MHz'
 
 
+@utils.instance_singleton
 class MemoryClocks(object):
-    _memory_clocks = None
 
     def __init__(self, adapter_index):
         self._adapter_index = adapter_index
+        self._memory_clocks = None
 
     def __getitem__(self, item):
         return list(self)[item]
@@ -1676,8 +1682,8 @@ class MemoryClocks(object):
         return lpODCapabilities
 
     def __iter__(self):
-        if MemoryClocks._memory_clocks is None:
-            MemoryClocks._memory_clocks = []
+        if self._memory_clocks is None:
+            self._memory_clocks = []
 
             iAdapterIndex = INT(self._adapter_index)
             lpODCapabilities = self._capabilities
@@ -1743,9 +1749,56 @@ class MemoryClocks(object):
                     value._obj = Values
                     value._adapter_index = self._adapter_index
                     value._level = i
-                    MemoryClocks._memory_clocks.append(value)
+                    self._memory_clocks.append(value)
 
-            return iter(MemoryClocks._memory_clocks)
+            return iter(self._memory_clocks)
+
+
+class MemoryTiming(IntValueWrapper):
+
+    @property
+    def unit_of_measure(self):
+        return ''
+
+    @property
+    def min(self):
+        return 0
+
+    @property
+    def step(self):
+        return 0
+    
+    @property
+    def max(self):
+        return 0
+    
+    @property
+    def default(self):
+        return 0
+        
+
+@utils.instance_singleton
+class MemoryTimings(object):
+
+    def __init__(self, adapter_index):
+        self._adapter_index = adapter_index
+        self._memory_timings = None
+
+    def _set_level(self, level, value):
+        pass
+    
+    def __iter__(self):
+        if self._memory_timings is None:
+            self._memory_timings = []
+            
+        return iter(self._memory_timings)
+
+    def __getitem__(self, item):
+        timings = list(self)
+        return timings[item]
+
+    def __setitem__(self, key, value):
+        pass
 
 
 class FanSpeed(IntValueWrapper):
@@ -1779,11 +1832,16 @@ class FanSpeed(IntValueWrapper):
             self._set_automatic(self.real, value)
 
 
+@utils.instance_singleton
 class FanSpeeds(object):
-    _fan_speeds = None
 
     def __init__(self, adapter_index):
         self._adapter_index = adapter_index
+        self._fan_speeds = None
+
+    @property
+    def zero_controls(self):
+        return ZeroFanControls(self._adapter_index)
 
     @property
     def _capabilities(self):
@@ -1801,8 +1859,8 @@ class FanSpeeds(object):
 
     def __iter__(self):
 
-        if FanSpeeds._fan_speeds is None:
-            FanSpeeds._fan_speeds = []
+        if self._fan_speeds is None:
+            self._fan_speeds = []
             iAdapterIndex = INT(self._adapter_index)
 
             def _dummy():
@@ -1906,10 +1964,10 @@ class FanSpeeds(object):
                         ):
                             return value
 
-                FanSpeeds._fan_speeds += [_do()]
+                self._fan_speeds.append(_do())
 
             else:
-                FanSpeeds._fan_speeds += [_dummy()]
+                self._fan_speeds.append(_dummy())
 
             if lpODCapabilities.iFlags & ADL_ODN_FAN_SPEED_TARGET == ADL_ODN_FAN_SPEED_TARGET:
                 min_val = lpODCapabilities.fanSpeed.iMin
@@ -1951,10 +2009,10 @@ class FanSpeeds(object):
                         ):
                             return value
 
-                FanSpeeds._fan_speeds += [_do()]
+                self._fan_speeds.append(_do())
 
             else:
-                FanSpeeds._fan_speeds += [_dummy()]
+                self._fan_speeds.append(_dummy())
 
             if lpODCapabilities.iFlags & ADL_ODN_ACOUSTIC_LIMIT_SCLK == ADL_ODN_ACOUSTIC_LIMIT_SCLK:
                 min_val = lpODCapabilities.minimumPerformanceClock.iMin
@@ -1996,10 +2054,10 @@ class FanSpeeds(object):
                         ):
                             return value
 
-                FanSpeeds._fan_speeds += [_do()]
+                self._fan_speeds.append(_do())
 
             else:
-                FanSpeeds._fan_speeds += [_dummy()]
+                self._fan_speeds.append(_dummy())
 
             if lpODCapabilities.iFlags & ADL_ODN_TEMPERATURE_FAN_MAX == ADL_ODN_TEMPERATURE_FAN_MAX:
                 min_val = lpODCapabilities.fanTemperature.iMin
@@ -2041,12 +2099,129 @@ class FanSpeeds(object):
                         ):
                             return value
 
-                FanSpeeds._fan_speeds += [_do()]
+                self._fan_speeds.append(_do())
 
             else:
-                FanSpeeds._fan_speeds += [_dummy()]
+                self._fan_speeds.append(_dummy())
 
-        return iter(FanSpeeds._fan_speeds)
+        return iter(self._fan_speeds)
+
+    def __getitem__(self, item):
+        speeds = list(self)
+        return speeds[item]
+
+    def __setitem__(self, key, value):
+        values = list(self)
+        val = values[key]
+        val += value - val.real
+
+
+class ZeroFanControl(IntValueWrapper):
+
+    @property
+    def unit_of_measure(self):
+        return ''
+
+    @property
+    def min(self):
+        return self._obj.min_value
+
+
+@utils.instance_singleton
+class ZeroFanControls(object):
+
+    def __init__(self, adapter_index):
+        self._adapter_index = adapter_index
+        self._fan_controls = None
+
+    def _set_level(self, level, value):
+        iAdapterIndex = INT(self._adapter_index)
+        with ADL2_Main_Control_Create as context:
+            lpNumberOfFeatures = INT(OD8_COUNT)
+            lpOverdrive8Capabilities = INT(0)
+            lppInitSettingList = (ADLOD8SingleInitSetting * OD8_COUNT)()
+            initSetting = ADLOD8InitSetting()
+
+            _ADL2_Overdrive8_Init_SettingX2_Get(
+                context,
+                iAdapterIndex,
+                ctypes.byref(lpOverdrive8Capabilities),
+                ctypes.byref(lpNumberOfFeatures),
+                ctypes.byref(lppInitSettingList)
+            )
+
+            if (
+                not lpOverdrive8Capabilities.value & ADL_OD8_FAN_ZERO_RPM_CONTROL == ADL_OD8_FAN_ZERO_RPM_CONTROL
+            ):
+                return
+
+            initSetting.overdrive8Capabilities = lpOverdrive8Capabilities
+
+            if lpNumberOfFeatures > OD8_COUNT:
+                initSetting.count = OD8_COUNT
+            else:
+                initSetting.count = lpNumberOfFeatures
+
+            for i in range(initSetting.count):
+                initSetting.od8SettingTable[i].defaultValue = lppInitSettingList[i].defaultValue
+                initSetting.od8SettingTable[i].featureID = lppInitSettingList[i].featureID
+                initSetting.od8SettingTable[i].maxValue = lppInitSettingList[i].maxValue
+                initSetting.od8SettingTable[i].minValue = lppInitSettingList[i].minValue
+
+            ADL_Main_Memory_Free(lppInitSettingList)
+
+            return _set_overdrive_8(context, iAdapterIndex, initSetting, level, value)
+
+    def __iter__(self):
+        if self._fan_controls is None:
+            self._fan_controls = []
+            iAdapterIndex = INT(self._adapter_index)
+
+            with ADL2_Main_Control_Create as context:
+                lpNumberOfFeatures = INT(OD8_COUNT)
+                lpOverdrive8Capabilities = INT(0)
+                lppInitSettingList = (ADLOD8SingleInitSetting * OD8_COUNT)()
+                initSetting = ADLOD8InitSetting()
+
+                _ADL2_Overdrive8_Init_SettingX2_Get(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(lpOverdrive8Capabilities),
+                    ctypes.byref(lpNumberOfFeatures),
+                    ctypes.byref(lppInitSettingList)
+                )
+                initSetting.overdrive8Capabilities = lpOverdrive8Capabilities
+
+                if (
+                    lpOverdrive8Capabilities.value & ADL_OD8_FAN_ZERO_RPM_CONTROL == ADL_OD8_FAN_ZERO_RPM_CONTROL
+                ):
+
+                    if lpNumberOfFeatures > OD8_COUNT:
+                        initSetting.count = OD8_COUNT
+                    else:
+                        initSetting.count = lpNumberOfFeatures
+
+                    for i in range(initSetting.count):
+                        initSetting.od8SettingTable[i].defaultValue = lppInitSettingList[i].defaultValue
+                        initSetting.od8SettingTable[i].featureID = lppInitSettingList[i].featureID
+                        initSetting.od8SettingTable[i].maxValue = lppInitSettingList[i].maxValue
+                        initSetting.od8SettingTable[i].minValue = lppInitSettingList[i].minValue
+
+                    ADL_Main_Memory_Free(lppInitSettingList)
+
+                    for cls in _get_overdrive_8(
+                        context,
+                        iAdapterIndex,
+                        initSetting,
+                        [OD8_FAN_ZERORPM_CONTROL, ADL_OD8_FAN_ZERO_RPM_CONTROL]
+                    ):
+                        value = ZeroFanControl(cls.current)
+                        value._obj = cls
+                        value._adapter_index = self._adapter_index
+                        value._level = cls.level
+                        self._fan_controls.append(value)
+
+        return iter(self._fan_controls)
 
     def __getitem__(self, item):
         speeds = list(self)
@@ -2095,11 +2270,34 @@ class Load(FloatValueWrapper):
         return 100.0
 
 
+class AutoOC(IntValueWrapper):
+
+    @property
+    def unit_of_measure(self):
+        return ''
+
+    @property
+    def min(self):
+        return self._obj.min_value
+
+    @property
+    def default(self):
+        return self._obj.default
+
+    @property
+    def editable(self):
+        return self._obj.editable
+
+
+@utils.instance_singleton
 class OverDriveN(object):
-    _power_threshold = []
 
     def __init__(self, adapter_index):
         self._adapter_index = adapter_index
+        self._power_threshold = []
+        self._auto_oc_uv = None
+        self._auto_oc_core = None
+        self._auto_oc_memory = None
 
     @property
     def _capabilities(self):
@@ -2169,6 +2367,50 @@ class OverDriveN(object):
         return [Temperature(iTemperature.value / 1000.0)]
 
     @property
+    def auto_oc_uv(self):
+        if self._auto_oc_uv is None:
+            class Value(object):
+                min_val = 0
+                max_val = 0
+                default = 0
+
+            value = AutoOC(0)
+            value._obj = Value
+
+            self._auto_oc_uv = value
+
+        return self._auto_oc_uv
+
+    @property
+    def auto_oc_core(self):
+        if self._auto_oc_core is None:
+            class Value(object):
+                min_val = 0
+                max_val = 0
+                default = 0
+
+            value = AutoOC(0)
+            value._obj = Value
+
+            self._auto_oc_core = value
+
+        return self._auto_oc_core
+
+    @property
+    def auto_oc_memory(self):
+        if self._auto_oc_memory is None:
+            class Value(object):
+                min_val = 0
+                max_val = 0
+                default = 0
+
+            value = AutoOC(0)
+            value._obj = Value
+            self._auto_oc_memory = value
+
+        return self._auto_oc_memory
+
+    @property
     def is_power_control_supported(self):
         lpODCapabilities = self._capabilities
 
@@ -2224,7 +2466,7 @@ class OverDriveN(object):
 
     @property
     def power_control(self):
-        if not OverDriveN._power_threshold:
+        if not self._power_threshold:
             def _do():
                 class Values(object):
                     min_value = min_val
@@ -2259,14 +2501,14 @@ class OverDriveN(object):
                     current_val = lpODPowerLimit.iMaxOperatingTemperature
                     level = 1
 
-                    OverDriveN._power_threshold += [_do()]
+                    self._power_threshold.append(_do())
 
                     min_val = lpODCapabilities.power.iMin
                     max_val = lpODCapabilities.power.iMax
                     step_val = lpODCapabilities.power.iStep
                     current_val = lpODPowerLimit.iTDPLimit
                     level = 2
-                    OverDriveN._power_threshold += [_do()]
+                    self._power_threshold.append(_do())
 
             else:
                 min_val = 0
@@ -2274,12 +2516,12 @@ class OverDriveN(object):
                 step_val = 0
                 current_val = 0
                 level = 1
-                OverDriveN._power_threshold += [_do()]
+                self._power_threshold.append(_do())
 
                 level = 2
-                OverDriveN._power_threshold += [_do()]
+                self._power_threshold.append(_do())
 
-        return iter(OverDriveN._power_threshold)
+        return iter(self._power_threshold)
 
     @property
     def engine_clocks(self):
@@ -2296,6 +2538,10 @@ class OverDriveN(object):
     @property
     def memory_voltages(self):
         return MemoryVoltages(self._adapter_index)
+    
+    @property
+    def memory_timings(self):
+        return MemoryTimings(self._adapter_index)
 
     @property
     def fan_speeds(self):

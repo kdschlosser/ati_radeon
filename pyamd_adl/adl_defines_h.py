@@ -289,11 +289,10 @@ class ADL_STATUS(ENUM):
     ADL_OK = EnumItem(0).set_string(
         'ADL function completed successfully (0)'
     )
-    # / Generic Error. Most likely one or more of the Escape calls to the
-    # driver failednot
+    # / Generic Error. Most likely one or more of the Escape calls to the driver failed!
     ADL_ERR = EnumItem(-1).set_string(
         'Generic Error. Most likely one or more of the'
-        ' Escape calls to the driver failednot (-1)'
+        ' Escape calls to the driver failed! (-1)'
     )
     # / ADL not initialized
     ADL_ERR_NOT_INIT = EnumItem(-2).set_string(
@@ -2341,6 +2340,8 @@ class ADLOD8FeatureControl(ENUM):
     ADL_OD8_AUTO_OC_ENGINE = EnumItem(1 << 11).set_string('Auto OC Engine')
     ADL_OD8_AUTO_OC_MEMORY = EnumItem(1 << 12).set_string('Auto OC Memory')
     ADL_OD8_FAN_CURVE = EnumItem(1 << 13).set_string('Fan Curve')
+    ADL_OD8_WS_AUTO_FAN_ACOUSTIC_LIMIT = EnumItem(1 << 14).set_string('Fan Acoustic Limit')
+    ADL_OD8_POWER_GAUGE = EnumItem(1 << 15).set_string('Power Gauge')
 
 
 ADL_OD8_GFXCLK_LIMITS = ADLOD8FeatureControl.ADL_OD8_GFXCLK_LIMITS
@@ -2357,6 +2358,8 @@ ADL_OD8_AUTO_UV_ENGINE = ADLOD8FeatureControl.ADL_OD8_AUTO_UV_ENGINE
 ADL_OD8_AUTO_OC_ENGINE = ADLOD8FeatureControl.ADL_OD8_AUTO_OC_ENGINE
 ADL_OD8_AUTO_OC_MEMORY = ADLOD8FeatureControl.ADL_OD8_AUTO_OC_MEMORY
 ADL_OD8_FAN_CURVE = ADLOD8FeatureControl.ADL_OD8_FAN_CURVE
+ADL_OD8_WS_AUTO_FAN_ACOUSTIC_LIMIT = ADLOD8FeatureControl.ADL_OD8_WS_AUTO_FAN_ACOUSTIC_LIMIT
+ADL_OD8_POWER_GAUGE = ADLOD8FeatureControl.ADL_OD8_POWER_GAUGE
 
 
 class _ADLOD8SettingId(ENUM):
@@ -2389,7 +2392,8 @@ class _ADLOD8SettingId(ENUM):
     OD8_FAN_CURVE_SPEED_4 = EnumItem(26).set_string('Fan Curve Speed 4')
     OD8_FAN_CURVE_TEMPERATURE_5 = EnumItem(27).set_string('Fan Curve Temperature 5')
     OD8_FAN_CURVE_SPEED_5 = EnumItem(28).set_string('Fan Curve Speed 5')
-    OD8_COUNT = EnumItem(29).set_string('ODN Count')
+    OD8_POWER_GAUGE = EnumItem(29).set_string('Power Gauge')
+    OD8_COUNT = EnumItem(30).set_string('ODN Count')
 
 
 ADLOD8SettingId = _ADLOD8SettingId
@@ -2422,6 +2426,7 @@ OD8_FAN_CURVE_TEMPERATURE_4 = _ADLOD8SettingId.OD8_FAN_CURVE_TEMPERATURE_4
 OD8_FAN_CURVE_SPEED_4 = _ADLOD8SettingId.OD8_FAN_CURVE_SPEED_4
 OD8_FAN_CURVE_TEMPERATURE_5 = _ADLOD8SettingId.OD8_FAN_CURVE_TEMPERATURE_5
 OD8_FAN_CURVE_SPEED_5 = _ADLOD8SettingId.OD8_FAN_CURVE_SPEED_5
+OD8_POWER_GAUGE = _ADLOD8SettingId.OD8_POWER_GAUGE
 OD8_COUNT = _ADLOD8SettingId.OD8_COUNT
 
 # Define Performance Metrics Log max sensors number

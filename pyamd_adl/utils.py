@@ -25,8 +25,27 @@
 # ***********************************************************************************
 
 import sys
+import six
+
 
 PY2 = sys.version_info[0] < 3
+
+
+class InstanceSingleton(type):
+
+    def __init__(cls, name, bases, dct):
+        super(InstanceSingleton, cls).__init__(name, bases, dct)
+        cls._instances = {}
+
+    def __call__(cls, adapter_index):
+        if adapter_index not in cls._instances:
+            cls._instances[adapter_index] = super(InstanceSingleton, cls).__call__(adapter_index)
+
+        return cls._instances[adapter_index]
+
+
+def instance_singleton(cls):
+    return six.add_metaclass(InstanceSingleton)(cls)
 
 
 def get_string(data):

@@ -24,6 +24,7 @@
 
 # ***********************************************************************************
 from .adl_structures_h import *  # NOQA
+from . import utils
 
 # Copyright (c) 2016 Advanced Micro Devices, Inc. All rights reserved.
 # MIT LICENSE:
@@ -287,691 +288,1843 @@ __all__ = (
 )
 
 
-from .adl_sdk_h import ADL2_Main_Control_Create  # NOQA
+from .adl_sdk_h import ADL2_Main_Control_Create, ADL_Main_Memory_Free # NOQA
 
 
-class ValueWrapper(int):
+def _set_overdrive_8(context, iAdapterIndex, initSetting, level, value):
+    lpNumberOfFeatures = INT(OD8_COUNT)
+    lppCurrentSettingList = (INT * OD8_COUNT)()
+    odCurrentSetting = ADLOD8CurrentSetting()
+
+    _ADL2_Overdrive8_Current_SettingX2_Get(
+        context,
+        iAdapterIndex,
+        ctypes.byref(lpNumberOfFeatures),
+        ctypes.byref(lppCurrentSettingList)
+    )
+
+    if lpNumberOfFeatures > OD8_COUNT:
+        odCurrentSetting.count = OD8_COUNT
+    else:
+        odCurrentSetting.count = lpNumberOfFeatures
+
+    for i in range(odCurrentSetting.count):
+        odCurrentSetting.Od8SettingTable[i] = lppCurrentSettingList[i]
+
+    ADL_Main_Memory_Free(lppCurrentSettingList)
+
+    odlpDataOutput = ADLPMLogDataOutput()
+
+    _ADL2_New_QueryPMLogData_Get(
+        context,
+        iAdapterIndex,
+        ctypes.byref(odlpDataOutput),
+    )
+
+    odSetSetting = ADLOD8SetSetting()
+    odSetSetting.count = OD8_COUNT
+
+    max_val = initSetting.od8SettingTable[level].maxValue
+    min_val = initSetting.od8SettingTable[level].minValue
+
+    if max_val < value or min_val > value:
+        return
+
+    for i in range(OD8_GFXCLK_FREQ1, OD8_UCLK_FMAX + 1):
+        odSetSetting.od8SettingTable[i].requested = 1
+        odSetSetting.od8SettingTable[i].value = odCurrentSetting.Od8SettingTable[i]
+
+    reset = True
+
+    if OD8_FAN_CURVE_TEMPERATURE_1 <= level <= OD8_FAN_CURVE_SPEED_5:
+        reset = False
+
+    for i in range(OD8_FAN_CURVE_TEMPERATURE_1, OD8_FAN_CURVE_SPEED_5 + 1):
+        odSetSetting.od8SettingTable[i].reset = reset
+        odSetSetting.od8SettingTable[i].requested = 1
+        odSetSetting.od8SettingTable[i].value = odCurrentSetting.Od8SettingTable[i]
+
+    odSetSetting.od8SettingTable[level].requested = 1
+    odSetSetting.od8SettingTable[level].value = value
+
+    if OD8_GFXCLK_FMAX == level:
+        odSetSetting.od8SettingTable[OD8_GFXCLK_FREQ3].value = value
+    elif OD8_GFXCLK_FMIN == level:
+        odSetSetting.od8SettingTable[OD8_GFXCLK_FREQ1].value = value
+
+    if _ADL2_Overdrive8_Setting_Set(
+            context,
+            iAdapterIndex,
+            ctypes.byref(odSetSetting),
+            ctypes.byref(odCurrentSetting)
+    ) == ADL_OK:
+        return value
+
+
+def _get_overdrive_8(context, iAdapterIndex, initSetting, *args):
+    lpNumberOfFeatures = INT(OD8_COUNT)
+    lppCurrentSettingList = (INT * OD8_COUNT)()
+    odCurrentSetting = ADLOD8CurrentSetting()
+
+    _ADL2_Overdrive8_Current_SettingX2_Get(
+        context,
+        iAdapterIndex,
+        ctypes.byref(lpNumberOfFeatures),
+        ctypes.byref(lppCurrentSettingList)
+    )
+
+    if lpNumberOfFeatures > OD8_COUNT:
+        odCurrentSetting.count = OD8_COUNT
+    else:
+        odCurrentSetting.count = lpNumberOfFeatures
+
+    for i in range(odCurrentSetting.count):
+        odCurrentSetting.Od8SettingTable[i] = lppCurrentSettingList[i]
+
+    ADL_Main_Memory_Free(lppCurrentSettingList)
+
+    odlpDataOutput = ADLPMLogDataOutput()
+
+    _ADL2_New_QueryPMLogData_Get(
+        context,
+        iAdapterIndex,
+        ctypes.byref(odlpDataOutput),
+    )
+
+    for item, cap in args:
+        if initSetting.overdrive8Capabilities & cap == cap:
+            editable_val = True
+        else:
+            editable_val = False
+
+        max_val = initSetting.od8SettingTable[item].maxValue
+        min_val = initSetting.od8SettingTable[item].minValue
+        default_val = initSetting.od8SettingTable[item].defaultValue
+        current_val = odCurrentSetting.Od8SettingTable[item]
+
+        class Values(object):
+            min_value = min_val
+            max_value = max_val
+            default = default_val
+            editable = editable_val
+            current = current_val
+            level = item
+
+        yield Values
+
+
+class IntValueWrapper(int):
 
     def __init__(self, value=None):
         if value is None:
-            super(ValueWrapper, self).__init__(self)
+            super(IntValueWrapper, self).__init__(self)
         else:
             try:
-                super(ValueWrapper, self).__init__(value)
+                super(IntValueWrapper, self).__init__(value)
             except TypeError:
-                super(ValueWrapper, self).__init__()
+                super(IntValueWrapper, self).__init__()
 
-        self.__obj = None
+        self._obj = None
+        self._adapter_index = None
+        self._level = None
+        self._parent = None
+        self._set = None
+        self._get_automatic = None
+        self._set_automatic = None
 
-    def _set_object(self, obj):
-        self.__obj = obj
+    def __set_value(self, value):
+        if self._set is None and None in (self._parent, self._level):
+            return self
 
-    @property
-    def min(self):
-        return self.__obj.minValue.value
+        if self._set is None:
+            # noinspection PyProtectedMember
+            value = self._parent._set_value(self._level, value)
+        else:
+            value = self._set(value)
+
+        if value is None:
+            return self
+
+        cls = self.__class__(value)
+        cls._adapter_index = self._adapter_index
+        cls._level = self._level
+        cls._obj = self._obj
+        cls._parent = self._parent
+        cls._set = self._set
+
+        # noinspection PyMethodFirstArgAssignment
+        self = cls
+
+        return self
+
+    def __idiv__(self, other):
+        return self.__ifloordiv__(other)
+
+    def __itruediv__(self, other):
+        return self.__idiv__(other)
+
+    def __ifloordiv__(self, other):
+        value = self.real // other
+        return self.__set_value(value)
+
+    def __imul__(self, other):
+        value = self.real * other
+        return self.__set_value(value)
+
+    def __iadd__(self, other):
+        value = self.real + other
+        return self.__set_value(value)
+
+    def __isub__(self, other):
+        value = self.real - other
+        return self.__set_value(value)
 
     @property
     def max(self):
-        return self.__obj.maxValue.value
+        return self._obj.max_value
+
+
+class FloatValueWrapper(float):
+
+    def __init__(self, value=None):
+        if value is None:
+            super(FloatValueWrapper, self).__init__(self)
+        else:
+            try:
+                super(FloatValueWrapper, self).__init__(value)
+            except TypeError:
+                super(FloatValueWrapper, self).__init__()
+
+        self._obj = None
+        self._adapter_index = None
+        self._level = None
+        self._parent = None
+        self._set = None
+
+    def __set_value(self, value):
+        if self._set is None and None in (self._parent, self._level):
+            return self
+
+        if self._set is None:
+            # noinspection PyProtectedMember
+            value = self._parent._set_value(self._level, value)
+        else:
+            value = self._set(value)
+
+        if value is None:
+            return self
+
+        cls = self.__class__(value)
+        cls._adapter_index = self._adapter_index
+        cls._level = self._level
+        cls._obj = self._obj
+        cls._parent = self._parent
+        cls._set = self._set
+
+        # noinspection PyMethodFirstArgAssignment
+        self = cls
+
+        return self
+
+    def __idiv__(self, other):
+        value = self.real / other
+        return self.__set_value(value)
+
+    def __itruediv__(self, other):
+        return self.__idiv__(other)
+
+    def __ifloordiv__(self, other):
+        return self
+
+    def __imul__(self, other):
+        value = self.real * other
+        return self.__set_value(value)
+
+    def __iadd__(self, other):
+        value = self.real + other
+        return self.__set_value(value)
+
+    def __isub__(self, other):
+        value = self.real - other
+        return self.__set_value(value)
+
+    @property
+    def max(self):
+        return self._obj.max_value
+
+
+class CoreVoltage(FloatValueWrapper):
+
+    @property
+    def is_active(self):
+        self.real != self.default
+
+    def activate(self):
+        pass
+
+    @property
+    def step(self):
+        return self._obj.step
 
     @property
     def default(self):
-        return self.__obj.defaultValue.value
+        return self._obj.default
+
+    @property
+    def min(self):
+        return self._obj.min_value
+
+    @property
+    def unit_of_measure(self):
+        return 'VDC'
 
 
-def _get_value(item_id, feature_id, odInitSetting, odCurrentSetting):
-    if item_id in (
-        OD8_GFXCLK_FMIN,
-        OD8_GFXCLK_FMAX,
-        OD8_UCLK_FMAX,
-        OD8_AC_TIMING,
-        OD8_FAN_ZERORPM_CONTROL,
-        OD8_AUTO_UV_ENGINE_CONTROL,
-        OD8_AUTO_OC_ENGINE_CONTROL,
-        OD8_AUTO_OC_MEMORY_CONTROL
-    ):
-        visible = True
-    else:
-        visible = odInitSetting.overdrive8Capabilities & feature_id == feature_id
+@utils.instance_singleton
+class CoreVoltages(object):
 
-    if visible:
-        res = ValueWrapper(odCurrentSetting.Od8SettingTable[item_id].value)
-        res._set_object(odInitSetting.od8SettingTable[item_id])
-        return res
-
-
-class OverDrive8(object):
     def __init__(self, adapter_index):
         self._adapter_index = adapter_index
+        self._core_voltages = None
+
+    def __getitem__(self, item):
+        return list(self)[item]
+
+    def __setitem__(self, key, value):
+        values = list(self)
+        val = values[key]
+        val += value - val.real
 
     @property
-    def _current_settings(self):
+    def actual(self):
         iAdapterIndex = INT(self._adapter_index)
-        odCurrentSetting = ADLOD8CurrentSetting()
-        ctypes.memset(ctypes.byref(odCurrentSetting), 0, ctypes.sizeof(ADLOD8CurrentSetting))
-
-        odCurrentSetting.count = OD8_COUNT
-
-        numberOfFeaturesCurrent = INT(OD8_COUNT)
-        lpCurrentSettingList = (INT * OD8_COUNT)()
-        with ADL2_Main_Control_Create as context:
-            if _ADL2_Overdrive8_Current_SettingX2_Get(
-                    context,
-                    iAdapterIndex,
-                    ctypes.byref(numberOfFeaturesCurrent),
-                    ctypes.byref(lpCurrentSettingList)
-            ) == ADL_OK:
-                if numberOfFeaturesCurrent.value > OD8_COUNT:
-                    odCurrentSetting.count = OD8_COUNT
-                else:
-                    odCurrentSetting.count = numberOfFeaturesCurrent
-
-                for i in range(odCurrentSetting.count.value):
-                    odCurrentSetting.Od8SettingTable[i] = lpCurrentSettingList[i]
-
-                return odCurrentSetting
-
-    @property
-    def _init_settings(self):
-        iAdapterIndex = INT(self._adapter_index)
-
-        odInitSetting = ADLOD8InitSetting()
-        ctypes.memset(ctypes.byref(odInitSetting), 0, ctypes.sizeof(ADLOD8InitSetting))
-
-        odInitSetting.count = OD8_COUNT
-        overdrive8Capabilities = INT()
-        numberOfFeatures = INT(OD8_COUNT)
-        lpInitSettingList = (ADLOD8SingleInitSetting * OD8_COUNT)()
+        lpODPerformanceStatus = ADLODNPerformanceStatus()
 
         with ADL2_Main_Control_Create as context:
-            if _ADL2_Overdrive8_Init_SettingX2_Get(
+            _ADL2_OverdriveN_PerformanceStatus_Get(
                 context,
                 iAdapterIndex,
-                ctypes.byref(overdrive8Capabilities),
-                ctypes.byref(numberOfFeatures),
-                ctypes.byref(lpInitSettingList)
-            ) == ADL_OK:
-                if numberOfFeatures.value > OD8_COUNT:
-                    odInitSetting.count = OD8_COUNT
-                else:
-                    odInitSetting.count = numberOfFeatures
+                ctypes.byref(lpODPerformanceStatus)
+            )
 
-                odInitSetting.overdrive8Capabilities = overdrive8Capabilities
-
-                for i in range(odInitSetting.count.value):
-                    odInitSetting.od8SettingTable[i].defaultValue = lpInitSettingList[i].defaultValue.value
-                    odInitSetting.od8SettingTable[i].featureID = lpInitSettingList[i].featureID.value
-                    odInitSetting.od8SettingTable[i].maxValue = lpInitSettingList[i].maxValue.value
-                    odInitSetting.od8SettingTable[i].minValue = lpInitSettingList[i].minValue.value
-
-                return odInitSetting
+        try:
+            return CoreVoltage(lpODPerformanceStatus.iVDDC / 1000.0)
+        except ZeroDivisionError:
+            return CoreVoltage(0.0)
 
     @property
-    def _pm_log(self):
-        iAdapterIndex = INT(self._adapter_index)
-        odlpDataOutput = ADLPMLogDataOutput()
-        ctypes.memset(ctypes.byref(odlpDataOutput), 0, ctypes.sizeof(ADLPMLogDataOutput))
+    def current(self):
+        for value in self:
+            if value.is_active:
+                return value
 
+    def _set_level(self, level, value):
+        iAdapterIndex = INT(self._adapter_index)
         with ADL2_Main_Control_Create as context:
-            if _ADL2_New_QueryPMLogData_Get(
+            lpNumberOfFeatures = INT(OD8_COUNT)
+            lpOverdrive8Capabilities = INT(0)
+            lppInitSettingList = (ADLOD8SingleInitSetting * OD8_COUNT)()
+            initSetting = ADLOD8InitSetting()
+
+            _ADL2_Overdrive8_Init_SettingX2_Get(
                 context,
                 iAdapterIndex,
-                ctypes.byref(odlpDataOutput)
-            ) == ADL_OK:
-                return odlpDataOutput
-
-    @property
-    def is_gfx_clock_limits_supported(self):
-        odInitSetting = self._init_settings
-        return odInitSetting.overdrive8Capabilities.value & ADL_OD8_GFXCLK_LIMITS == ADL_OD8_GFXCLK_LIMITS
-
-    @property
-    def is_gfx_clock_curve_supported(self):
-        odInitSetting = self._init_settings
-        return odInitSetting.overdrive8Capabilities.value & ADL_OD8_GFXCLK_CURVE == ADL_OD8_GFXCLK_CURVE
-
-    @property
-    def is_memory_clock_supported(self):
-        odInitSetting = self._init_settings
-        return odInitSetting.overdrive8Capabilities.value & ADL_OD8_UCLK_MAX == ADL_OD8_UCLK_MAX
-
-    @property
-    def is_power_percentage_supported(self):
-        odInitSetting = self._init_settings
-        return odInitSetting.overdrive8Capabilities.value & ADL_OD8_POWER_LIMIT == ADL_OD8_POWER_LIMIT
-
-    @property
-    def is_fan_acoustic_limit_supported(self):
-        odInitSetting = self._init_settings
-        return odInitSetting.overdrive8Capabilities.value & ADL_OD8_ACOUSTIC_LIMIT_SCLK == ADL_OD8_ACOUSTIC_LIMIT_SCLK
-
-    @property
-    def is_minimum_fan_speed_supported(self):
-        odInitSetting = self._init_settings
-        return odInitSetting.overdrive8Capabilities.value & ADL_OD8_FAN_SPEED_MIN == ADL_OD8_FAN_SPEED_MIN
-
-    @property
-    def is_fan_target_temperature_supported(self):
-        odInitSetting = self._init_settings
-        return odInitSetting.overdrive8Capabilities.value & ADL_OD8_TEMPERATURE_FAN == ADL_OD8_TEMPERATURE_FAN
-
-    @property
-    def is_system_temperature_supported(self):
-        odInitSetting = self._init_settings
-        return odInitSetting.overdrive8Capabilities.value & ADL_OD8_TEMPERATURE_SYSTEM == ADL_OD8_TEMPERATURE_SYSTEM
-
-    @property
-    def is_ac_timing_supported(self):
-        odInitSetting = self._init_settings
-        return odInitSetting.overdrive8Capabilities.value & ADL_OD8_MEMORY_TIMING_TUNE == ADL_OD8_MEMORY_TIMING_TUNE
-
-    @property
-    def is_zero_rpm_fan_control_supported(self):
-        odInitSetting = self._init_settings
-        return odInitSetting.overdrive8Capabilities.value & ADL_OD8_FAN_ZERO_RPM_CONTROL == ADL_OD8_FAN_ZERO_RPM_CONTROL
-
-    @property
-    def is_auto_uv_engine_control_supported(self):
-        odInitSetting = self._init_settings
-        return odInitSetting.overdrive8Capabilities.value & ADL_OD8_AUTO_UV_ENGINE == ADL_OD8_AUTO_UV_ENGINE
-
-    @property
-    def is_auto_oc_engine_control_supported(self):
-        odInitSetting = self._init_settings
-        return odInitSetting.overdrive8Capabilities.value & ADL_OD8_AUTO_OC_ENGINE == ADL_OD8_AUTO_OC_ENGINE
-
-    @property
-    def is_auto_oc_memory_control_supported(self):
-        odInitSetting = self._init_settings
-        return odInitSetting.overdrive8Capabilities.value & ADL_OD8_AUTO_OC_MEMORY == ADL_OD8_AUTO_OC_MEMORY
-
-    @property
-    def is_fan_curve_supported(self):
-        odInitSetting = self._init_settings
-        return odInitSetting.overdrive8Capabilities.value & ADL_OD8_FAN_CURVE == ADL_OD8_FAN_CURVE
-
-    @property
-    def gfx_clock_frequency_1(self):
-        if self.is_gfx_clock_curve_supported:
-            odCurrentSetting = self._current_settings
-            odInitSetting = self._init_settings
-
-            return _get_value(OD8_GFXCLK_FREQ1, ADL_OD8_GFXCLK_CURVE, odInitSetting, odCurrentSetting)
-
-    @gfx_clock_frequency_1.setter
-    def gfx_clock_frequency_1(self, value):
-        if self.is_gfx_clock_curve_supported:
-            self.__set(OD8_GFXCLK_FREQ1, value)
-
-    @property
-    def gfx_clock_frequency_2(self):
-        if self.is_gfx_clock_curve_supported or self.is_gfx_clock_limits_supported:
-            odCurrentSetting = self._current_settings
-            odInitSetting = self._init_settings
-
-            return _get_value(OD8_GFXCLK_FREQ2, ADL_OD8_GFXCLK_CURVE, odInitSetting, odCurrentSetting)
-
-    @gfx_clock_frequency_2.setter
-    def gfx_clock_frequency_2(self, value):
-        if self.is_gfx_clock_curve_supported or self.is_gfx_clock_limits_supported:
-            self.__set(OD8_GFXCLK_FREQ2, value)
-
-    @property
-    def gfx_clock_frequency_3(self):
-        if self.is_gfx_clock_curve_supported:
-            odCurrentSetting = self._current_settings
-            odInitSetting = self._init_settings
-
-            return _get_value(OD8_GFXCLK_FREQ3, ADL_OD8_GFXCLK_CURVE, odInitSetting, odCurrentSetting)
-
-    @gfx_clock_frequency_3.setter
-    def gfx_clock_frequency_3(self, value):
-        if self.is_gfx_clock_curve_supported:
-            self.__set(OD8_GFXCLK_FREQ3, value)
-
-    @property
-    def gfx_clock_f_min(self):
-        if self.is_gfx_clock_curve_supported:
-            odCurrentSetting = self._current_settings
-            odInitSetting = self._init_settings
-
-            return _get_value(OD8_GFXCLK_FMIN, ADL_OD8_GFXCLK_CURVE, odInitSetting, odCurrentSetting)
-
-    @gfx_clock_f_min.setter
-    def gfx_clock_f_min(self, value):
-        if self.is_gfx_clock_curve_supported:
-            self.__set(OD8_GFXCLK_FMIN, value)
-
-    @property
-    def gfx_clock_f_max(self):
-        if self.is_gfx_clock_curve_supported:
-            odCurrentSetting = self._current_settings
-            odInitSetting = self._init_settings
-
-            return _get_value(OD8_GFXCLK_FMAX, ADL_OD8_GFXCLK_CURVE, odInitSetting, odCurrentSetting)
-
-    @gfx_clock_f_max.setter
-    def gfx_clock_f_max(self, value):
-        if self.is_gfx_clock_curve_supported:
-            self.__set(OD8_GFXCLK_FMAX, value)
-
-    @property
-    def is_gfx_clock_sensor_supported(self):
-        odlpDataOutput = self._pm_log
-        return bool(odlpDataOutput.sensors[PMLOG_CLK_GFXCLK].supported.value)
-
-    @property
-    def gfx_clock_sensor(self):
-        odlpDataOutput = self._pm_log
-
-        if odlpDataOutput.sensors[PMLOG_CLK_GFXCLK].supported.value:
-            return odlpDataOutput.sensors[PMLOG_CLK_GFXCLK].value.value
-
-    @property
-    def gfx_clock_voltage_1(self):
-        if self.is_gfx_clock_curve_supported:
-            odCurrentSetting = self._current_settings
-            odInitSetting = self._init_settings
-
-            return _get_value(OD8_GFXCLK_VOLTAGE1, ADL_OD8_GFXCLK_CURVE, odInitSetting, odCurrentSetting)
-
-    @gfx_clock_voltage_1.setter
-    def gfx_clock_voltage_1(self, value):
-        if self.is_gfx_clock_curve_supported:
-            self.__set(OD8_GFXCLK_VOLTAGE1, value)
-
-    @property
-    def gfx_clock_voltage_2(self):
-        if self.is_gfx_clock_curve_supported:
-            odCurrentSetting = self._current_settings
-            odInitSetting = self._init_settings
-
-            return _get_value(OD8_GFXCLK_VOLTAGE2, ADL_OD8_GFXCLK_CURVE, odInitSetting, odCurrentSetting)
-
-    @gfx_clock_voltage_2.setter
-    def gfx_clock_voltage_2(self, value):
-        if self.is_gfx_clock_curve_supported:
-            self.__set(OD8_GFXCLK_VOLTAGE2, value)
-
-    @property
-    def gfx_clock_voltage_3(self):
-        if self.is_gfx_clock_curve_supported:
-            odCurrentSetting = self._current_settings
-            odInitSetting = self._init_settings
-
-            return _get_value(OD8_GFXCLK_VOLTAGE3, ADL_OD8_GFXCLK_CURVE, odInitSetting, odCurrentSetting)
-
-    @gfx_clock_voltage_3.setter
-    def gfx_clock_voltage_3(self, value):
-        if self.is_gfx_clock_curve_supported:
-            self.__set(OD8_GFXCLK_VOLTAGE3, value)
-
-    @property
-    def memory_clock(self):
-
-        if self.is_memory_clock_supported:
-            odCurrentSetting = self._current_settings
-            odInitSetting = self._init_settings
-
-            return _get_value(OD8_UCLK_FMAX, ADL_OD8_UCLK_MAX, odInitSetting, odCurrentSetting)
-
-    @memory_clock.setter
-    def memory_clock(self, value):
-
-        if self.is_memory_clock_supported:
-            self.__set(OD8_UCLK_FMAX, value)
-
-    @property
-    def is_memory_clock_sensor_supported(self):
-        odlpDataOutput = self._pm_log
-        return bool(odlpDataOutput.sensors[PMLOG_CLK_MEMCLK].supported.value)
-
-    @property
-    def memory_clock_sensor(self):
-        odlpDataOutput = self._pm_log
-
-        if odlpDataOutput.sensors[PMLOG_CLK_MEMCLK].supported.value:
-            return odlpDataOutput.sensors[PMLOG_CLK_MEMCLK].value.value
-
-    @property
-    def system_temperature(self):
-        if self.is_system_temperature_supported:
-            odCurrentSetting = self._current_settings
-            odInitSetting = self._init_settings
-
-            return _get_value(OD8_OPERATING_TEMP_MAX, ADL_OD8_TEMPERATURE_SYSTEM, odInitSetting, odCurrentSetting)
-
-    @system_temperature.setter
-    def system_temperature(self, value):
-        if self.is_system_temperature_supported:
-            self.__set(OD8_OPERATING_TEMP_MAX, value)
-
-    @property
-    def fan_target_temperature(self):
-        if self.is_fan_target_temperature_supported:
-            odCurrentSetting = self._current_settings
-            odInitSetting = self._init_settings
-
-            return _get_value(OD8_FAN_TARGET_TEMP, ADL_OD8_TEMPERATURE_FAN, odInitSetting, odCurrentSetting)
-
-    @fan_target_temperature.setter
-    def fan_target_temperature(self, value):
-        if self.is_fan_target_temperature_supported:
-            self.__set(OD8_FAN_TARGET_TEMP, value)
-
-    @property
-    def power_percentage(self):
-        if self.is_power_percentage_supported:
-            odCurrentSetting = self._current_settings
-            odInitSetting = self._init_settings
-
-            return _get_value(OD8_POWER_PERCENTAGE, ADL_OD8_POWER_LIMIT, odInitSetting, odCurrentSetting)
-
-    @power_percentage.setter
-    def power_percentage(self, value):
-        if self.is_power_percentage_supported:
-            self.__set(OD8_POWER_PERCENTAGE, value)
-
-    @property
-    def is_temperature_edge_sensor_supported(self):
-        odlpDataOutput = self._pm_log
-        return bool(odlpDataOutput.sensors[PMLOG_TEMPERATURE_EDGE].supported.value)
-
-    @property
-    def temperature_edge_sensor(self):
-        odlpDataOutput = self._pm_log
-
-        if odlpDataOutput.sensors[PMLOG_TEMPERATURE_EDGE].supported.value:
-            return odlpDataOutput.sensors[PMLOG_TEMPERATURE_EDGE].value.value
-
-    @property
-    def is_temperature_hotspot_sensor_supported(self):
-        odlpDataOutput = self._pm_log
-        return bool(odlpDataOutput.sensors[PMLOG_TEMPERATURE_HOTSPOT].supported.value)
-
-    @property
-    def temperature_hotspot_sensor(self):
-        odlpDataOutput = self._pm_log
-
-        if odlpDataOutput.sensors[PMLOG_TEMPERATURE_HOTSPOT].supported.value:
-            return odlpDataOutput.sensors[PMLOG_TEMPERATURE_HOTSPOT].value.value
-
-    @property
-    def minimum_fan_speed(self):
-        if self.is_minimum_fan_speed_supported:
-            odCurrentSetting = self._current_settings
-            odInitSetting = self._init_settings
-
-            return _get_value(OD8_FAN_MIN_SPEED, ADL_OD8_FAN_SPEED_MIN, odInitSetting, odCurrentSetting)
-
-    @minimum_fan_speed.setter
-    def minimum_fan_speed(self, value):
-        if self.is_minimum_fan_speed_supported:
-            self.__set(OD8_FAN_MIN_SPEED, value)
-
-    @property
-    def fan_acoustic_limit(self):
-        if self.is_fan_acoustic_limit_supported:
-            odCurrentSetting = self._current_settings
-            odInitSetting = self._init_settings
-
-            return _get_value(OD8_FAN_ACOUSTIC_LIMIT, ADL_OD8_ACOUSTIC_LIMIT_SCLK, odInitSetting, odCurrentSetting)
-
-    @fan_acoustic_limit.setter
-    def fan_acoustic_limit(self, value):
-        if self.is_fan_acoustic_limit_supported:
-            self.__set(OD8_FAN_ACOUSTIC_LIMIT, value)
-
-    @property
-    def is_fan_rpm_sensor_supported(self):
-        odlpDataOutput = self._pm_log
-        return bool(odlpDataOutput.sensors[PMLOG_FAN_RPM].supported.value)
-
-    @property
-    def fan_rpm_sensor(self):
-        odlpDataOutput = self._pm_log
-
-        if odlpDataOutput.sensors[PMLOG_FAN_RPM].supported.value:
-            return odlpDataOutput.sensors[PMLOG_FAN_RPM].value.value
-
-    @property
-    def ac_timing(self):
-        if self.is_ac_timing_supported:
-            odCurrentSetting = self._current_settings
-            odInitSetting = self._init_settings
-
-            return _get_value(OD8_AC_TIMING, ADL_OD8_MEMORY_TIMING_TUNE, odInitSetting, odCurrentSetting)
-
-    @ac_timing.setter
-    def ac_timing(self, value):
-        if self.is_ac_timing_supported:
-            self.__set(OD8_AC_TIMING, value)
-
-    @property
-    def zero_rpm_fan_control(self):
-        if self.is_zero_rpm_fan_control_supported:
-            odCurrentSetting = self._current_settings
-            odInitSetting = self._init_settings
-
-            return _get_value(OD8_FAN_ZERORPM_CONTROL, ADL_OD8_FAN_ZERO_RPM_CONTROL, odInitSetting, odCurrentSetting)
-
-    @zero_rpm_fan_control.setter
-    def zero_rpm_fan_control(self, value):
-        if self.is_zero_rpm_fan_control_supported:
-            self.__set(OD8_FAN_ZERORPM_CONTROL, value)
-
-    @property
-    def auto_uv_engine_control(self):
-        if self.is_auto_uv_engine_control_supported:
-            odCurrentSetting = self._current_settings
-            odInitSetting = self._init_settings
-
-            return _get_value(OD8_AUTO_UV_ENGINE_CONTROL, ADL_OD8_AUTO_UV_ENGINE, odInitSetting, odCurrentSetting)
-
-    @auto_uv_engine_control.setter
-    def auto_uv_engine_control(self, value):
-        if self.is_auto_uv_engine_control_supported:
-            self.__set(OD8_AUTO_UV_ENGINE_CONTROL, value)
-
-    @property
-    def auto_oc_engine_control(self):
-        if self.is_auto_oc_engine_control_supported:
-            odCurrentSetting = self._current_settings
-            odInitSetting = self._init_settings
-
-            return _get_value(OD8_AUTO_OC_ENGINE_CONTROL, ADL_OD8_AUTO_OC_ENGINE, odInitSetting, odCurrentSetting)
-
-    @auto_oc_engine_control.setter
-    def auto_oc_engine_control(self, value):
-        if self.is_auto_oc_engine_control_supported:
-            self.__set(OD8_AUTO_OC_ENGINE_CONTROL, value)
-
-    @property
-    def auto_oc_memory_control(self):
-        if self.is_auto_oc_memory_control_supported:
-            odCurrentSetting = self._current_settings
-            odInitSetting = self._init_settings
-
-            return _get_value(OD8_AUTO_OC_MEMORY_CONTROL, ADL_OD8_AUTO_OC_MEMORY, odInitSetting, odCurrentSetting)
-
-    @auto_oc_memory_control.setter
-    def auto_oc_memory_control(self, value):
-        if self.is_auto_oc_memory_control_supported:
-            self.__set(OD8_AUTO_OC_MEMORY_CONTROL, value)
-
-    @property
-    def fan_curve_temperature_1(self):
-        if self.is_fan_curve_supported:
-            odCurrentSetting = self._current_settings
-            odInitSetting = self._init_settings
-
-            return _get_value(OD8_FAN_CURVE_TEMPERATURE_1, ADL_OD8_FAN_CURVE, odInitSetting, odCurrentSetting)
-
-    @fan_curve_temperature_1.setter
-    def fan_curve_temperature_1(self, value):
-        if self.is_fan_curve_supported:
-            self.__set(OD8_FAN_CURVE_TEMPERATURE_1, value)
-
-    @property
-    def fan_curve_speed_1(self):
-        if self.is_fan_curve_supported:
-            odCurrentSetting = self._current_settings
-            odInitSetting = self._init_settings
-
-            return _get_value(OD8_FAN_CURVE_SPEED_1, ADL_OD8_FAN_CURVE, odInitSetting, odCurrentSetting)
-
-    @fan_curve_speed_1.setter
-    def fan_curve_speed_1(self, value):
-        if self.is_fan_curve_supported:
-            self.__set(OD8_FAN_CURVE_SPEED_1, value)
-
-    @property
-    def fan_curve_temperature_2(self):
-        if self.is_fan_curve_supported:
-            odCurrentSetting = self._current_settings
-            odInitSetting = self._init_settings
-
-            return _get_value(OD8_FAN_CURVE_TEMPERATURE_2, ADL_OD8_FAN_CURVE, odInitSetting, odCurrentSetting)
-
-    @fan_curve_temperature_2.setter
-    def fan_curve_temperature_2(self, value):
-        if self.is_fan_curve_supported:
-            self.__set(OD8_FAN_CURVE_TEMPERATURE_2, value)
-
-    @property
-    def fan_curve_speed_2(self):
-        if self.is_fan_curve_supported:
-            odCurrentSetting = self._current_settings
-            odInitSetting = self._init_settings
-
-            return _get_value(OD8_FAN_CURVE_SPEED_2, ADL_OD8_FAN_CURVE, odInitSetting, odCurrentSetting)
-
-    @fan_curve_speed_2.setter
-    def fan_curve_speed_2(self, value):
-        if self.is_fan_curve_supported:
-            self.__set(OD8_FAN_CURVE_SPEED_2, value)
-
-    @property
-    def fan_curve_temperature_3(self):
-        if self.is_fan_curve_supported:
-            odCurrentSetting = self._current_settings
-            odInitSetting = self._init_settings
-
-            return _get_value(OD8_FAN_CURVE_TEMPERATURE_3, ADL_OD8_FAN_CURVE, odInitSetting, odCurrentSetting)
-
-    @fan_curve_temperature_3.setter
-    def fan_curve_temperature_3(self, value):
-        if self.is_fan_curve_supported:
-            self.__set(OD8_FAN_CURVE_TEMPERATURE_3, value)
-
-    @property
-    def fan_curve_speed_3(self):
-        if self.is_fan_curve_supported:
-            odCurrentSetting = self._current_settings
-            odInitSetting = self._init_settings
-
-            return _get_value(OD8_FAN_CURVE_SPEED_3, ADL_OD8_FAN_CURVE, odInitSetting, odCurrentSetting)
-
-    @fan_curve_speed_3.setter
-    def fan_curve_speed_3(self, value):
-        if self.is_fan_curve_supported:
-            self.__set(OD8_FAN_CURVE_SPEED_3, value)
-
-    @property
-    def fan_curve_temperature_4(self):
-        if self.is_fan_curve_supported:
-            odCurrentSetting = self._current_settings
-            odInitSetting = self._init_settings
-
-            return _get_value(OD8_FAN_CURVE_TEMPERATURE_4, ADL_OD8_FAN_CURVE, odInitSetting, odCurrentSetting)
-
-    @fan_curve_temperature_4.setter
-    def fan_curve_temperature_4(self, value):
-        if self.is_fan_curve_supported:
-            self.__set(OD8_FAN_CURVE_TEMPERATURE_4, value)
-
-    @property
-    def fan_curve_speed_4(self):
-        if self.is_fan_curve_supported:
-            odCurrentSetting = self._current_settings
-            odInitSetting = self._init_settings
-
-            return _get_value(OD8_FAN_CURVE_SPEED_4, ADL_OD8_FAN_CURVE, odInitSetting, odCurrentSetting)
-
-    @fan_curve_speed_4.setter
-    def fan_curve_speed_4(self, value):
-        if self.is_fan_curve_supported:
-            self.__set(OD8_FAN_CURVE_SPEED_4, value)
-
-    @property
-    def fan_curve_temperature_5(self):
-        if self.is_fan_curve_supported:
-            odCurrentSetting = self._current_settings
-            odInitSetting = self._init_settings
-
-            return _get_value(OD8_FAN_CURVE_TEMPERATURE_5, ADL_OD8_FAN_CURVE, odInitSetting, odCurrentSetting)
-
-    @fan_curve_temperature_5.setter
-    def fan_curve_temperature_5(self, value):
-        if self.is_fan_curve_supported:
-            self.__set(OD8_FAN_CURVE_TEMPERATURE_5, value)
-
-    @property
-    def fan_curve_speed_5(self):
-        if self.is_fan_curve_supported:
-            odCurrentSetting = self._current_settings
-            odInitSetting = self._init_settings
-
-            return _get_value(OD8_FAN_CURVE_SPEED_5, ADL_OD8_FAN_CURVE, odInitSetting, odCurrentSetting)
-
-    @fan_curve_speed_5.setter
-    def fan_curve_speed_5(self, value):
-        if self.is_fan_curve_supported:
-            self.__set(OD8_FAN_CURVE_SPEED_5, value)
-
-    def __set(self, setting_id, value):
-        iAdapterIndex = INT(self._adapter_index)
-        odCurrentSetting = self._current_settings
-        odInitSetting = self._init_settings
-
-        odSetSetting = ADLOD8SetSetting()
-        ctypes.memset(ctypes.byref(odSetSetting), 0, ctypes.sizeof(ADLOD8SetSetting))
-        odSetSetting.count = OD8_COUNT
-        for i in range(OD8_GFXCLK_FREQ1, OD8_UCLK_FMAX):
-            odSetSetting.od8SettingTable[i].requested = 1
-            odSetSetting.od8SettingTable[i].value = odCurrentSetting.Od8SettingTable[i]
-
-        if OD8_FAN_CURVE_SPEED_5 >= setting_id >= OD8_FAN_CURVE_TEMPERATURE_1:
-            reset = False
-        else:
-            reset = True
-
-        for i in range(OD8_FAN_CURVE_TEMPERATURE_1, OD8_FAN_CURVE_SPEED_5):
-            odSetSetting.od8SettingTable[i].reset = reset
-            odSetSetting.od8SettingTable[i].requested = 1
-            odSetSetting.od8SettingTable[i].value = odCurrentSetting.Od8SettingTable[i]
-
-        odSetSetting.od8SettingTable[setting_id].requested = 1
-
-        if odInitSetting.od8SettingTable[setting_id].minValue.value > value:
-            return False
-
-        if odInitSetting.od8SettingTable[setting_id].maxValue.value < value:
-            return False
-
-        odSetSetting.od8SettingTable[setting_id].value = value
-        if OD8_GFXCLK_FMAX == setting_id:
-            odSetSetting.od8SettingTable[OD8_GFXCLK_FREQ3].value = value
-        elif OD8_GFXCLK_FMIN == setting_id:
-            odSetSetting.od8SettingTable[OD8_GFXCLK_FREQ1].value = value
-
-        with ADL2_Main_Control_Create as context:
-            if _ADL2_Overdrive8_Setting_Set(
+                ctypes.byref(lpOverdrive8Capabilities),
+                ctypes.byref(lpNumberOfFeatures),
+                ctypes.byref(lppInitSettingList)
+            )
+
+            if (
+                not lpOverdrive8Capabilities.value & ADL_OD8_GFXCLK_LIMITS == ADL_OD8_GFXCLK_LIMITS and
+                not lpOverdrive8Capabilities.value & ADL_OD8_GFXCLK_CURVE == ADL_OD8_GFXCLK_CURVE
+            ):
+                return
+
+            initSetting.overdrive8Capabilities = lpOverdrive8Capabilities
+
+            if lpNumberOfFeatures > OD8_COUNT:
+                initSetting.count = OD8_COUNT
+            else:
+                initSetting.count = lpNumberOfFeatures
+
+            for i in range(initSetting.count):
+                initSetting.od8SettingTable[i].defaultValue = lppInitSettingList[i].defaultValue
+                initSetting.od8SettingTable[i].featureID = lppInitSettingList[i].featureID
+                initSetting.od8SettingTable[i].maxValue = lppInitSettingList[i].maxValue
+                initSetting.od8SettingTable[i].minValue = lppInitSettingList[i].minValue
+
+            ADL_Main_Memory_Free(lppInitSettingList)
+
+            return _set_overdrive_8(context, iAdapterIndex, initSetting, level, value)
+
+    def __iter__(self):
+        if self._core_voltages is None:
+            self._core_voltages = []
+
+            iAdapterIndex = INT(self._adapter_index)
+
+            with ADL2_Main_Control_Create as context:
+                lpNumberOfFeatures = INT(OD8_COUNT)
+                lpOverdrive8Capabilities = INT(0)
+                lppInitSettingList = (ADLOD8SingleInitSetting * OD8_COUNT)()
+                initSetting = ADLOD8InitSetting()
+
+                _ADL2_Overdrive8_Init_SettingX2_Get(
                     context,
                     iAdapterIndex,
-                    ctypes.byref(odSetSetting),
-                    ctypes.byref(odCurrentSetting)
-            ) == ADL_OK:
-                return True
+                    ctypes.byref(lpOverdrive8Capabilities),
+                    ctypes.byref(lpNumberOfFeatures),
+                    ctypes.byref(lppInitSettingList)
+                )
+                initSetting.overdrive8Capabilities = lpOverdrive8Capabilities
 
+                if (
+                    lpOverdrive8Capabilities.value & ADL_OD8_GFXCLK_LIMITS == ADL_OD8_GFXCLK_LIMITS or
+                    lpOverdrive8Capabilities.value & ADL_OD8_GFXCLK_CURVE == ADL_OD8_GFXCLK_CURVE
+                ):
+
+                    if lpNumberOfFeatures > OD8_COUNT:
+                        initSetting.count = OD8_COUNT
+                    else:
+                        initSetting.count = lpNumberOfFeatures
+
+                    for i in range(initSetting.count):
+                        initSetting.od8SettingTable[i].defaultValue = lppInitSettingList[i].defaultValue
+                        initSetting.od8SettingTable[i].featureID = lppInitSettingList[i].featureID
+                        initSetting.od8SettingTable[i].maxValue = lppInitSettingList[i].maxValue
+                        initSetting.od8SettingTable[i].minValue = lppInitSettingList[i].minValue
+
+                    ADL_Main_Memory_Free(lppInitSettingList)
+
+                    for cls in _get_overdrive_8(
+                        context,
+                        iAdapterIndex,
+                        initSetting,
+                        [OD8_GFXCLK_VOLTAGE1, ADL_OD8_GFXCLK_CURVE],
+                        [OD8_GFXCLK_VOLTAGE2, ADL_OD8_GFXCLK_CURVE],
+                        [OD8_GFXCLK_VOLTAGE3, ADL_OD8_GFXCLK_CURVE]
+                    ):
+
+                        value = CoreVoltage(cls.current)
+                        value._obj = cls
+                        value._adapter_index = self._adapter_index
+                        value._level = cls.level
+                        self._core_voltages.append(value)
+
+        return iter(self._core_voltages)
+
+
+class CoreClock(IntValueWrapper):
+
+    @property
+    def is_active(self):
+        iAdapterIndex = INT(self._adapter_index)
+        lpCoreClock = INT()
+        lpMemoryClock = INT()
+
+        from .adapter_h import _ADL2_Adapter_ObservedClockInfo_Get
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_Adapter_ObservedClockInfo_Get(
+                context,
+                iAdapterIndex,
+                ctypes.byref(lpCoreClock),
+                ctypes.byref(lpMemoryClock)
+            )
+
+            return lpCoreClock == self.real
+
+    def activate(self):
+        pass
+
+    @property
+    def editable(self):
+        return self._obj.editable
+
+    @property
+    def step(self):
+        return 0
+
+    @property
+    def default(self):
+        return self._obj.default
+
+    @property
+    def min(self):
+        return self._obj.min_value
+
+    @property
+    def unit_of_measure(self):
+        return 'MHz'
+
+
+@utils.instance_singleton
+class CoreClocks(object):
+
+    def __init__(self, adapter_index):
+        self._adapter_index = adapter_index
+        self._core_clocks = None
+
+    def __getitem__(self, item):
+        return list(self)[item]
+
+    def __setitem__(self, key, value):
+        values = list(self)
+        val = values[key]
+        val += value - val.real
+
+    @property
+    def actual(self):
+        iAdapterIndex = INT(self._adapter_index)
+        lpCoreClock = INT()
+        lpMemoryClock = INT()
+
+        from .adapter_h import _ADL2_Adapter_ObservedClockInfo_Get
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_Adapter_ObservedClockInfo_Get(
+                context,
+                iAdapterIndex,
+                ctypes.byref(lpCoreClock),
+                ctypes.byref(lpMemoryClock)
+            )
+
+            return CoreClock(lpCoreClock)
+
+    @property
+    def current(self):
+        for value in self:
+            if value.is_active:
+                return value
+
+    def _set_level(self, level, value):
+        iAdapterIndex = INT(self._adapter_index)
+        with ADL2_Main_Control_Create as context:
+            lpNumberOfFeatures = INT(OD8_COUNT)
+            lpOverdrive8Capabilities = INT(0)
+            lppInitSettingList = (ADLOD8SingleInitSetting * OD8_COUNT)()
+            initSetting = ADLOD8InitSetting()
+
+            _ADL2_Overdrive8_Init_SettingX2_Get(
+                context,
+                iAdapterIndex,
+                ctypes.byref(lpOverdrive8Capabilities),
+                ctypes.byref(lpNumberOfFeatures),
+                ctypes.byref(lppInitSettingList)
+            )
+
+            if (
+                not lpOverdrive8Capabilities.value & ADL_OD8_GFXCLK_LIMITS == ADL_OD8_GFXCLK_LIMITS and
+                not lpOverdrive8Capabilities.value & ADL_OD8_GFXCLK_CURVE == ADL_OD8_GFXCLK_CURVE
+            ):
+                return
+
+            initSetting.overdrive8Capabilities = lpOverdrive8Capabilities
+
+            if lpNumberOfFeatures > OD8_COUNT:
+                initSetting.count = OD8_COUNT
+            else:
+                initSetting.count = lpNumberOfFeatures
+
+            for i in range(initSetting.count):
+                initSetting.od8SettingTable[i].defaultValue = lppInitSettingList[i].defaultValue
+                initSetting.od8SettingTable[i].featureID = lppInitSettingList[i].featureID
+                initSetting.od8SettingTable[i].maxValue = lppInitSettingList[i].maxValue
+                initSetting.od8SettingTable[i].minValue = lppInitSettingList[i].minValue
+
+            ADL_Main_Memory_Free(lppInitSettingList)
+
+            return _set_overdrive_8(context, iAdapterIndex, initSetting, level, value)
+
+    def __iter__(self):
+        if self._core_clocks is None:
+            self._core_clocks = []
+
+            iAdapterIndex = INT(self._adapter_index)
+
+            with ADL2_Main_Control_Create as context:
+                lpNumberOfFeatures = INT(OD8_COUNT)
+                lpOverdrive8Capabilities = INT(0)
+                lppInitSettingList = (ADLOD8SingleInitSetting * OD8_COUNT)()
+                initSetting = ADLOD8InitSetting()
+
+                _ADL2_Overdrive8_Init_SettingX2_Get(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(lpOverdrive8Capabilities),
+                    ctypes.byref(lpNumberOfFeatures),
+                    ctypes.byref(lppInitSettingList)
+                )
+                initSetting.overdrive8Capabilities = lpOverdrive8Capabilities
+
+                if (
+                    lpOverdrive8Capabilities.value & ADL_OD8_GFXCLK_LIMITS == ADL_OD8_GFXCLK_LIMITS or
+                    lpOverdrive8Capabilities.value & ADL_OD8_GFXCLK_CURVE == ADL_OD8_GFXCLK_CURVE
+                ):
+
+                    if lpNumberOfFeatures > OD8_COUNT:
+                        initSetting.count = OD8_COUNT
+                    else:
+                        initSetting.count = lpNumberOfFeatures
+
+                    for i in range(initSetting.count):
+                        initSetting.od8SettingTable[i].defaultValue = lppInitSettingList[i].defaultValue
+                        initSetting.od8SettingTable[i].featureID = lppInitSettingList[i].featureID
+                        initSetting.od8SettingTable[i].maxValue = lppInitSettingList[i].maxValue
+                        initSetting.od8SettingTable[i].minValue = lppInitSettingList[i].minValue
+
+                    ADL_Main_Memory_Free(lppInitSettingList)
+
+                    for cls in _get_overdrive_8(
+                            context,
+                            iAdapterIndex,
+                            initSetting,
+                            [OD8_GFXCLK_FREQ1, ADL_OD8_GFXCLK_CURVE],
+                            [OD8_GFXCLK_FREQ2, ADL_OD8_GFXCLK_CURVE],
+                            [OD8_GFXCLK_FREQ3, ADL_OD8_GFXCLK_CURVE],
+                            [OD8_GFXCLK_FMIN, ADL_OD8_GFXCLK_CURVE],
+                            [OD8_GFXCLK_FMAX, ADL_OD8_GFXCLK_CURVE]
+                    ):
+                        value = CoreClock(cls.current)
+                        value._obj = cls
+                        value._adapter_index = self._adapter_index
+                        value._level = cls.level
+                        self._core_clocks.append(value)
+
+        return iter(self._core_clocks)
+
+
+class MemoryVoltage(FloatValueWrapper):
+
+    @property
+    def is_active(self):
         return False
+
+    def activate(self):
+        pass
+
+    @property
+    def step(self):
+        return 0
+
+    @property
+    def default(self):
+        return 0
+
+    @property
+    def max(self):
+        return 0
+
+    @property
+    def min(self):
+        return 0
+
+    @property
+    def unit_of_measure(self):
+        return 'VDC'
+
+
+@utils.instance_singleton
+class MemoryVoltages(object):
+
+    def __init__(self, adapter_index):
+        self._adapter_index = adapter_index
+        self._memory_voltages = []
+
+    def __getitem__(self, item):
+        return list(self)[item]
+
+    def __setitem__(self, key, value):
+        pass
+
+    @property
+    def actual(self):
+        return MemoryVoltage(0.0)
+
+    @property
+    def current(self):
+        return MemoryVoltage(0.0)
+
+    def _set_level(self, level, value):
+        pass
+
+    def __iter__(self):
+        return iter(self._memory_voltages)
+
+
+class MemoryClock(IntValueWrapper):
+
+    @property
+    def is_active(self):
+        iAdapterIndex = INT(self._adapter_index)
+        lpCoreClock = INT()
+        lpMemoryClock = INT()
+
+        from .adapter_h import _ADL2_Adapter_ObservedClockInfo_Get
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_Adapter_ObservedClockInfo_Get(
+                context,
+                iAdapterIndex,
+                ctypes.byref(lpCoreClock),
+                ctypes.byref(lpMemoryClock)
+            )
+
+            return lpMemoryClock == self.real
+
+    def activate(self):
+        pass
+
+    @property
+    def step(self):
+        return self._obj.step
+
+    @property
+    def default(self):
+        return self._obj.default
+
+    @property
+    def min(self):
+        return self._obj.min_value
+
+    @property
+    def editable(self):
+        return self._obj.editable
+
+    @property
+    def unit_of_measure(self):
+        return 'MHz'
+
+
+@utils.instance_singleton
+class MemoryClocks(object):
+
+    def __init__(self, adapter_index):
+        self._adapter_index = adapter_index
+        self._memory_clocks = None
+
+    def __getitem__(self, item):
+        return list(self)[item]
+
+    def __setitem__(self, key, value):
+        values = list(self)
+        val = values[key]
+        val += value - val.real
+
+    @property
+    def actual(self):
+        iAdapterIndex = INT(self._adapter_index)
+        lpCoreClock = INT()
+        lpMemoryClock = INT()
+
+        from .adapter_h import _ADL2_Adapter_ObservedClockInfo_Get
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_Adapter_ObservedClockInfo_Get(
+                context,
+                iAdapterIndex,
+                ctypes.byref(lpCoreClock),
+                ctypes.byref(lpMemoryClock)
+            )
+
+            return MemoryClock(lpMemoryClock)
+
+    @property
+    def current(self):
+        for value in self:
+            if value.is_active:
+                return value
+
+    def _set_level(self, level, value):
+        iAdapterIndex = INT(self._adapter_index)
+        with ADL2_Main_Control_Create as context:
+            lpNumberOfFeatures = INT(OD8_COUNT)
+            lpOverdrive8Capabilities = INT(0)
+            lppInitSettingList = (ADLOD8SingleInitSetting * OD8_COUNT)()
+            initSetting = ADLOD8InitSetting()
+
+            _ADL2_Overdrive8_Init_SettingX2_Get(
+                context,
+                iAdapterIndex,
+                ctypes.byref(lpOverdrive8Capabilities),
+                ctypes.byref(lpNumberOfFeatures),
+                ctypes.byref(lppInitSettingList)
+            )
+
+            if not lpOverdrive8Capabilities.value & ADL_OD8_UCLK_MAX == ADL_OD8_UCLK_MAX:
+                return
+
+            initSetting.overdrive8Capabilities = lpOverdrive8Capabilities
+
+            if lpNumberOfFeatures > OD8_COUNT:
+                initSetting.count = OD8_COUNT
+            else:
+                initSetting.count = lpNumberOfFeatures
+
+            for i in range(initSetting.count):
+                initSetting.od8SettingTable[i].defaultValue = lppInitSettingList[i].defaultValue
+                initSetting.od8SettingTable[i].featureID = lppInitSettingList[i].featureID
+                initSetting.od8SettingTable[i].maxValue = lppInitSettingList[i].maxValue
+                initSetting.od8SettingTable[i].minValue = lppInitSettingList[i].minValue
+
+            ADL_Main_Memory_Free(lppInitSettingList)
+
+            return _set_overdrive_8(context, iAdapterIndex, initSetting, level, value)
+
+    def __iter__(self):
+        if self._memory_clocks is None:
+            self._memory_clocks = []
+
+            iAdapterIndex = INT(self._adapter_index)
+
+            with ADL2_Main_Control_Create as context:
+                lpNumberOfFeatures = INT(OD8_COUNT)
+                lpOverdrive8Capabilities = INT(0)
+                lppInitSettingList = (ADLOD8SingleInitSetting * OD8_COUNT)()
+                initSetting = ADLOD8InitSetting()
+
+                _ADL2_Overdrive8_Init_SettingX2_Get(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(lpOverdrive8Capabilities),
+                    ctypes.byref(lpNumberOfFeatures),
+                    ctypes.byref(lppInitSettingList)
+                )
+                initSetting.overdrive8Capabilities = lpOverdrive8Capabilities
+
+                if lpOverdrive8Capabilities.value & ADL_OD8_UCLK_MAX == ADL_OD8_UCLK_MAX:
+
+                    if lpNumberOfFeatures > OD8_COUNT:
+                        initSetting.count = OD8_COUNT
+                    else:
+                        initSetting.count = lpNumberOfFeatures
+
+                    for i in range(initSetting.count):
+                        initSetting.od8SettingTable[i].defaultValue = lppInitSettingList[i].defaultValue
+                        initSetting.od8SettingTable[i].featureID = lppInitSettingList[i].featureID
+                        initSetting.od8SettingTable[i].maxValue = lppInitSettingList[i].maxValue
+                        initSetting.od8SettingTable[i].minValue = lppInitSettingList[i].minValue
+
+                    ADL_Main_Memory_Free(lppInitSettingList)
+
+                    for cls in _get_overdrive_8(
+                        context,
+                        iAdapterIndex,
+                        initSetting,
+                        [OD8_UCLK_FMAX, ADL_OD8_UCLK_MAX]
+                    ):
+                        value = MemoryClock(cls.current)
+                        value._obj = cls
+                        value._adapter_index = self._adapter_index
+                        value._level = cls.level
+                        self._memory_clocks.append(value)
+
+            return iter(self._memory_clocks)
+
+
+class MemoryTiming(IntValueWrapper):
+
+    @property
+    def unit_of_measure(self):
+        return ''
+
+    @property
+    def min(self):
+        return self._obj.min_value
+
+    @property
+    def step(self):
+        return self._obj.step_value
+
+
+@utils.instance_singleton
+class MemoryTimings(object):
+
+    def __init__(self, adapter_index):
+        self._adapter_index = adapter_index
+        self._memory_timings
+
+    def _set_level(self, level, value):
+        iAdapterIndex = INT(self._adapter_index)
+        with ADL2_Main_Control_Create as context:
+            lpNumberOfFeatures = INT(OD8_COUNT)
+            lpOverdrive8Capabilities = INT(0)
+            lppInitSettingList = (ADLOD8SingleInitSetting * OD8_COUNT)()
+            initSetting = ADLOD8InitSetting()
+
+            _ADL2_Overdrive8_Init_SettingX2_Get(
+                context,
+                iAdapterIndex,
+                ctypes.byref(lpOverdrive8Capabilities),
+                ctypes.byref(lpNumberOfFeatures),
+                ctypes.byref(lppInitSettingList)
+            )
+
+            if not lpOverdrive8Capabilities.value &  ADL_OD8_MEMORY_TIMING_TUNE ==  ADL_OD8_MEMORY_TIMING_TUNE:
+                return
+
+            initSetting.overdrive8Capabilities = lpOverdrive8Capabilities
+
+            if lpNumberOfFeatures > OD8_COUNT:
+                initSetting.count = OD8_COUNT
+            else:
+                initSetting.count = lpNumberOfFeatures
+
+            for i in range(initSetting.count):
+                initSetting.od8SettingTable[i].defaultValue = lppInitSettingList[i].defaultValue
+                initSetting.od8SettingTable[i].featureID = lppInitSettingList[i].featureID
+                initSetting.od8SettingTable[i].maxValue = lppInitSettingList[i].maxValue
+                initSetting.od8SettingTable[i].minValue = lppInitSettingList[i].minValue
+
+            ADL_Main_Memory_Free(lppInitSettingList)
+
+            return _set_overdrive_8(context, iAdapterIndex, initSetting, level, value)
+
+    def __iter__(self):
+        if self._memory_timings is None:
+            self._memory_timings = []
+            iAdapterIndex = INT(self._adapter_index)
+
+            with ADL2_Main_Control_Create as context:
+                lpNumberOfFeatures = INT(OD8_COUNT)
+                lpOverdrive8Capabilities = INT(0)
+                lppInitSettingList = (ADLOD8SingleInitSetting * OD8_COUNT)()
+                initSetting = ADLOD8InitSetting()
+
+                _ADL2_Overdrive8_Init_SettingX2_Get(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(lpOverdrive8Capabilities),
+                    ctypes.byref(lpNumberOfFeatures),
+                    ctypes.byref(lppInitSettingList)
+                )
+                initSetting.overdrive8Capabilities = lpOverdrive8Capabilities
+
+                if lpOverdrive8Capabilities.value & ADL_OD8_MEMORY_TIMING_TUNE ==  ADL_OD8_MEMORY_TIMING_TUNE:
+
+                    if lpNumberOfFeatures > OD8_COUNT:
+                        initSetting.count = OD8_COUNT
+                    else:
+                        initSetting.count = lpNumberOfFeatures
+
+                    for i in range(initSetting.count):
+                        initSetting.od8SettingTable[i].defaultValue = lppInitSettingList[i].defaultValue
+                        initSetting.od8SettingTable[i].featureID = lppInitSettingList[i].featureID
+                        initSetting.od8SettingTable[i].maxValue = lppInitSettingList[i].maxValue
+                        initSetting.od8SettingTable[i].minValue = lppInitSettingList[i].minValue
+
+                    ADL_Main_Memory_Free(lppInitSettingList)
+
+                    for cls in _get_overdrive_8(
+                        context,
+                        iAdapterIndex,
+                        initSetting,
+                        [OD8_AC_TIMING, ADL_OD8_MEMORY_TIMING_TUNE],
+                    ):
+                        value = MemoryTiming(cls.current)
+                        value._obj = cls
+                        value._adapter_index = self._adapter_index
+                        value._level = cls.level
+                        self._memory_timings.append(value)
+
+        return iter(self._memory_timings)
+
+    def __getitem__(self, item):
+        timings = list(self)
+        return timings[item]
+
+    def __setitem__(self, key, value):
+        values = list(self)
+        val = values[key]
+        val += value - val.real
+
+
+class FanSpeed(IntValueWrapper):
+
+    @property
+    def unit_of_measure(self):
+        return self._obj.unit
+
+    @property
+    def min(self):
+        return self._obj.min_value
+
+    @property
+    def step(self):
+        return self._obj.step_value
+
+    @property
+    def automatic(self):
+        return self._get_automatic()
+
+    @automatic.setter
+    def automatic(self, value):
+        if value is True:
+            value = ODNControlType_Auto
+        elif value is False:
+            value = ODNControlType_Manual
+        else:
+            return
+
+        if value is True:
+            self._set_automatic(self.real, value)
+
+
+@utils.instance_singleton
+class FanSpeeds(object):
+
+    def __init__(self, adapter_index):
+        self._adapter_index = adapter_index
+        self._fan_speeds = None
+
+    @property
+    def zero_controls(self):
+        return ZeroFanControls(self._adapter_index)
+
+    def _set_level(self, level, value):
+        iAdapterIndex = INT(self._adapter_index)
+        with ADL2_Main_Control_Create as context:
+            lpNumberOfFeatures = INT(OD8_COUNT)
+            lpOverdrive8Capabilities = INT(0)
+            lppInitSettingList = (ADLOD8SingleInitSetting * OD8_COUNT)()
+            initSetting = ADLOD8InitSetting()
+
+            _ADL2_Overdrive8_Init_SettingX2_Get(
+                context,
+                iAdapterIndex,
+                ctypes.byref(lpOverdrive8Capabilities),
+                ctypes.byref(lpNumberOfFeatures),
+                ctypes.byref(lppInitSettingList)
+            )
+
+            if (
+                not lpOverdrive8Capabilities.value & ADL_OD8_ACOUSTIC_LIMIT_SCLK == ADL_OD8_ACOUSTIC_LIMIT_SCLK and
+                not lpOverdrive8Capabilities.value & ADL_OD8_FAN_SPEED_MIN == ADL_OD8_FAN_SPEED_MIN
+            ):
+                return
+
+            initSetting.overdrive8Capabilities = lpOverdrive8Capabilities
+
+            if lpNumberOfFeatures > OD8_COUNT:
+                initSetting.count = OD8_COUNT
+            else:
+                initSetting.count = lpNumberOfFeatures
+
+            for i in range(initSetting.count):
+                initSetting.od8SettingTable[i].defaultValue = lppInitSettingList[i].defaultValue
+                initSetting.od8SettingTable[i].featureID = lppInitSettingList[i].featureID
+                initSetting.od8SettingTable[i].maxValue = lppInitSettingList[i].maxValue
+                initSetting.od8SettingTable[i].minValue = lppInitSettingList[i].minValue
+
+            ADL_Main_Memory_Free(lppInitSettingList)
+
+            return _set_overdrive_8(context, iAdapterIndex, initSetting, level, value)
+
+    def __iter__(self):
+        if self._fan_speeds is None:
+            self._fan_speeds = []
+            iAdapterIndex = INT(self._adapter_index)
+
+            with ADL2_Main_Control_Create as context:
+                lpNumberOfFeatures = INT(OD8_COUNT)
+                lpOverdrive8Capabilities = INT(0)
+                lppInitSettingList = (ADLOD8SingleInitSetting * OD8_COUNT)()
+                initSetting = ADLOD8InitSetting()
+
+                _ADL2_Overdrive8_Init_SettingX2_Get(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(lpOverdrive8Capabilities),
+                    ctypes.byref(lpNumberOfFeatures),
+                    ctypes.byref(lppInitSettingList)
+                )
+                initSetting.overdrive8Capabilities = lpOverdrive8Capabilities
+
+                if (
+                    lpOverdrive8Capabilities.value & ADL_OD8_ACOUSTIC_LIMIT_SCLK == ADL_OD8_ACOUSTIC_LIMIT_SCLK or
+                    lpOverdrive8Capabilities.value & ADL_OD8_FAN_SPEED_MIN == ADL_OD8_FAN_SPEED_MIN
+                ):
+
+                    if lpNumberOfFeatures > OD8_COUNT:
+                        initSetting.count = OD8_COUNT
+                    else:
+                        initSetting.count = lpNumberOfFeatures
+
+                    for i in range(initSetting.count):
+                        initSetting.od8SettingTable[i].defaultValue = lppInitSettingList[i].defaultValue
+                        initSetting.od8SettingTable[i].featureID = lppInitSettingList[i].featureID
+                        initSetting.od8SettingTable[i].maxValue = lppInitSettingList[i].maxValue
+                        initSetting.od8SettingTable[i].minValue = lppInitSettingList[i].minValue
+
+                    ADL_Main_Memory_Free(lppInitSettingList)
+
+                    for cls in _get_overdrive_8(
+                        context,
+                        iAdapterIndex,
+                        initSetting,
+                        [OD8_FAN_MIN_SPEED, ADL_OD8_FAN_SPEED_MIN],
+                        [OD8_FAN_ACOUSTIC_LIMIT, ADL_OD8_ACOUSTIC_LIMIT_SCLK]
+
+                    ):
+                        value = FanSpeed(cls.current)
+                        value._obj = cls
+                        value._adapter_index = self._adapter_index
+                        value._level = cls.level
+                        self._fan_speeds.append(value)
+
+        return iter(self._fan_speeds)
+
+    def __getitem__(self, item):
+        speeds = list(self)
+        return speeds[item]
+
+    def __setitem__(self, key, value):
+        values = list(self)
+        val = values[key]
+        val += value - val.real
+
+
+class ZeroFanControl(IntValueWrapper):
+
+    @property
+    def unit_of_measure(self):
+        return ''
+
+    @property
+    def min(self):
+        return self._obj.min_value
+
+
+@utils.instance_singleton
+class ZeroFanControls(object):
+
+    def __init__(self, adapter_index):
+        self._adapter_index = adapter_index
+        self._fan_controls = None
+
+    def _set_level(self, level, value):
+        iAdapterIndex = INT(self._adapter_index)
+        with ADL2_Main_Control_Create as context:
+            lpNumberOfFeatures = INT(OD8_COUNT)
+            lpOverdrive8Capabilities = INT(0)
+            lppInitSettingList = (ADLOD8SingleInitSetting * OD8_COUNT)()
+            initSetting = ADLOD8InitSetting()
+
+            _ADL2_Overdrive8_Init_SettingX2_Get(
+                context,
+                iAdapterIndex,
+                ctypes.byref(lpOverdrive8Capabilities),
+                ctypes.byref(lpNumberOfFeatures),
+                ctypes.byref(lppInitSettingList)
+            )
+
+            if (
+                not lpOverdrive8Capabilities.value & ADL_OD8_FAN_ZERO_RPM_CONTROL == ADL_OD8_FAN_ZERO_RPM_CONTROL
+            ):
+                return
+
+            initSetting.overdrive8Capabilities = lpOverdrive8Capabilities
+
+            if lpNumberOfFeatures > OD8_COUNT:
+                initSetting.count = OD8_COUNT
+            else:
+                initSetting.count = lpNumberOfFeatures
+
+            for i in range(initSetting.count):
+                initSetting.od8SettingTable[i].defaultValue = lppInitSettingList[i].defaultValue
+                initSetting.od8SettingTable[i].featureID = lppInitSettingList[i].featureID
+                initSetting.od8SettingTable[i].maxValue = lppInitSettingList[i].maxValue
+                initSetting.od8SettingTable[i].minValue = lppInitSettingList[i].minValue
+
+            ADL_Main_Memory_Free(lppInitSettingList)
+
+            return _set_overdrive_8(context, iAdapterIndex, initSetting, level, value)
+
+    def __iter__(self):
+        if self._fan_controls is None:
+            self._fan_controls = []
+            iAdapterIndex = INT(self._adapter_index)
+
+            with ADL2_Main_Control_Create as context:
+                lpNumberOfFeatures = INT(OD8_COUNT)
+                lpOverdrive8Capabilities = INT(0)
+                lppInitSettingList = (ADLOD8SingleInitSetting * OD8_COUNT)()
+                initSetting = ADLOD8InitSetting()
+
+                _ADL2_Overdrive8_Init_SettingX2_Get(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(lpOverdrive8Capabilities),
+                    ctypes.byref(lpNumberOfFeatures),
+                    ctypes.byref(lppInitSettingList)
+                )
+                initSetting.overdrive8Capabilities = lpOverdrive8Capabilities
+
+                if (
+                    lpOverdrive8Capabilities.value & ADL_OD8_FAN_ZERO_RPM_CONTROL == ADL_OD8_FAN_ZERO_RPM_CONTROL
+                ):
+
+                    if lpNumberOfFeatures > OD8_COUNT:
+                        initSetting.count = OD8_COUNT
+                    else:
+                        initSetting.count = lpNumberOfFeatures
+
+                    for i in range(initSetting.count):
+                        initSetting.od8SettingTable[i].defaultValue = lppInitSettingList[i].defaultValue
+                        initSetting.od8SettingTable[i].featureID = lppInitSettingList[i].featureID
+                        initSetting.od8SettingTable[i].maxValue = lppInitSettingList[i].maxValue
+                        initSetting.od8SettingTable[i].minValue = lppInitSettingList[i].minValue
+
+                    ADL_Main_Memory_Free(lppInitSettingList)
+
+                    for cls in _get_overdrive_8(
+                        context,
+                        iAdapterIndex,
+                        initSetting,
+                        [OD8_FAN_ZERORPM_CONTROL, ADL_OD8_FAN_ZERO_RPM_CONTROL]
+                    ):
+                        value = ZeroFanControl(cls.current)
+                        value._obj = cls
+                        value._adapter_index = self._adapter_index
+                        value._level = cls.level
+                        self._fan_controls.append(value)
+
+        return iter(self._fan_controls)
+
+    def __getitem__(self, item):
+        speeds = list(self)
+        return speeds[item]
+
+    def __setitem__(self, key, value):
+        values = list(self)
+        val = values[key]
+        val += value - val.real
+
+
+class PowerThreshold(IntValueWrapper):
+
+    @property
+    def unit_of_measure(self):
+        return ''
+
+    @property
+    def min(self):
+        return self._obj.min_value
+
+    @property
+    def default(self):
+        return self._obj.default
+
+    @property
+    def editable(self):
+        return self._obj.editable
+
+
+class Temperature(FloatValueWrapper):
+
+    @property
+    def unit_of_measure(self):
+        return ''
+
+    @property
+    def min(self):
+        return self._obj.min_value
+
+    @property
+    def default(self):
+        return self._obj.default
+
+    @property
+    def editable(self):
+        return self._obj.editable
+
+
+class Load(FloatValueWrapper):
+
+    @property
+    def unit_of_measure(self):
+        return '%'
+
+    @property
+    def min(self):
+        return 0.0
+
+    @property
+    def max(self):
+        return 100.0
+
+
+class AutoOC(IntValueWrapper):
+
+    @property
+    def unit_of_measure(self):
+        return ''
+
+    @property
+    def min(self):
+        return self._obj.min_value
+
+    @property
+    def default(self):
+        return self._obj.default
+
+    @property
+    def editable(self):
+        return self._obj.editable
+
+
+@utils.instance_singleton
+class OverDrive8(object):
+
+    def __init__(self, adapter_index):
+        self._adapter_index = adapter_index
+        self. _power_threshold = []
+        self._temperatures = None
+        self._auto_oc_uv = None
+        self._auto_oc_core = None
+        self._auto_oc_memory = None
+
+    @property
+    def _activity(self):
+        iAdapterIndex = INT(self._adapter_index)
+        lpActivity = ADLPMActivity()
+        lpActivity.iSize = ctypes.sizeof(ADLPMActivity)
+
+        from .overdrive5_h import _ADL2_Overdrive5_CurrentActivity_Get
+
+        with ADL2_Main_Control_Create as context:
+            _ADL2_Overdrive5_CurrentActivity_Get(
+                context,
+                iAdapterIndex,
+                ctypes.byref(lpActivity)
+            )
+            return lpActivity
+
+    @property
+    def bus_speed(self):
+        lpActivity = self._activity
+        return lpActivity.iCurrentBusSpeed // 100
+
+    @property
+    def bus_lanes(self):
+        lpActivity = self._activity
+
+        class BusLanes(object):
+            max_value = lpActivity.iMaximumBusLanes
+
+        bus_lanes = IntValueWrapper(lpActivity.iCurrentBusLanes)
+        bus_lanes._obj = BusLanes
+
+        return bus_lanes
+
+    @property
+    def load(self):
+        lpActivity = self._activity
+        return Load(lpActivity.iGPUActivityPercent / 10.0)
+
+    @property
+    def temperatures(self):
+        if self._temperatures is None:
+            self._temperatures = []
+            iAdapterIndex = INT(self._adapter_index)
+
+            with ADL2_Main_Control_Create as context:
+                lpNumberOfFeatures = INT(OD8_COUNT)
+                lpOverdrive8Capabilities = INT(0)
+                lppInitSettingList = (ADLOD8SingleInitSetting * OD8_COUNT)()
+                initSetting = ADLOD8InitSetting()
+
+                _ADL2_Overdrive8_Init_SettingX2_Get(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(lpOverdrive8Capabilities),
+                    ctypes.byref(lpNumberOfFeatures),
+                    ctypes.byref(lppInitSettingList)
+                )
+                initSetting.overdrive8Capabilities = lpOverdrive8Capabilities
+
+                if (
+                    lpOverdrive8Capabilities.value & ADL_OD8_TEMPERATURE_SYSTEM == ADL_OD8_TEMPERATURE_SYSTEM or
+                    lpOverdrive8Capabilities.value & ADL_OD8_TEMPERATURE_FAN == ADL_OD8_TEMPERATURE_FAN or
+                    lpOverdrive8Capabilities.value & ADL_OD8_POWER_LIMIT == ADL_OD8_POWER_LIMIT
+                ):
+                    if lpNumberOfFeatures > OD8_COUNT:
+                        initSetting.count = OD8_COUNT
+                    else:
+                        initSetting.count = lpNumberOfFeatures
+
+                    for i in range(initSetting.count):
+                        initSetting.od8SettingTable[i].defaultValue = lppInitSettingList[i].defaultValue
+                        initSetting.od8SettingTable[i].featureID = lppInitSettingList[i].featureID
+                        initSetting.od8SettingTable[i].maxValue = lppInitSettingList[i].maxValue
+                        initSetting.od8SettingTable[i].minValue = lppInitSettingList[i].minValue
+
+                    ADL_Main_Memory_Free(lppInitSettingList)
+
+                    def _set(level, val):
+                        with ADL2_Main_Control_Create as _context:
+                            _lpNumberOfFeatures = INT(OD8_COUNT)
+                            _lpOverdrive8Capabilities = INT(0)
+                            _lppInitSettingList = (ADLOD8SingleInitSetting * OD8_COUNT)()
+                            _initSetting = ADLOD8InitSetting()
+
+                            _ADL2_Overdrive8_Init_SettingX2_Get(
+                                _context,
+                                iAdapterIndex,
+                                ctypes.byref(_lpOverdrive8Capabilities),
+                                ctypes.byref(_lpNumberOfFeatures),
+                                ctypes.byref(_lppInitSettingList)
+                            )
+
+                            if (
+                                not _lpOverdrive8Capabilities.value & ADL_OD8_TEMPERATURE_SYSTEM == ADL_OD8_TEMPERATURE_SYSTEM and
+                                not _lpOverdrive8Capabilities.value & ADL_OD8_TEMPERATURE_FAN == ADL_OD8_TEMPERATURE_FAN and
+                                not _lpOverdrive8Capabilities.value & ADL_OD8_POWER_LIMIT == ADL_OD8_POWER_LIMIT
+                            ):
+                                return
+
+                            _initSetting.overdrive8Capabilities = _lpOverdrive8Capabilities
+
+                            if _lpNumberOfFeatures > OD8_COUNT:
+                                initSetting.count = OD8_COUNT
+                            else:
+                                _initSetting.count = _lpNumberOfFeatures
+
+                            for j in range(initSetting.count):
+                                _initSetting.od8SettingTable[j].defaultValue = _lppInitSettingList[j].defaultValue
+                                _initSetting.od8SettingTable[j].featureID = _lppInitSettingList[j].featureID
+                                _initSetting.od8SettingTable[j].maxValue = _lppInitSettingList[j].maxValue
+                                _initSetting.od8SettingTable[j].minValue = _lppInitSettingList[j].minValue
+
+                            ADL_Main_Memory_Free(_lppInitSettingList)
+
+                            return _set_overdrive_8(_context, iAdapterIndex, _initSetting, level, val)
+
+                    for cls in _get_overdrive_8(
+                            context,
+                            iAdapterIndex,
+                            initSetting,
+                            [OD8_OPERATING_TEMP_MAX, ADL_OD8_TEMPERATURE_SYSTEM],
+                            [OD8_FAN_TARGET_TEMP, ADL_OD8_TEMPERATURE_FAN],
+                            [OD8_POWER_PERCENTAGE, ADL_OD8_POWER_LIMIT]
+                    ):
+                        value = Temperature(cls.current)
+                        value._obj = cls
+                        value._set = _set
+                        value._adapter_index = self._adapter_index
+                        value._level = cls.level
+                        self._temperatures.append(value)
+
+        return self._temperatures
+
+    @property
+    def is_power_control_supported(self):
+        iAdapterIndex = INT(self._adapter_index)
+
+        with ADL2_Main_Control_Create as context:
+            lpNumberOfFeatures = INT(OD8_COUNT)
+            lpOverdrive8Capabilities = INT(0)
+            lppInitSettingList = (ADLOD8SingleInitSetting * OD8_COUNT)()
+            initSetting = ADLOD8InitSetting()
+
+            _ADL2_Overdrive8_Init_SettingX2_Get(
+                context,
+                iAdapterIndex,
+                ctypes.byref(lpOverdrive8Capabilities),
+                ctypes.byref(lpNumberOfFeatures),
+                ctypes.byref(lppInitSettingList)
+            )
+            initSetting.overdrive8Capabilities = lpOverdrive8Capabilities
+
+            return lpOverdrive8Capabilities.value & ADL_OD8_POWER_GAUGE == ADL_OD8_POWER_GAUGE
+
+    def _set_value(self, level, value):
+        iAdapterIndex = INT(self._adapter_index)
+        with ADL2_Main_Control_Create as context:
+            lpNumberOfFeatures = INT(OD8_COUNT)
+            lpOverdrive8Capabilities = INT(0)
+            lppInitSettingList = (ADLOD8SingleInitSetting * OD8_COUNT)()
+            initSetting = ADLOD8InitSetting()
+
+            _ADL2_Overdrive8_Init_SettingX2_Get(
+                context,
+                iAdapterIndex,
+                ctypes.byref(lpOverdrive8Capabilities),
+                ctypes.byref(lpNumberOfFeatures),
+                ctypes.byref(lppInitSettingList)
+            )
+
+            if not lpOverdrive8Capabilities.value & ADL_OD8_POWER_GAUGE == ADL_OD8_POWER_GAUGE:
+                return
+
+            initSetting.overdrive8Capabilities = lpOverdrive8Capabilities
+
+            if lpNumberOfFeatures > OD8_COUNT:
+                initSetting.count = OD8_COUNT
+            else:
+                initSetting.count = lpNumberOfFeatures
+
+            for i in range(initSetting.count):
+                initSetting.od8SettingTable[i].defaultValue = lppInitSettingList[i].defaultValue
+                initSetting.od8SettingTable[i].featureID = lppInitSettingList[i].featureID
+                initSetting.od8SettingTable[i].maxValue = lppInitSettingList[i].maxValue
+                initSetting.od8SettingTable[i].minValue = lppInitSettingList[i].minValue
+
+            ADL_Main_Memory_Free(lppInitSettingList)
+
+            return _set_overdrive_8(context, iAdapterIndex, initSetting, level, value)
+
+    @property
+    def auto_oc_uv(self):
+        if self._auto_oc_uv is None:
+            iAdapterIndex = INT(self._adapter_index)
+
+            with ADL2_Main_Control_Create as context:
+                lpNumberOfFeatures = INT(OD8_COUNT)
+                lpOverdrive8Capabilities = INT(0)
+                lppInitSettingList = (ADLOD8SingleInitSetting * OD8_COUNT)()
+                initSetting = ADLOD8InitSetting()
+
+                _ADL2_Overdrive8_Init_SettingX2_Get(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(lpOverdrive8Capabilities),
+                    ctypes.byref(lpNumberOfFeatures),
+                    ctypes.byref(lppInitSettingList)
+                )
+                initSetting.overdrive8Capabilities = lpOverdrive8Capabilities
+
+                if not lpOverdrive8Capabilities.value & ADL_OD8_AUTO_UV_ENGINE == ADL_OD8_AUTO_UV_ENGINE:
+                    class Value(object):
+                        min_val = 0
+                        max_val = 0
+                        default = 0
+
+                    value = AutoOC(0)
+                    value._obj = Value
+                    self._auto_oc_uv = value
+
+                else:
+                    if lpNumberOfFeatures > OD8_COUNT:
+                        initSetting.count = OD8_COUNT
+                    else:
+                        initSetting.count = lpNumberOfFeatures
+
+                    for i in range(initSetting.count):
+                        initSetting.od8SettingTable[i].defaultValue = lppInitSettingList[i].defaultValue
+                        initSetting.od8SettingTable[i].featureID = lppInitSettingList[i].featureID
+                        initSetting.od8SettingTable[i].maxValue = lppInitSettingList[i].maxValue
+                        initSetting.od8SettingTable[i].minValue = lppInitSettingList[i].minValue
+
+                    ADL_Main_Memory_Free(lppInitSettingList)
+
+                    def _set(level, val):
+                        with ADL2_Main_Control_Create as _context:
+                            _lpNumberOfFeatures = INT(OD8_COUNT)
+                            _lpOverdrive8Capabilities = INT(0)
+                            _lppInitSettingList = (ADLOD8SingleInitSetting * OD8_COUNT)()
+                            _initSetting = ADLOD8InitSetting()
+
+                            _ADL2_Overdrive8_Init_SettingX2_Get(
+                                _context,
+                                iAdapterIndex,
+                                ctypes.byref(_lpOverdrive8Capabilities),
+                                ctypes.byref(_lpNumberOfFeatures),
+                                ctypes.byref(_lppInitSettingList)
+                            )
+
+                            if not lpOverdrive8Capabilities.value & ADL_OD8_AUTO_UV_ENGINE == ADL_OD8_AUTO_UV_ENGINE:
+                                return
+
+                            _initSetting.overdrive8Capabilities = _lpOverdrive8Capabilities
+
+                            if _lpNumberOfFeatures > OD8_COUNT:
+                                initSetting.count = OD8_COUNT
+                            else:
+                                _initSetting.count = _lpNumberOfFeatures
+
+                            for j in range(initSetting.count):
+                                _initSetting.od8SettingTable[j].defaultValue = _lppInitSettingList[j].defaultValue
+                                _initSetting.od8SettingTable[j].featureID = _lppInitSettingList[j].featureID
+                                _initSetting.od8SettingTable[j].maxValue = _lppInitSettingList[j].maxValue
+                                _initSetting.od8SettingTable[j].minValue = _lppInitSettingList[j].minValue
+
+                            ADL_Main_Memory_Free(_lppInitSettingList)
+
+                            return _set_overdrive_8(_context, iAdapterIndex, _initSetting, level, val)
+
+                    for cls in _get_overdrive_8(
+                        context,
+                        iAdapterIndex,
+                        initSetting,
+                        [OD8_AUTO_UV_ENGINE_CONTROL, ADL_OD8_AUTO_UV_ENGINE]
+                    ):
+                        value = AutoOC(cls.current)
+                        value._obj = cls
+                        value._set = _set
+                        value._adapter_index = self._adapter_index
+                        value._level = cls.level
+                        self._auto_oc_uv = value
+
+        return self._auto_oc_uv
+
+    @property
+    def auto_oc_core(self):
+        if self._auto_oc_core is None:
+            iAdapterIndex = INT(self._adapter_index)
+
+            with ADL2_Main_Control_Create as context:
+                lpNumberOfFeatures = INT(OD8_COUNT)
+                lpOverdrive8Capabilities = INT(0)
+                lppInitSettingList = (ADLOD8SingleInitSetting * OD8_COUNT)()
+                initSetting = ADLOD8InitSetting()
+
+                _ADL2_Overdrive8_Init_SettingX2_Get(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(lpOverdrive8Capabilities),
+                    ctypes.byref(lpNumberOfFeatures),
+                    ctypes.byref(lppInitSettingList)
+                )
+                initSetting.overdrive8Capabilities = lpOverdrive8Capabilities
+
+                if not lpOverdrive8Capabilities.value & ADL_OD8_AUTO_OC_ENGINE == ADL_OD8_AUTO_OC_ENGINE:
+                    class Value(object):
+                        min_val = 0
+                        max_val = 0
+                        default = 0
+
+                    value = AutoOC(0)
+                    value._obj = Value
+                    self._auto_oc_core = value
+
+                else:
+                    if lpNumberOfFeatures > OD8_COUNT:
+                        initSetting.count = OD8_COUNT
+                    else:
+                        initSetting.count = lpNumberOfFeatures
+
+                    for i in range(initSetting.count):
+                        initSetting.od8SettingTable[i].defaultValue = lppInitSettingList[i].defaultValue
+                        initSetting.od8SettingTable[i].featureID = lppInitSettingList[i].featureID
+                        initSetting.od8SettingTable[i].maxValue = lppInitSettingList[i].maxValue
+                        initSetting.od8SettingTable[i].minValue = lppInitSettingList[i].minValue
+
+                    ADL_Main_Memory_Free(lppInitSettingList)
+
+                    def _set(level, val):
+                        with ADL2_Main_Control_Create as _context:
+                            _lpNumberOfFeatures = INT(OD8_COUNT)
+                            _lpOverdrive8Capabilities = INT(0)
+                            _lppInitSettingList = (ADLOD8SingleInitSetting * OD8_COUNT)()
+                            _initSetting = ADLOD8InitSetting()
+
+                            _ADL2_Overdrive8_Init_SettingX2_Get(
+                                _context,
+                                iAdapterIndex,
+                                ctypes.byref(_lpOverdrive8Capabilities),
+                                ctypes.byref(_lpNumberOfFeatures),
+                                ctypes.byref(_lppInitSettingList)
+                            )
+
+                            if not lpOverdrive8Capabilities.value & ADL_OD8_AUTO_OC_ENGINE == ADL_OD8_AUTO_OC_ENGINE:
+                                return
+
+                            _initSetting.overdrive8Capabilities = _lpOverdrive8Capabilities
+
+                            if _lpNumberOfFeatures > OD8_COUNT:
+                                initSetting.count = OD8_COUNT
+                            else:
+                                _initSetting.count = _lpNumberOfFeatures
+
+                            for j in range(initSetting.count):
+                                _initSetting.od8SettingTable[j].defaultValue = _lppInitSettingList[j].defaultValue
+                                _initSetting.od8SettingTable[j].featureID = _lppInitSettingList[j].featureID
+                                _initSetting.od8SettingTable[j].maxValue = _lppInitSettingList[j].maxValue
+                                _initSetting.od8SettingTable[j].minValue = _lppInitSettingList[j].minValue
+
+                            ADL_Main_Memory_Free(_lppInitSettingList)
+
+                            return _set_overdrive_8(_context, iAdapterIndex, _initSetting, level, val)
+
+                    for cls in _get_overdrive_8(
+                            context,
+                            iAdapterIndex,
+                            initSetting,
+                            [OD8_AUTO_OC_ENGINE_CONTROL, ADL_OD8_AUTO_OC_ENGINE]
+                    ):
+                        value = AutoOC(cls.current)
+                        value._obj = cls
+                        value._set = _set
+                        value._adapter_index = self._adapter_index
+                        value._level = cls.level
+                        self._auto_oc_core = value
+
+        return self._auto_oc_core
+
+    @property
+    def auto_oc_memory(self):
+        if self._auto_oc_memory is None:
+            iAdapterIndex = INT(self._adapter_index)
+
+            with ADL2_Main_Control_Create as context:
+                lpNumberOfFeatures = INT(OD8_COUNT)
+                lpOverdrive8Capabilities = INT(0)
+                lppInitSettingList = (ADLOD8SingleInitSetting * OD8_COUNT)()
+                initSetting = ADLOD8InitSetting()
+
+                _ADL2_Overdrive8_Init_SettingX2_Get(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(lpOverdrive8Capabilities),
+                    ctypes.byref(lpNumberOfFeatures),
+                    ctypes.byref(lppInitSettingList)
+                )
+                initSetting.overdrive8Capabilities = lpOverdrive8Capabilities
+
+                if not lpOverdrive8Capabilities.value & ADL_OD8_AUTO_OC_MEMORY == ADL_OD8_AUTO_OC_MEMORY:
+                    class Value(object):
+                        min_val = 0
+                        max_val = 0
+                        default = 0
+
+                    value = AutoOC(0)
+                    value._obj = Value
+                    self._auto_oc_memory = value
+
+                else:
+                    if lpNumberOfFeatures > OD8_COUNT:
+                        initSetting.count = OD8_COUNT
+                    else:
+                        initSetting.count = lpNumberOfFeatures
+
+                    for i in range(initSetting.count):
+                        initSetting.od8SettingTable[i].defaultValue = lppInitSettingList[i].defaultValue
+                        initSetting.od8SettingTable[i].featureID = lppInitSettingList[i].featureID
+                        initSetting.od8SettingTable[i].maxValue = lppInitSettingList[i].maxValue
+                        initSetting.od8SettingTable[i].minValue = lppInitSettingList[i].minValue
+
+                    ADL_Main_Memory_Free(lppInitSettingList)
+
+                    def _set(level, val):
+                        with ADL2_Main_Control_Create as _context:
+                            _lpNumberOfFeatures = INT(OD8_COUNT)
+                            _lpOverdrive8Capabilities = INT(0)
+                            _lppInitSettingList = (ADLOD8SingleInitSetting * OD8_COUNT)()
+                            _initSetting = ADLOD8InitSetting()
+
+                            _ADL2_Overdrive8_Init_SettingX2_Get(
+                                _context,
+                                iAdapterIndex,
+                                ctypes.byref(_lpOverdrive8Capabilities),
+                                ctypes.byref(_lpNumberOfFeatures),
+                                ctypes.byref(_lppInitSettingList)
+                            )
+
+                            if not lpOverdrive8Capabilities.value & ADL_OD8_AUTO_OC_MEMORY == ADL_OD8_AUTO_OC_MEMORY:
+                                return
+
+                            _initSetting.overdrive8Capabilities = _lpOverdrive8Capabilities
+
+                            if _lpNumberOfFeatures > OD8_COUNT:
+                                initSetting.count = OD8_COUNT
+                            else:
+                                _initSetting.count = _lpNumberOfFeatures
+
+                            for j in range(initSetting.count):
+                                _initSetting.od8SettingTable[j].defaultValue = _lppInitSettingList[j].defaultValue
+                                _initSetting.od8SettingTable[j].featureID = _lppInitSettingList[j].featureID
+                                _initSetting.od8SettingTable[j].maxValue = _lppInitSettingList[j].maxValue
+                                _initSetting.od8SettingTable[j].minValue = _lppInitSettingList[j].minValue
+
+                            ADL_Main_Memory_Free(_lppInitSettingList)
+
+                            return _set_overdrive_8(_context, iAdapterIndex, _initSetting, level, val)
+
+                    for cls in _get_overdrive_8(
+                            context,
+                            iAdapterIndex,
+                            initSetting,
+                            [OD8_AUTO_OC_MEMORY_CONTROL, ADL_OD8_AUTO_OC_MEMORY]
+                    ):
+                        value = AutoOC(cls.current)
+                        value._obj = cls
+                        value._set = _set
+                        value._adapter_index = self._adapter_index
+                        value._level = cls.level
+                        self._auto_oc_memory = value
+
+        return self._auto_oc_memory
+
+    @property
+    def power_control(self):
+        if not self._power_threshold:
+            iAdapterIndex = INT(self._adapter_index)
+
+            with ADL2_Main_Control_Create as context:
+                lpNumberOfFeatures = INT(OD8_COUNT)
+                lpOverdrive8Capabilities = INT(0)
+                lppInitSettingList = (ADLOD8SingleInitSetting * OD8_COUNT)()
+                initSetting = ADLOD8InitSetting()
+
+                _ADL2_Overdrive8_Init_SettingX2_Get(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(lpOverdrive8Capabilities),
+                    ctypes.byref(lpNumberOfFeatures),
+                    ctypes.byref(lppInitSettingList)
+                )
+                initSetting.overdrive8Capabilities = lpOverdrive8Capabilities
+
+                if lpOverdrive8Capabilities.value & ADL_OD8_POWER_GAUGE == ADL_OD8_POWER_GAUGE:
+
+                    if lpNumberOfFeatures > OD8_COUNT:
+                        initSetting.count = OD8_COUNT
+                    else:
+                        initSetting.count = lpNumberOfFeatures
+
+                    for i in range(initSetting.count):
+                        initSetting.od8SettingTable[i].defaultValue = lppInitSettingList[i].defaultValue
+                        initSetting.od8SettingTable[i].featureID = lppInitSettingList[i].featureID
+                        initSetting.od8SettingTable[i].maxValue = lppInitSettingList[i].maxValue
+                        initSetting.od8SettingTable[i].minValue = lppInitSettingList[i].minValue
+
+                    ADL_Main_Memory_Free(lppInitSettingList)
+
+                    for cls in _get_overdrive_8(
+                            context,
+                            iAdapterIndex,
+                            initSetting,
+                            [OD8_POWER_GAUGE, ADL_OD8_POWER_GAUGE]
+                    ):
+                        value = ZeroFanControl(cls.current)
+                        value._obj = cls
+                        value._adapter_index = self._adapter_index
+                        value._level = cls.level
+                        self._power_threshold.append(value)
+
+        return iter(self._power_threshold)
+
+    @property
+    def engine_clocks(self):
+        return CoreClocks(self._adapter_index)
+
+    @property
+    def memory_clocks(self):
+        return MemoryClocks(self._adapter_index)
+
+    @property
+    def core_voltages(self):
+        return CoreVoltages(self._adapter_index)
+
+    @property
+    def memory_voltages(self):
+        return MemoryVoltages(self._adapter_index)
+
+    @property
+    def memory_timings(self):
+        return MemoryTimings(self._adapter_index)
+
+    @property
+    def fan_speeds(self):
+        return FanSpeeds(self._adapter_index)
+

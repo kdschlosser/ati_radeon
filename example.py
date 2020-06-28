@@ -81,11 +81,23 @@ for adapter in pyamd_adl.adapters:
 
     print()
     print('fan_speeds')
-    for fan_speed in adapter.fan_speeds:
+    fan_speeds = adapter.fan_speeds
+    for fan_speed in fan_speeds:
         print('    speed:', fan_speed, fan_speed.unit_of_measure)
         print('    min:', fan_speed.min, fan_speed.unit_of_measure)
         print('    max:', fan_speed.max, fan_speed.unit_of_measure)
         print('    automatic:', fan_speed.automatic)
+        print()
+
+    print()
+    zero_controls = fan_speeds.zero_controls
+    print('    zero controls:')
+    for control in zero_controls:
+        print('        value:', control)
+        print('        default:', control.default)
+        print('        min:', control.min)
+        print('        max:', control.max)
+        print('        editable:', control.editable)
         print()
 
     print()
@@ -94,6 +106,34 @@ for adapter in pyamd_adl.adapters:
     print('    date:', firmware.date)
     print('    part_number:', firmware.part_number)
     print('    version:', firmware.version)
+
+    print()
+
+    auto_oc = adapter.auto_oc
+    uv = auto_oc.uv
+    core = auto_oc.core
+    memory = auto_oc.memory
+    print('auto oc')
+    print('    uv:')
+    print('        value:', uv)
+    print('        default:', uv.default)
+    print('        min:', uv.min)
+    print('        max:', uv.max)
+    print('        editable:', uv.editable)
+    print()
+    print('    core:')
+    print('        value:', core)
+    print('        default:', core.default)
+    print('        min:', core.min)
+    print('        max:', core.max)
+    print('        editable:', core.editable)
+    print()
+    print('    memory:')
+    print('        value:', memory)
+    print('        default:', memory.default)
+    print('        min:', memory.min)
+    print('        max:', memory.max)
+    print('        editable:', memory.editable)
 
     print()
     print('core')
@@ -108,6 +148,7 @@ for adapter in pyamd_adl.adapters:
     print('    load:', load, load.unit_of_measure)
     print()
     print('    clocks')
+
     for clock in clocks:
         print('        clock:', clock, clock.unit_of_measure)
         print('        step:', clock.step, clock.unit_of_measure)
@@ -133,6 +174,7 @@ for adapter in pyamd_adl.adapters:
     memory = adapter.memory
     clocks = memory.clocks
     voltages = memory.voltages
+    timings = memory.timings
     actual_clock = clocks.actual
     print('    size:', memory.size)
     print('    type:', memory.type)
@@ -159,6 +201,15 @@ for adapter in pyamd_adl.adapters:
         print('        min:', voltage.min, voltage.unit_of_measure)
         print('        max:', voltage.max, voltage.unit_of_measure)
         print('        is_active:', voltage.is_active)
+        print()
+
+    print()
+    print('    timings')
+    for timing in timings:
+        print('        value:', timing)
+        print('        default:', timing.default)
+        print('        min:', timing.min)
+        print('        max:', timing.max)
         print()
 
     print()

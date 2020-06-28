@@ -2333,6 +2333,10 @@ class Adapter(object):
         return overdrive.fan_speeds
 
     @property
+    def auto_oc(self):
+        return AutoOC(self._adapter_index)
+
+    @property
     def core(self):
         return Core(self._adapter_index)
 
@@ -3108,6 +3112,7 @@ class CrossFire(object):
             )
 
 
+@utils.instance_singleton
 class Firmware(object):
 
     def __init__(self, adapter_index):
@@ -3145,6 +3150,7 @@ class Firmware(object):
             return utils.get_string(lpBiosInfo.strVersion)
 
 
+@utils.instance_singleton
 class Memory(object):
 
     def __init__(self, adapter_index):
@@ -3207,6 +3213,11 @@ class Memory(object):
         return overdrive.memory_clocks
 
     @property
+    def timings(self):
+        overdrive = self._overdrive
+        return overdrive.memory_timings
+
+    @property
     def _overdrive(self):
         iSupported = INT()
         iEnabled = INT()
@@ -3241,6 +3252,63 @@ class Memory(object):
                     return OverDrive8(self._adapter_index)
 
 
+@utils.instance_singleton
+class AutoOC(object):
+
+    def __init__(self, adapter_index):
+        self._adapter_index = adapter_index
+
+    @property
+    def uv(self):
+        overdrive = self._overdrive
+        return overdrive.auto_oc_uv
+
+    @property
+    def core(self):
+        overdrive = self._overdrive
+        return overdrive.auto_oc_uv
+
+    @property
+    def memory(self):
+        overdrive = self._overdrive
+        return overdrive.auto_oc_uv
+
+    @property
+    def _overdrive(self):
+        iSupported = INT()
+        iEnabled = INT()
+        iVersion = INT()
+
+        from .overdrive5_h import _ADL2_Overdrive_Caps
+
+        # Repeat for all available adapters in the system
+        iAdapterIndex = INT(self._adapter_index)
+        with ADL2_Main_Control_Create as context:
+            if _ADL2_Overdrive_Caps(
+                    context,
+                    iAdapterIndex,
+                    ctypes.byref(iSupported),
+                    ctypes.byref(iEnabled),
+                    ctypes.byref(iVersion)
+            ) == ADL_OK:
+                if iVersion.value == 5:
+                    from .overdrive5_h import OverDrive5
+                    return OverDrive5(self._adapter_index)
+
+                elif iVersion.value == 6:
+                    from .overdrive6_h import OverDrive6
+                    return OverDrive6(self._adapter_index)
+
+                elif iVersion.value == 7:
+                    from .overdriven_h import OverDriveN
+                    return OverDriveN(self._adapter_index)
+
+                elif iVersion.value == 8:
+                    from .overdrive8_h import OverDrive8
+                    return OverDrive8(self._adapter_index)
+
+
+@utils.instance_singleton
 class Core(object):
 
     def __init__(self, adapter_index):

@@ -5841,5 +5841,8 @@ __all__ = (
     'LPADLCrossfireComb',
     'LPADLODPerformanceLevels',
     'LPADLBracketSlotInfo',
-    'LPADLConnectorInfo'
+    'LPADLConnectorInfo',
+    'ADL_OD8_WS_AUTO_FAN_ACOUSTIC_LIMIT',
+    'ADL_OD8_POWER_GAUGE',
+    'OD8_POWER_GAUGE'
 )

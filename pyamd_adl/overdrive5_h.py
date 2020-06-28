@@ -714,11 +714,12 @@ class CoreVoltage(FloatValueWrapper):
         return 'VDC'
 
 
+@utils.instance_singleton
 class CoreVoltages(object):
-    _core_voltages = None
 
     def __init__(self, adapter_index):
         self._adapter_index = adapter_index
+        self._core_voltages = None
 
     def __getitem__(self, item):
         return list(self)[item]
@@ -819,8 +820,8 @@ class CoreVoltages(object):
             return value
 
     def __iter__(self):
-        if CoreVoltages._core_voltages is None:
-            CoreVoltages._core_voltages = []
+        if self._core_voltages is None:
+            self._core_voltages = []
 
             iAdapterIndex = INT(self._adapter_index)
 
@@ -894,9 +895,9 @@ class CoreVoltages(object):
                 value._obj = Values
                 value._adapter_index = self._adapter_index
                 value._level = i
-                CoreVoltages._core_voltages.append(value)
+                self._core_voltages.append(value)
 
-        return iter(CoreVoltages._core_voltages)
+        return iter(self._core_voltages)
 
 
 class CoreClock(IntValueWrapper):
@@ -932,11 +933,12 @@ class CoreClock(IntValueWrapper):
         return 'MHz'
 
 
+@utils.instance_singleton
 class CoreClocks(object):
-    _core_clocks = None
 
     def __init__(self, adapter_index):
         self._adapter_index = adapter_index
+        self._core_clocks = None
 
     def __getitem__(self, item):
         return list(self)[item]
@@ -1037,8 +1039,8 @@ class CoreClocks(object):
             return value
 
     def __iter__(self):
-        if CoreClocks._core_clocks is None:
-            CoreClocks._core_clocks = []
+        if self._core_clocks is None:
+            self._core_clocks = []
 
             iAdapterIndex = INT(self._adapter_index)
 
@@ -1112,9 +1114,9 @@ class CoreClocks(object):
                 value._obj = Values
                 value._adapter_index = self._adapter_index
                 value._level = i
-                CoreClocks._core_clocks.append(value)
+                self._core_clocks.append(value)
 
-        return iter(CoreClocks._core_clocks)
+        return iter(self._core_clocks)
 
 
 class MemoryClock(IntValueWrapper):
@@ -1150,11 +1152,12 @@ class MemoryClock(IntValueWrapper):
         return 'MHz'
 
 
+@utils.instance_singleton
 class MemoryClocks(object):
-    _memory_clocks = None
 
     def __init__(self, adapter_index):
         self._adapter_index = adapter_index
+        self._memory_clocks = None
 
     def __getitem__(self, item):
         return list(self)[item]
@@ -1255,8 +1258,8 @@ class MemoryClocks(object):
             return value
 
     def __iter__(self):
-        if MemoryClocks._memory_clocks is None:
-            MemoryClocks._memory_clocks = []
+        if self._memory_clocks is None:
+            self._memory_clocks = []
 
             iAdapterIndex = INT(self._adapter_index)
 
@@ -1330,20 +1333,21 @@ class MemoryClocks(object):
                 value._obj = Values
                 value._adapter_index = self._adapter_index
                 value._level = i
-                MemoryClocks._memory_clocks.append(value)
+                self._memory_clocks.append(value)
 
-        return iter(MemoryClocks._memory_clocks)
+        return iter(self._memory_clocks)
 
 
 class MemoryVoltage(CoreVoltage):
     pass
 
 
+@utils.instance_singleton
 class MemoryVoltages(object):
-    _memory_voltages = []
 
     def __init__(self, adapter_index):
         self._adapter_index = adapter_index
+        self._memory_voltages = []
 
     def __getitem__(self, item):
         return list(self)[item]
@@ -1360,7 +1364,54 @@ class MemoryVoltages(object):
         return MemoryVoltage(0)
 
     def __iter__(self):
-        return iter(MemoryVoltages._memory_voltages)
+        return iter(self._memory_voltages)
+
+
+class MemoryTiming(IntValueWrapper):
+
+    @property
+    def unit_of_measure(self):
+        return ''
+
+    @property
+    def min(self):
+        return 0
+
+    @property
+    def step(self):
+        return 0
+
+    @property
+    def max(self):
+        return 0
+
+    @property
+    def default(self):
+        return 0
+
+
+@utils.instance_singleton
+class MemoryTimings(object):
+
+    def __init__(self, adapter_index):
+        self._adapter_index = adapter_index
+        self._memory_timings = None
+
+    def _set_level(self, level, value):
+        pass
+
+    def __iter__(self):
+        if self._memory_timings is None:
+            self._memory_timings = []
+
+        return iter(self._memory_timings)
+
+    def __getitem__(self, item):
+        timings = list(self)
+        return timings[item]
+
+    def __setitem__(self, key, value):
+        pass
 
 
 class FanSpeed(IntValueWrapper):
@@ -1383,10 +1434,15 @@ class FanSpeed(IntValueWrapper):
             self._parent._set_automatic(self._level)
 
 
+@utils.instance_singleton
 class FanSpeeds(object):
 
     def __init__(self, adapter_index):
         self._adapter_index = adapter_index
+
+    @property
+    def zero_controls(self):
+        return ZeroFanControls(self._adapter_index)
 
     def __iter__(self):
         iAdapterIndex = INT(self._adapter_index)
@@ -1598,6 +1654,49 @@ class FanSpeeds(object):
         val += value - val.real
 
 
+class ZeroFanControl(IntValueWrapper):
+
+    @property
+    def unit_of_measure(self):
+        return ''
+
+    @property
+    def min(self):
+        return 0
+
+    @property
+    def max(self):
+        return 0
+
+    @property
+    def default(self):
+        return 0
+
+
+@utils.instance_singleton
+class ZeroFanControls(object):
+
+    def __init__(self, adapter_index):
+        self._adapter_index = adapter_index
+        self._fan_controls = None
+
+    def _set_level(self, level, value):
+        pass
+
+    def __iter__(self):
+        if self._fan_controls is None:
+            self._fan_controls = []
+
+        return iter(self._fan_controls)
+
+    def __getitem__(self, item):
+        speeds = list(self)
+        return speeds[item]
+
+    def __setitem__(self, key, value):
+        pass
+
+
 class PowerThreshold(IntValueWrapper):
 
     @property
@@ -1635,11 +1734,38 @@ class Load(FloatValueWrapper):
         return 100.0
 
 
+class AutoOC(IntValueWrapper):
+
+    @property
+    def unit_of_measure(self):
+        return ''
+
+    @property
+    def min(self):
+        return 0
+
+    @property
+    def default(self):
+        return 0
+
+    @property
+    def editable(self):
+        return False
+
+    @property
+    def max(self):
+        return 0
+
+
+@utils.instance_singleton
 class OverDrive5(object):
-    _power_threshold = None
 
     def __init__(self, adapter_index):
         self._adapter_index = adapter_index
+        self._power_threshold = None
+        self._auto_oc_uv = None
+        self._auto_oc_core = None
+        self._auto_oc_memory = None
 
     @property
     def _activity(self):
@@ -1719,6 +1845,50 @@ class OverDrive5(object):
         return res
 
     @property
+    def auto_oc_uv(self):
+        if self._auto_oc_uv is None:
+            class Value(object):
+                min_val = 0
+                max_val = 0
+                default = 0
+
+            value = AutoOC(0)
+            value._obj = Value
+
+            self._auto_oc_uv = value
+
+        return self._auto_oc_uv
+
+    @property
+    def auto_oc_core(self):
+        if self._auto_oc_core is None:
+            class Value(object):
+                min_val = 0
+                max_val = 0
+                default = 0
+
+            value = AutoOC(0)
+            value._obj = Value
+
+            self._auto_oc_core = value
+
+        return self._auto_oc_core
+
+    @property
+    def auto_oc_memory(self):
+        if self._auto_oc_memory is None:
+            class Value(object):
+                min_val = 0
+                max_val = 0
+                default = 0
+
+            value = AutoOC(0)
+            value._obj = Value
+            self._auto_oc_memory = value
+
+        return self._auto_oc_memory
+
+    @property
     def is_power_control_supported(self):
         powerControlSupported = INT()
         iAdapterIndex = INT(self._adapter_index)
@@ -1772,8 +1942,8 @@ class OverDrive5(object):
 
     @property
     def power_control(self):
-        if OverDrive5._power_threshold is None:
-            OverDrive5._power_threshold = []
+        if self._power_threshold is None:
+            self._power_threshold = []
             if self.is_power_control_supported:
                 iAdapterIndex = INT(self._adapter_index)
                 powerControlInfo = ADLPowerControlInfo()
@@ -1818,9 +1988,9 @@ class OverDrive5(object):
             value._level = 0
             value._adapter_index = self._adapter_index
 
-            OverDrive5._power_threshold += [value]
+            self._power_threshold += [value]
 
-        return OverDrive5._power_threshold
+        return self._power_threshold
 
     @power_control.setter
     def power_control(self, value):
@@ -1856,6 +2026,10 @@ class OverDrive5(object):
     @property
     def memory_voltages(self):
         return MemoryVoltages(self._adapter_index)
+
+    @property
+    def memory_timings(self):
+        return MemoryTimings(self._adapter_index)
 
     @property
     def fan_speeds(self):
